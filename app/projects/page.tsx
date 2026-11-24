@@ -1,5 +1,5 @@
 import PageHero from "@/components/PageHero";
-import { CLIENTS, IMAGES } from "@/lib/data";
+import { CLIENTS } from "@/lib/data";
 
 export const metadata = { title: "Projects — Netkathir Technologies" };
 
@@ -15,9 +15,8 @@ export default function Projects() {
       <PageHero
         kicker="Projects"
         title="Transforming Ideas into Intelligent Solutions."
-        image={IMAGES.heroes.projects}
       />
-      <section className="pb-32">
+      <section className="pb-16">
         <div className="mx-auto max-w-7xl px-6">
           <ul className="border-t border-ink/10">
             {CLIENTS.map((c, i) => (

@@ -12,7 +12,7 @@ export default function Contact() {
         title="Let's Build Your Next Intelligent Solution."
         image={IMAGES.heroes.contact}
       />
-      <section className="pb-32">
+      <section className="pb-16">
         <div className="mx-auto max-w-7xl px-6 grid lg:grid-cols-[1.3fr_1fr] gap-12">
           <ContactForm />
           <aside data-reveal className="space-y-8">

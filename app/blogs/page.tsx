@@ -1,5 +1,5 @@
 import PageHero from "@/components/PageHero";
-import { BLOGS, IMAGES } from "@/lib/data";
+import { BLOGS } from "@/lib/data";
 
 export const metadata = { title: "Blogs — Netkathir Technologies" };
 
@@ -10,9 +10,8 @@ export default function Blogs() {
         kicker="Insights"
         title="Insights / Blogs."
         sub="Notes on AI, cloud, DevOps and building software that lasts."
-        image={IMAGES.heroes.blogs}
       />
-      <section className="pb-32">
+      <section className="pb-16">
         <div className="mx-auto max-w-7xl px-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {BLOGS.map((b) => (
             <a

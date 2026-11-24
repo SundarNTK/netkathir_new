@@ -22,27 +22,35 @@ export default function HorizontalScroll({
 
   useEffect(() => {
     const mm = gsap.matchMedia();
-    mm.add("(min-width: 900px) and (prefers-reduced-motion: no-preference)", () => {
-      const dist = () => track.current!.scrollWidth - window.innerWidth + 120;
-      gsap.to(track.current, {
-        x: () => -dist(),
-        ease: "none",
-        scrollTrigger: {
-          trigger: root.current,
-          pin: true,
-          scrub: 0.8,
-          start: "top top",
-          end: () => "+=" + dist(),
-          invalidateOnRefresh: true,
-          onUpdate: (self) => gsap.set(bar.current, { scaleX: self.progress }),
-        },
+    // Wait until the route has scrolled back to the top. Creating the pin in the
+    // same commit as navigation measures the previous page and overlaps this one.
+    const timer = window.setTimeout(() => {
+      mm.add("(min-width: 900px) and (prefers-reduced-motion: no-preference)", () => {
+        const dist = () => track.current!.scrollWidth - window.innerWidth + 120;
+        gsap.to(track.current, {
+          x: () => -dist(),
+          ease: "none",
+          scrollTrigger: {
+            trigger: root.current,
+            pin: true,
+            scrub: 0.8,
+            start: "top top",
+            end: () => "+=" + dist(),
+            invalidateOnRefresh: true,
+            onUpdate: (self) => gsap.set(bar.current, { scaleX: self.progress }),
+          },
+        });
       });
-    });
-    return () => mm.revert();
+      ScrollTrigger.refresh();
+    }, 60);
+    return () => {
+      window.clearTimeout(timer);
+      mm.revert();
+    };
   }, []);
 
   return (
-    <section ref={root} className="relative min-h-screen flex flex-col justify-center py-24 overflow-hidden">
+    <section ref={root} className="relative flex flex-col justify-center py-14 overflow-hidden">
       <div className="px-6 mx-auto max-w-7xl w-full mb-12">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-ice mb-4">{kicker}</p>
         <h2 data-split className="font-display text-[clamp(2.2rem,6vw,5rem)] leading-none">

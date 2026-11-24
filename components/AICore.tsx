@@ -330,7 +330,7 @@ const dotTex = (() => {
 })();
 
 /** A flowing wire-mesh band wrapped around the robot in a circle, studded with glowing particles. */
-function AiWaveRing({ palette, R, H, y, tilt, Nu = 120, Nv = 9, speed = 1 }: { palette: RobotPalette; R: number; H: number; y: number; tilt: number; Nu?: number; Nv?: number; speed?: number }) {
+function AiWaveRing({ palette, R, H, y, tilt, x = -0.6, Nu = 120, Nv = 9, speed = 1 }: { palette: RobotPalette; R: number; H: number; y: number; tilt: number; x?: number; Nu?: number; Nv?: number; speed?: number }) {
   const grp = useRef<THREE.Group>(null!);
   const nodes = useMemo(() => new Float32Array(Nu * Nv * 3), [Nu, Nv]);
   const { seg, pts } = useMemo(() => {
@@ -385,7 +385,7 @@ function AiWaveRing({ palette, R, H, y, tilt, Nu = 120, Nv = 9, speed = 1 }: { p
   });
 
   return (
-    <group position={[-0.6, 0, 0]} rotation={[tilt, 0, tilt * 0.4]}>
+    <group position={[x, 0, 0]} rotation={[tilt, 0, tilt * 0.4]}>
       <group ref={grp}>
         <lineSegments geometry={seg} frustumCulled={false}>
           <lineBasicMaterial color="#2f6bff" transparent opacity={0.3} depthWrite={false} />
@@ -612,8 +612,9 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
       const g = panels.current[i];
       if (!g) return;
       const appear = i < 3 || mobile ? 1 : ease(clamp01((sc - (i - 3) * 0.2) / 0.3 + 0.05));
-      const spread = 1 + e * 0.1;
-      g.position.set(p.pos[0] * spread, p.pos[1] + Math.sin(t * 1.2 + i * 1.3) * 0.07, p.pos[2]);
+      const spread = mobile ? 0.72 : 1 + e * 0.1;
+      const ox = mobile ? 0.6 : 0;
+      g.position.set(p.pos[0] * spread + ox, p.pos[1] + Math.sin(t * 1.2 + i * 1.3) * 0.07, p.pos[2]);
       g.rotation.y = p.ry + Math.sin(t * 0.5 + i) * 0.03;
       g.scale.setScalar(0.2 + 0.8 * appear);
       g.visible = appear > 0.01 && i < visible;
@@ -654,13 +655,13 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
   return (
     <group ref={stage} position={[0, -2.35, 0]} scale={0.9}>
       {/* floor: soft contact shadow */}
-      <mesh position={[-0.6, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[mobile ? 0 : -0.6, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[2.2, 48]} />
         <shaderMaterial transparent depthWrite={false} vertexShader={stageShadow.v} fragmentShader={stageShadow.f} />
       </mesh>
 
       {/* ================================ ROBOT ================================ */}
-      <group ref={robot} position={[-0.6, 0, 0]}>
+      <group ref={robot} position={[mobile ? 0 : -0.6, 0, 0]}>
         {/* boots + legs */}
         {[-1, 1].map((sd) => (
           <group key={sd} position={[sd * 0.4, 0, 0.02]}>
@@ -809,10 +810,10 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
 
 
       {/* circular AI data wave wrapped around the robot */}
-      <AiWaveRing palette={palette} R={3.6} H={0.95} y={1.7} tilt={0.22} Nu={mobile ? 60 : 96} Nv={6} />
+      <AiWaveRing palette={palette} R={mobile ? 2.7 : 3.6} H={0.95} y={1.7} tilt={0.22} x={mobile ? 0 : -0.6} Nu={mobile ? 60 : 96} Nv={6} />
       {!mobile && <AiWaveRing palette={palette} R={2.9} H={0.6} y={3.7} tilt={-0.2} Nu={80} Nv={5} speed={1.3} />}
 
-      <Sparkles count={mobile ? 18 : 40} scale={[7, 6, 3]} position={[1.2, 2.2, 0]} size={mobile ? 3 : 4} speed={0.3} opacity={0.75} color="#16a34a" noise={0.6} />
+      <Sparkles count={mobile ? 18 : 40} scale={mobile ? [4.2, 4.2, 2] : [7, 6, 3]} position={[mobile ? 0 : 1.2, 2.2, 0]} size={mobile ? 3 : 4} speed={0.3} opacity={0.75} color="#16a34a" noise={0.6} />
     </group>
   );
 }

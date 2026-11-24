@@ -4,7 +4,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, Lightformer } from "@react-three/drei";
 import AICore from "./AICore";
-import { Articles, Chip, ServicesScene, Devices, Globe, Mail, Presence, Workbench } from "./Hero3D";
+import { Articles, Chip, Devices, Globe, Mail, Presence, Workbench } from "./Hero3D";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -24,12 +24,12 @@ const STAGES: Record<string, Stage> = {
 
 const VARIANT: Record<string, "core" | "services" | "none" | "chip" | "globe" | "devices" | "work" | "articles" | "mail"> = {
   "/": "core",
-  "/services": "services",
-  "/projects": "work",
-  "/products": "devices",
-  "/blogs": "articles",
+  "/services": "none",
+  "/projects": "none",
+  "/products": "none",
+  "/blogs": "none",
   "/about": "globe",
-  "/contact": "mail",
+  "/contact": "none",
 };
 
 type Shared = {
@@ -296,6 +296,7 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
   const spin = useRef<THREE.Group>(null!);
   const mouse = useRef({ x: 0, y: 0 });
   const tmp = useRef([new THREE.Color(), new THREE.Color(), new THREE.Color()]);
+  const snap = useRef(true);
 
   const shared = useMemo<Shared>(
     () => ({
@@ -318,6 +319,12 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
     return () => window.removeEventListener("mousemove", m);
   }, []);
 
+  // Land on the new route's pose immediately. Damping from the previous page
+  // leaves the model sitting on top of whatever section is now in view.
+  useEffect(() => {
+    snap.current = true;
+  }, [path]);
+
   useFrame((state, d) => {
     const dt = Math.min(d, 0.25);
     shared.uTime.value += dt;
@@ -328,13 +335,19 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
     const core = variant === "core";
     const out = Math.max(0, p - 1.5); // the home hero is pinned for ~1.5 screens while the head transforms; then it leaves
     const tx = core ? (mobile ? 0 : stage.x * (1 - 0.06 * Math.min(p / 1.05, 1))) : mobile ? 0 : stage.x * Math.max(0, Math.cos(Math.min(p, 1.3) * 1.2));
-    const ty = core ? (mobile ? -0.7 + p * 7.04 : stage.y + out * 4.8) : (mobile ? 1.1 : stage.y) + Math.min(p, 2.5) * 4.8;
-    const ts = core ? stage.s * (mobile ? 0.62 : 1) * (1 - Math.min(out, 1) * 0.2) : stage.s * (mobile ? 0.5 : 1) * (1 - Math.min(pc, 2) * 0.16);
+    const ty = core ? (mobile ? -0.72 + p * 7.04 : stage.y + out * 4.8) : (mobile ? 0.35 : stage.y) + Math.min(p, 2.5) * 4.8;
+    const ts = core ? stage.s * (mobile ? 0.5 : 1) * (1 - Math.min(out, 1) * 0.2) : stage.s * (mobile ? 0.46 : 1) * (1 - Math.min(pc, 2) * 0.16);
     const g = group.current;
-    g.position.x = THREE.MathUtils.damp(g.position.x, tx, 5, dt);
-    g.position.y = THREE.MathUtils.damp(g.position.y, ty, 6, dt);
-    g.position.z = THREE.MathUtils.damp(g.position.z, -pc * 0.9, 4, dt);
-    g.scale.setScalar(THREE.MathUtils.damp(g.scale.x, ts, 4, dt));
+    if (snap.current) {
+      g.position.set(tx, ty, -pc * 0.9);
+      g.scale.setScalar(Math.max(ts, 0.0001));
+      snap.current = false;
+    } else {
+      g.position.x = THREE.MathUtils.damp(g.position.x, tx, 5, dt);
+      g.position.y = THREE.MathUtils.damp(g.position.y, ty, 6, dt);
+      g.position.z = THREE.MathUtils.damp(g.position.z, -pc * 0.9, 4, dt);
+      g.scale.setScalar(THREE.MathUtils.damp(g.scale.x, ts, 4, dt));
+    }
     // only the surrounding network / orbit rings turn; the robot always faces the viewer
     const sp = spin.current;
     if (sp) {
@@ -351,9 +364,11 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
     cols.forEach((c, i) => c.lerp(tmp.current[i].set(stage.pal[i]), 1 - Math.exp(-4 * dt)));
 
     // camera parallax
-    const drift = reduced ? 0 : 1;
-    state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, mouse.current.x * 0.8 + Math.sin(shared.uTime.value * 0.25) * 0.35 * drift, 0.1);
-    state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, mouse.current.y * 0.5 + Math.cos(shared.uTime.value * 0.2) * 0.15 * drift, 0.1);
+    const drift = reduced || mobile ? 0 : 1;
+    const aimX = mobile ? 0 : mouse.current.x * 0.8 + Math.sin(shared.uTime.value * 0.25) * 0.35 * drift;
+    const aimY = mobile ? 0 : mouse.current.y * 0.5 + Math.cos(shared.uTime.value * 0.2) * 0.15 * drift;
+    state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, aimX, mobile ? 0.2 : 0.1);
+    state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, aimY, mobile ? 0.2 : 0.1);
     state.camera.lookAt(0, 0, 0);
   });
 
@@ -363,9 +378,6 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
       <group ref={group}>
         <Presence active={variant === "core"}>
           <AICore palette={shared} mobile={mobile} />
-        </Presence>
-        <Presence active={variant === "services"}>
-          <ServicesScene palette={shared} />
         </Presence>
         <Presence active={variant === "chip"}>
           <Chip palette={shared} />
@@ -398,12 +410,17 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
 }
 
 export default function Scene() {
+  const path = usePathname();
+  const variant = VARIANT[path] ?? "core";
   const mobile = typeof window !== "undefined" && window.innerWidth < 800;
   const reduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   // pause the GPU entirely when the tab is hidden or the hero has scrolled away
   const [active, setActive] = useState(true);
   useEffect(() => {
-    const f = () => setActive(!document.hidden && window.scrollY < window.innerHeight * 2.2);
+    // The home hero stays pinned for a little over one screen. After that the
+    // model must be gone, or it paints through the sections underneath.
+    const limit = () => window.innerHeight * (path === "/" ? 1.15 : 0.95);
+    const f = () => setActive(!document.hidden && window.scrollY < limit());
     f();
     window.addEventListener("scroll", f, { passive: true });
     document.addEventListener("visibilitychange", f);
@@ -411,7 +428,8 @@ export default function Scene() {
       window.removeEventListener("scroll", f);
       document.removeEventListener("visibilitychange", f);
     };
-  }, []);
+  }, [path]);
+  if (variant === "none") return null;
   return (
     <Canvas
       frameloop={active ? "always" : "never"}

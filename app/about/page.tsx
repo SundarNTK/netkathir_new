@@ -13,9 +13,10 @@ export default function About() {
         title="The People and Purpose Behind Netkathir."
         sub="Founded 2015 · Trusted by clients worldwide."
         image={IMAGES.heroes.about}
+        room
       />
 
-      <section className="py-24">
+      <section className="py-14">
         <div className="mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <div>
             <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#14532d]/10 bg-white px-4 py-1.5 text-sm font-semibold text-[#15803d] shadow-sm"><span className="h-1.5 w-1.5 rounded-full bg-[#eab308]" />Who we are</p>
@@ -35,7 +36,7 @@ export default function About() {
         </div>
       </section>
 
-      <section className="py-24">
+      <section className="py-14">
         <div className="mx-auto max-w-7xl px-6 grid sm:grid-cols-3 gap-10 text-center">
           {[
             ["11", "+", "Years of excellence"],
@@ -52,9 +53,9 @@ export default function About() {
         </div>
       </section>
 
-      <section className="py-24">
+      <section className="py-14">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="mb-14 max-w-3xl">
+          <div className="mb-8 max-w-3xl">
             <p className="inline-flex items-center gap-2 rounded-full border border-white bg-white/70 px-4 py-1.5 text-sm font-semibold text-ice shadow-[0_10px_30px_-14px_rgba(22,101,52,0.5)] backdrop-blur-xl mb-6">
               <span className="h-1.5 w-1.5 rounded-full bg-violet" /> Leadership &amp; Global Presence
             </p>
@@ -92,9 +93,9 @@ export default function About() {
         </div>
       </section>
 
-      <section className="py-24">
+      <section className="py-14">
         <div className="mx-auto max-w-7xl px-6">
-          <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-14">What we stand for.</h2>
+          <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-8">What we stand for.</h2>
           <div data-stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {VALUES.map(([t, d], i) => (
               <div key={t} data-tilt className="glass rounded-3xl p-7 min-h-[14rem] flex flex-col justify-between">
@@ -109,10 +110,13 @@ export default function About() {
         </div>
       </section>
 
-      <section className="py-24">
+      <section className="py-14">
         <div className="mx-auto max-w-4xl px-6 text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={IMAGES.iso} alt="ISO 27001 Certified" className="mx-auto mb-6 h-36 w-36 object-contain" />
+          <div className="relative mx-auto mb-6 grid h-36 w-36 place-items-center">
+            <span aria-hidden className="absolute h-36 w-36 rounded-full bg-white shadow-[0_10px_28px_-16px_rgba(20,83,45,0.45)]" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={IMAGES.iso} alt="ISO 27001 Certified" className="relative z-10 h-36 w-36 object-contain" />
+          </div>
           <p className="font-mono text-xs text-muted mb-3">Established December 2015 · Incorporated May 2019</p>
           <p className="font-display text-3xl text-grad">ISO 27001 Certified</p>
         </div>

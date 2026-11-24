@@ -8,7 +8,7 @@ import * as THREE from "three";
 /** logo: reveal 0→1, burst: exit 0→1. */
 export type IntroState = { logo: number; burst: number };
 
-const LOGO_URL = "/images/brand/netkathir-logo-3d.png"; // the original logo, upscaled 8x with edges kept exact
+const LOGO_URL = "/images/brand/netkathir-logo-hd.png";
 const W = 8; // logo width in scene units
 
 const GLINT_V = /* glsl */ `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;

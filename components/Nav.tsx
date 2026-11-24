@@ -51,14 +51,34 @@ export default function Nav() {
 
   useEffect(() => {
     document.documentElement.style.overflow = open ? "hidden" : "";
+    window.dispatchEvent(new CustomEvent("nk:menu", { detail: open }));
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  useEffect(() => {
+    const f = () => {
+      if (window.matchMedia("(min-width: 1024px)").matches) setOpen(false);
+    };
+    window.addEventListener("resize", f);
+    return () => window.removeEventListener("resize", f);
+  }, []);
+
   return (
-    <header
-      className={`fixed top-0 inset-x-0 z-50 transition-all duration-700 ease-[cubic-bezier(.2,.8,.2,1)] ${
-        ready ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
-      }`}
-    >
+    <>
+    <header className="fixed top-0 inset-x-0 z-[70]">
+      <div
+        className={`relative transition-all duration-700 ease-[cubic-bezier(.2,.8,.2,1)] ${
+          ready ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+        }`}
+      >
       <div className="absolute inset-0 border-b border-white/80 bg-white/75 shadow-[0_10px_40px_-24px_rgba(22,101,52,0.45)] backdrop-blur-xl" />
       <div className="relative mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
         <Link href="/" className="relative z-[60] flex items-center gap-3" aria-label="Netkathir home">
@@ -113,40 +133,52 @@ export default function Nav() {
           <button
             className="lg:hidden w-11 h-11 rounded-full border border-ink/10 bg-white/80 backdrop-blur-xl flex flex-col items-center justify-center gap-1.5"
             onClick={() => setOpen(!open)}
-            aria-label="Menu"
+            aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
+            aria-controls="mobile-nav"
           >
             <span className={`h-px w-5 bg-ink transition-transform duration-300 ${open ? "rotate-45 translate-y-[3.5px]" : ""}`} />
             <span className={`h-px w-5 bg-ink transition-transform duration-300 ${open ? "-rotate-45 -translate-y-[3.5px]" : ""}`} />
           </button>
         </div>
       </div>
+      </div>
+    </header>
 
-      {/* full-screen menu */}
+      {/* Full-screen menu. It sits outside the bar that slides in, because a
+          transform on an ancestor traps position:fixed and the panel never covers the page. */}
       <div
-        className={`lg:hidden fixed inset-0 z-[55] bg-[#f6fbf7]/97 backdrop-blur-md flex flex-col justify-center gap-2 px-8 transition-[clip-path,opacity] duration-700 ease-[cubic-bezier(.7,0,.2,1)] ${
+        id="mobile-nav"
+        inert={!open}
+        className={`lg:hidden fixed inset-0 z-[60] overflow-y-auto overscroll-contain bg-[#f6fbf7] transition-[clip-path,opacity] duration-700 ease-[cubic-bezier(.7,0,.2,1)] ${
           open ? "opacity-100 pointer-events-auto [clip-path:circle(150%_at_90%_5%)]" : "opacity-0 pointer-events-none [clip-path:circle(0%_at_90%_5%)]"
         }`}
       >
-        {NAV.map((n, i) => (
+        <div className="mx-auto flex min-h-full max-w-lg flex-col justify-center gap-3 px-8 pb-12 pt-28">
+        {NAV.map((n, i) => {
+          const on = n.href === "/" ? path === "/" : path.startsWith(n.href);
+          return (
           <Link
             key={n.href}
             href={n.href}
-            style={{ transitionDelay: `${open ? 200 + i * 60 : 0}ms` }}
-            className={`flex items-baseline gap-4 font-display text-[2.6rem] leading-tight transition-all duration-700 ${
-              open ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
+            onClick={() => setOpen(false)}
+            style={{ transitionDelay: `${open ? 120 + i * 45 : 0}ms` }}
+            className={`flex items-baseline gap-4 font-display text-[clamp(1.7rem,7vw,2.6rem)] leading-none transition-all duration-700 ${
+              open ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+            } ${on ? "text-[#15803d]" : "text-ink"}`}
           >
-            <span className="font-mono text-xs text-ice">0{i + 1}</span>
+            <span className="w-7 shrink-0 font-mono text-xs text-ice">0{i + 1}</span>
             {n.label}
           </Link>
-        ))}
+          );
+        })}
         <p
-          className={`mt-8 font-mono text-xs text-ink/50 transition-opacity duration-700 delay-500 ${open ? "opacity-100" : "opacity-0"}`}
+          className={`mt-6 font-mono text-xs text-ink/50 transition-opacity duration-700 delay-500 ${open ? "opacity-100" : "opacity-0"}`}
         >
           {SITE.email}
         </p>
+        </div>
       </div>
-    </header>
+    </>
   );
 }

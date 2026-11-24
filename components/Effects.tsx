@@ -46,7 +46,14 @@ export default function Effects() {
     const smooth = () => gsap.ticker.lagSmoothing(0);
     if (window.__nkIntro === "playing") window.addEventListener("nk:intro-done", smooth, { once: true });
     else smooth();
+    const onMenu = (e: Event) => {
+      const open = (e as CustomEvent<boolean>).detail;
+      if (open) lenis.stop();
+      else if (window.__nkIntro !== "playing") lenis.start();
+    };
+    window.addEventListener("nk:menu", onMenu);
     return () => {
+      window.removeEventListener("nk:menu", onMenu);
       window.removeEventListener("nk:intro-done", resume);
       window.removeEventListener("nk:intro-done", smooth);
       gsap.ticker.remove(tick);
@@ -121,7 +128,8 @@ export default function Effects() {
 
   // Per-page animations + reveal
   useEffect(() => {
-    lenisRef.current?.scrollTo(0, { immediate: true });
+    lenisRef.current?.scrollTo(0, { immediate: true, force: true });
+    window.scrollTo(0, 0);
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const introPlaying = window.__nkIntro === "playing";
 

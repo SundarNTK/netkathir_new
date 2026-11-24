@@ -18,7 +18,7 @@ export default function Home() {
     <>
       {/* ───────────── HERO ───────────── */}
       <section className="relative lg:h-[210vh]">
-        <div className="relative flex min-h-screen flex-col justify-center overflow-hidden pt-24 pb-10 lg:sticky lg:top-0 lg:h-screen lg:flex-row lg:items-center">
+        <div className="relative flex min-h-screen flex-col justify-start overflow-hidden pt-28 pb-12 lg:sticky lg:top-0 lg:h-screen lg:flex-row lg:items-center lg:justify-center lg:pt-24 lg:pb-10">
 
         <div className="relative mx-auto max-w-7xl px-6 w-full">
           <div className="max-w-[34rem]">
@@ -42,11 +42,11 @@ export default function Home() {
           <h1 data-split data-delay="0.2" className="font-display text-[clamp(2.3rem,min(6.2vw,11vh),6.6rem)] leading-[0.92] text-grad shimmer">
             AI-First Software Company
           </h1>
-          <h2 data-split data-delay="0.9" className="font-display text-[clamp(1.1rem,min(2.3vw,3.6vh),2.1rem)] leading-tight mt-[clamp(0.7rem,2.2vh,1.6rem)] text-ink/90">
+          {/* mobile: the robot stands in this gap, under the title and above the subtitle */}
+          <div className="h-[min(52vh,24rem)] lg:hidden" aria-hidden />
+          <h2 data-split data-delay="0.9" className="font-display text-[clamp(1.1rem,min(2.3vw,3.6vh),2.1rem)] leading-tight mt-6 text-ink/90 lg:mt-[clamp(0.7rem,2.2vh,1.6rem)]">
             Intelligence engineered into every line.
           </h2>
-          {/* mobile: reserve a clear stage for the 3D robot between the headline and the text */}
-          <div className="h-[min(44vh,21rem)] lg:hidden" aria-hidden />
           <p data-reveal data-delay="1.1" className="mt-[clamp(0.5rem,1.8vh,1.4rem)] max-w-xl text-muted text-[clamp(0.9rem,2.1vh,1.1rem)]">
             AI agents, GenAI and enterprise software that plug into real workflows — for healthcare, education, eCommerce, manufacturing and HR.
           </p>
@@ -107,7 +107,7 @@ export default function Home() {
       </section>
 
       {/* ───────────── 11 YEARS ───────────── */}
-      <section className="py-32">
+      <section className="py-16">
         <div className="mx-auto max-w-7xl px-6 grid md:grid-cols-2 gap-16 items-end">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-ice mb-4">Why Netkathir</p>
@@ -125,7 +125,7 @@ export default function Home() {
       </section>
 
       {/* ───────────── AI CAPABILITIES ───────────── */}
-      <section className="py-24">
+      <section className="py-14">
         <div className="mx-auto max-w-7xl px-6 grid lg:grid-cols-[0.9fr_1.1fr] gap-16">
           <div className="lg:sticky lg:top-32 self-start">
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-ice mb-4">Artificial Intelligence</p>
@@ -163,7 +163,7 @@ export default function Home() {
       <HorizontalScroll kicker="What we do" title="Four ways we move you forward." items={PILLARS} />
 
       {/* ───────────── SHOWCASE ───────────── */}
-      <section className="py-24">
+      <section className="py-14">
         <div className="mx-auto max-w-7xl px-6">
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-glow mb-4">Explore</p>
           <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-12">
@@ -187,9 +187,9 @@ export default function Home() {
       </section>
 
       {/* ───────────── SERVICE GROUPS ───────────── */}
-      <section className="py-28">
+      <section className="py-14">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="mb-14 flex flex-wrap items-end justify-between gap-6">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
             <div>
               <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#14532d]/10 bg-white px-4 py-1.5 text-sm font-semibold text-[#15803d] shadow-sm"><span className="h-1.5 w-1.5 rounded-full bg-[#eab308]" />Capabilities</p>
               <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-[1.02]">Built for what&apos;s next.</h2>
@@ -224,10 +224,10 @@ export default function Home() {
       </section>
 
       {/* ───────────── TESTIMONIALS ───────────── */}
-      <section className="py-28">
+      <section className="py-14">
         <div className="mx-auto max-w-7xl px-6">
           <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#14532d]/10 bg-white px-4 py-1.5 text-sm font-semibold text-[#15803d] shadow-sm"><span className="h-1.5 w-1.5 rounded-full bg-[#eab308]" />Testimonials</p>
-          <h2 data-split className="mb-14 font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-[1.02]">Trusted by teams worldwide.</h2>
+          <h2 data-split className="mb-8 font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-[1.02]">Trusted by teams worldwide.</h2>
           <div data-stagger className="grid gap-5 md:grid-cols-3">
             {TESTIMONIALS.map((t, i) => (
               <figure key={t.org} className={`relative flex min-h-[19rem] flex-col justify-between overflow-hidden rounded-[1.75rem] border p-8 ${i === 1 ? "border-transparent bg-gradient-to-br from-[#14532d] via-[#166534] to-[#15803d] text-white shadow-[0_34px_70px_-30px_rgba(20,83,45,0.8)]" : "border-[#14532d]/10 bg-white shadow-[0_24px_60px_-34px_rgba(20,83,45,0.4)]"}`}>
@@ -244,9 +244,9 @@ export default function Home() {
       </section>
 
       {/* ───────────── ISO ───────────── */}
-      <section className="py-32">
+      <section className="py-16">
         <div className="mx-auto max-w-5xl px-6 text-center">
-          <div className="relative mx-auto w-56 h-56 mb-10 flex items-center justify-center">
+          <div className="relative mx-auto w-56 h-56 mb-6 flex items-center justify-center">
             {[0, 1, 2].map((i) => (
               <span
                 key={i}
@@ -254,8 +254,9 @@ export default function Home() {
                 style={{ animation: `pulse-ring 3.6s ease-out ${i * 1.2}s infinite` }}
               />
             ))}
+            <span aria-hidden className="absolute h-40 w-40 rounded-full bg-white shadow-[0_10px_28px_-16px_rgba(20,83,45,0.45)]" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={IMAGES.iso} alt="ISO 27001 Certified" className="relative w-40 h-40 object-contain drop-shadow-[0_0_34px_rgba(34,197,94,0.6)]" />
+            <img src={IMAGES.iso} alt="ISO 27001 Certified" className="relative z-10 w-40 h-40 object-contain" />
           </div>
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-ice mb-4">Security &amp; Trust</p>
           <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none">
@@ -265,9 +266,9 @@ export default function Home() {
       </section>
 
       {/* ───────────── CTA ───────────── */}
-      <section className="py-32">
+      <section className="py-16">
         <div className="mx-auto max-w-7xl px-6">
-          <h2 data-split className="font-display text-[clamp(2.4rem,7vw,6.5rem)] leading-[0.95] max-w-5xl mb-16">
+          <h2 data-split className="font-display text-[clamp(2.4rem,7vw,6.5rem)] leading-[0.95] max-w-5xl mb-8">
             We build your future with AI &amp; ERP.
           </h2>
           <div data-stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -283,7 +284,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <Link href="/contact#contact-form" data-magnetic className="btn btn-solid mt-16">
+          <Link href="/contact#contact-form" data-magnetic className="btn btn-solid mt-8">
             Get Started Now →
           </Link>
         </div>

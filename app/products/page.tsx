@@ -1,6 +1,6 @@
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
-import { IMAGES, PRODUCTS } from "@/lib/data";
+import { PRODUCTS } from "@/lib/data";
 
 export const metadata = { title: "Products — Netkathir Technologies" };
 
@@ -11,9 +11,8 @@ export default function Products() {
         kicker="Products"
         title="Products Built by Netkathir."
         sub="Software we design, run and stand behind ourselves."
-        image={IMAGES.heroes.products}
       />
-      <section className="pb-32">
+      <section className="pb-16">
         <div data-stagger className="mx-auto max-w-7xl px-6 grid lg:grid-cols-3 gap-6">
           {PRODUCTS.map((p, i) => (
             <article
