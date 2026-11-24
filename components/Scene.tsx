@@ -14,7 +14,7 @@ type Stage = { x: number; y: number; s: number; pal: [string, string, string] };
 /** Per-route stage: the AI core slides, scales and re-colours as you navigate. */
 const STAGES: Record<string, Stage> = {
   "/": { x: 3.2, y: -0.05, s: 0.95, pal: ["#14532d", "#16a34a", "#eab308"] },
-  "/services": { x: 3.3, y: 0.1, s: 0.95, pal: ["#166534", "#22c55e", "#facc15"] },
+  "/services": { x: 2.7, y: -0.1, s: 1.0, pal: ["#166534", "#22c55e", "#facc15"] },
   "/products": { x: 3.4, y: 0.0, s: 0.85, pal: ["#15803d", "#84cc16", "#ca8a04"] },
   "/projects": { x: 3.4, y: 0.1, s: 0.85, pal: ["#a16207", "#16a34a", "#84cc16"] },
   "/blogs": { x: 3.4, y: 0.1, s: 0.8, pal: ["#166534", "#4ade80", "#eab308"] },
@@ -328,8 +328,8 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
     const core = variant === "core";
     const out = Math.max(0, p - 1.5); // the home hero is pinned for ~1.5 screens while the head transforms; then it leaves
     const tx = core ? (mobile ? 0 : stage.x * (1 - 0.06 * Math.min(p / 1.05, 1))) : mobile ? 0 : stage.x * Math.max(0, Math.cos(Math.min(p, 1.3) * 1.2));
-    const ty = core ? (mobile ? 1.0 : stage.y) + out * 4.8 : (mobile ? 1.1 : stage.y) + Math.min(p, 2.5) * 4.8;
-    const ts = core ? stage.s * (mobile ? 0.5 : 1) * (1 - Math.min(out, 1) * 0.2) : stage.s * (mobile ? 0.5 : 1) * (1 - Math.min(pc, 2) * 0.16);
+    const ty = core ? (mobile ? -0.7 + p * 7.04 : stage.y + out * 4.8) : (mobile ? 1.1 : stage.y) + Math.min(p, 2.5) * 4.8;
+    const ts = core ? stage.s * (mobile ? 0.62 : 1) * (1 - Math.min(out, 1) * 0.2) : stage.s * (mobile ? 0.5 : 1) * (1 - Math.min(pc, 2) * 0.16);
     const g = group.current;
     g.position.x = THREE.MathUtils.damp(g.position.x, tx, 5, dt);
     g.position.y = THREE.MathUtils.damp(g.position.y, ty, 6, dt);
@@ -385,7 +385,7 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
         <Presence active={variant === "mail"}>
           <Mail palette={shared} />
         </Presence>
-        <Presence active={variant !== "none" && variant !== "core"}>
+        <Presence active={variant !== "none" && variant !== "core" && variant !== "services"}>
           <group ref={spin} scale={variant === "core" ? 0.8 : 1}>
             <Network shared={shared} count={mobile ? 30 : 46} />
             <Rings shared={shared} />

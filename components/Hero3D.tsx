@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/immutability -- imperative three.js animation: values are mutated per frame by design */
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { Edges, RoundedBox } from "@react-three/drei";
+import { ContactShadows, Edges, RoundedBox } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { WORLD_DOTS } from "@/lib/worldDots";
@@ -734,6 +735,17 @@ export function Mail({ palette }: { palette: RobotPalette }) {
     sh.closePath();
     return new THREE.ExtrudeGeometry(sh, { depth: 0.04, bevelEnabled: false });
   }, []);
+  const pocketShape = useMemo(() => {
+    const sh = new THREE.Shape();
+    sh.moveTo(-1.5, -1);
+    sh.lineTo(1.5, -1);
+    sh.lineTo(1.5, 0.35);
+    sh.lineTo(0, -0.3);
+    sh.lineTo(-1.5, 0.35);
+    sh.closePath();
+    return sh;
+  }, []);
+  const pocketEdge = useMemo(() => new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-1.5, 0.35, 0), new THREE.Vector3(0, -0.3, 0), new THREE.Vector3(0, -0.3, 0), new THREE.Vector3(1.5, 0.35, 0)]), []);
   const mouse = useMouse();
 
   useFrame(() => {
@@ -741,10 +753,10 @@ export function Mail({ palette }: { palette: RobotPalette }) {
     root.current.rotation.y = THREE.MathUtils.lerp(root.current.rotation.y, -0.25 + mouse.current.x * 0.35, 0.08);
     root.current.rotation.x = THREE.MathUtils.lerp(root.current.rotation.x, 0.1 - mouse.current.y * 0.12, 0.08);
     const open = 0.5 + 0.5 * Math.sin(t * 0.8);
-    flap.current.rotation.x = -open * 2.2;
-    letter.current.position.y = -0.1 + open * 0.75;
-    b1.current.position.y = 1.35 + Math.sin(t * 1.3) * 0.1;
-    b2.current.position.y = -1.15 + Math.sin(t * 1.1 + 1.5) * 0.1;
+    flap.current.rotation.x = open * 2.2; // swings back and up, behind the letter
+    letter.current.position.y = -0.55 + open * 0.95;
+    b1.current.position.y = 1.55 + Math.sin(t * 1.3) * 0.1;
+    b2.current.position.y = -1.25 + Math.sin(t * 1.1 + 1.5) * 0.1;
     pin.current.position.y = 1.5 + Math.sin(t * 1.6) * 0.12;
     pin.current.rotation.y = t * 0.9;
   });
@@ -752,24 +764,29 @@ export function Mail({ palette }: { palette: RobotPalette }) {
   return (
     <group ref={root}>
       <group position={[0, -0.2, 0]}>
-        <RoundedBox args={[3, 2, 0.12]} radius={0.08} smoothness={4}>
-          <meshPhysicalMaterial color="#ecf7ee" roughness={0.3} clearcoat={0.6} envMapIntensity={1.1} />
-          <Edges color="#16a34a" threshold={20} />
+        {/* envelope back */}
+        <RoundedBox args={[3, 2, 0.12]} radius={0.06} smoothness={4}>
+          <meshPhysicalMaterial color="#e3f1e7" roughness={0.35} clearcoat={0.5} envMapIntensity={1.1} />
         </RoundedBox>
-        <mesh ref={letter} position={[0, 0.2, 0.08]}>
+        {/* the letter slides out from between the back and the front pocket */}
+        <mesh ref={letter} position={[0, -0.55, 0.075]}>
           <planeGeometry args={[2.6, 1.6]} />
           <meshBasicMaterial map={lt} toneMapped={false} />
         </mesh>
-        {/* envelope front pocket */}
-        <mesh position={[0, -0.35, 0.1]} rotation={[0, 0, Math.PI]}>
-          <shapeGeometry args={[(() => { const s = new THREE.Shape(); s.moveTo(-1.5, -1); s.lineTo(1.5, -1); s.lineTo(0, 0.2); s.closePath(); return s; })()]} />
-          <meshPhysicalMaterial color="#d4edd9" roughness={0.3} clearcoat={0.5} side={THREE.DoubleSide} />
+        {/* front pocket: the classic V cut, in front of the letter */}
+        <mesh position={[0, 0, 0.096]}>
+          <shapeGeometry args={[pocketShape]} />
+          <meshPhysicalMaterial color="#f4fbf6" roughness={0.3} clearcoat={0.6} envMapIntensity={1.1} />
         </mesh>
-        <mesh ref={flap} geometry={flapGeo} position={[0, 1, 0.09]}>
+        <lineSegments position={[0, 0, 0.098]} geometry={pocketEdge}>
+          <lineBasicMaterial color="#16a34a" />
+        </lineSegments>
+        {/* flap, hinged on the top edge */}
+        <mesh ref={flap} geometry={flapGeo} position={[0, 1, 0.1]}>
           <meshPhysicalMaterial color="#16a34a" roughness={0.25} clearcoat={1} envMapIntensity={1.2} />
         </mesh>
       </group>
-      <group ref={b1} position={[-1.9, 1.35, 0.7]}>
+      <group ref={b1} position={[-2.5, 1.55, 0.7]}>
         <RoundedBox args={[1.5, 0.8, 0.08]} radius={0.2} smoothness={5}>
           <meshPhysicalMaterial color="#ffffff" roughness={0.2} clearcoat={1} />
         </RoundedBox>
@@ -782,7 +799,7 @@ export function Mail({ palette }: { palette: RobotPalette }) {
           <meshBasicMaterial color="#15803d" />
         </mesh>
       </group>
-      <group ref={b2} position={[1.9, -1.15, 0.8]}>
+      <group ref={b2} position={[2.0, -1.25, 0.8]}>
         <RoundedBox args={[1.7, 0.8, 0.08]} radius={0.2} smoothness={5}>
           <meshPhysicalMaterial color="#ffffff" roughness={0.2} clearcoat={1} />
         </RoundedBox>
@@ -796,7 +813,7 @@ export function Mail({ palette }: { palette: RobotPalette }) {
         </mesh>
       </group>
       {/* location pin */}
-      <group ref={pin} position={[2.1, 1.5, 0.3]}>
+      <group ref={pin} position={[2.3, 1.6, 0.3]}>
         <mesh position={[0, 0.2, 0]}>
           <sphereGeometry args={[0.24, 32, 32]} />
           <meshPhysicalMaterial color="#16a34a" roughness={0.2} clearcoat={1} />
@@ -835,151 +852,232 @@ function labelTexture(text: string, accent: string) {
 }
 
 const MODULES = [
-  { name: "AI & GenAI", x: -1.35, y: 1.25, accent: "#22a559" },
-  { name: "Enterprise Software", x: 1.4, y: 1.2, accent: "#16a34a" },
-  { name: "Cloud & DevOps", x: -1.35, y: -1.05, accent: "#eab308" },
-  { name: "Digital Transformation", x: 1.4, y: -1.1, accent: "#15803d" },
+  { name: "AI & GenAI", x: -2.4, z: -0.8, y: 0.35, accent: "#22a559" },
+  { name: "Enterprise Software", x: 0.8, z: -0.8, y: 0.35, accent: "#16a34a" },
+  { name: "Cloud & DevOps", x: -0.8, z: 0.8, y: -0.35, accent: "#eab308" },
+  { name: "Digital Transformation", x: 2.4, z: 0.8, y: -0.35, accent: "#15803d" },
 ];
 
-/** Four floating modules — one per service discipline — around a glowing hub; each lights up in turn. */
+/** Polished platform every module stands on: dark glass disc, glowing edge ring, name plate on the front lip. */
+function Pedestal({ label, accent, idx, rings }: { label: THREE.Texture; accent: string; idx: number; rings: { current: (THREE.MeshBasicMaterial | null)[] } }) {
+  return (
+    <group>
+      <mesh position={[0, -0.06, 0]}>
+        <cylinderGeometry args={[0.7, 0.74, 0.1, 64]} />
+        <meshPhysicalMaterial color="#0d2a1a" metalness={0.85} roughness={0.2} clearcoat={1} clearcoatRoughness={0.05} envMapIntensity={1.4} />
+      </mesh>
+      <mesh position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.58, 0.61, 64]} />
+        <meshBasicMaterial
+          ref={(r) => {
+            rings.current[idx] = r;
+          }}
+          color={accent} toneMapped={false} transparent opacity={0.9} />
+      </mesh>
+      <mesh position={[0, -0.04, 0.86]} rotation={[-0.2, 0, 0]}>
+        <planeGeometry args={[1.3, 0.285]} />
+        <meshBasicMaterial map={label} transparent toneMapped={false} />
+      </mesh>
+    </group>
+  );
+}
+
+/** Four studio-lit product renders — one per service discipline — each on its own pedestal, taking turns in the spotlight. */
 export function ServicesScene({ palette }: { palette: RobotPalette }) {
   const root = useRef<THREE.Group>(null!);
   const mods = useRef<THREE.Group[]>([]);
+  const rings = useRef<(THREE.MeshBasicMaterial | null)[]>([]);
   const net = useRef<THREE.Group>(null!);
-  const orbit = useRef<THREE.Mesh>(null!);
-  const bars = useRef<THREE.Mesh[]>([]);
+  const leds = useRef<THREE.Mesh[]>([]);
+  const cloud = useRef<THREE.Group>(null!);
   const mouse = useMouse();
   const labels = useMemo(() => MODULES.map((m) => labelTexture(m.name, m.accent)), []);
-  const glow = useMemo(() => new THREE.MeshBasicMaterial({ color: "#4ade80", toneMapped: false }), []);
-  const white = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#ffffff", roughness: 0.15, clearcoat: 1, envMapIntensity: 1.3 }), []);
-  const green = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#15803d", roughness: 0.25, clearcoat: 0.8, envMapIntensity: 1.2 }), []);
-  const gold = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#eab308", metalness: 0.9, roughness: 0.25, envMapIntensity: 1.4 }), []);
-  const lines = useMemo(() => {
+  const screen = useMemo(() => dashboardTexture(), []);
+  const m = useMemo(
+    () => ({
+      alu: new THREE.MeshPhysicalMaterial({ color: "#c9d2cf", metalness: 1, roughness: 0.22, envMapIntensity: 1.5 }),
+      black: new THREE.MeshPhysicalMaterial({ color: "#0b0f0d", metalness: 0.6, roughness: 0.28, clearcoat: 1, envMapIntensity: 1.3 }),
+      rack: new THREE.MeshPhysicalMaterial({ color: "#1a2420", metalness: 0.9, roughness: 0.3, envMapIntensity: 1.3 }),
+      glass: new THREE.MeshPhysicalMaterial({ color: "#d9fbe5", metalness: 0, roughness: 0.04, clearcoat: 1, transparent: true, opacity: 0.32, envMapIntensity: 2 }),
+      white: new THREE.MeshPhysicalMaterial({ color: "#ffffff", roughness: 0.3, clearcoat: 0.6, envMapIntensity: 1.1 }),
+      brass: new THREE.MeshPhysicalMaterial({ color: "#f0c040", metalness: 0.75, roughness: 0.32, clearcoat: 0.5, envMapIntensity: 1.3 }),
+      steel: new THREE.MeshPhysicalMaterial({ color: "#b4bfba", metalness: 0.8, roughness: 0.3, envMapIntensity: 1.3 }),
+      ledG: new THREE.MeshBasicMaterial({ color: "#4ade80", toneMapped: false }),
+      ledY: new THREE.MeshBasicMaterial({ color: "#facc15", toneMapped: false }),
+    }),
+    []
+  );
+  const graph = useMemo(() => {
+    const nodes = Array.from({ length: 14 }, (_, i) => {
+      const a = Math.acos(1 - (2 * (i + 0.5)) / 14);
+      const b = Math.PI * (1 + Math.sqrt(5)) * i;
+      return new THREE.Vector3(Math.sin(a) * Math.cos(b), Math.cos(a), Math.sin(a) * Math.sin(b)).multiplyScalar(0.32);
+    });
     const pts: number[] = [];
-    MODULES.forEach((m) => pts.push(0, 0, 0, m.x, m.y, 0));
+    nodes.forEach((p, i) =>
+      nodes.slice(i + 1).forEach((q) => {
+        if (p.distanceTo(q) < 0.36) pts.push(p.x, p.y, p.z, q.x, q.y, q.z);
+      })
+    );
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
-    return g;
+    return { lines: g, nodes };
   }, []);
 
-  useFrame(() => {
+  useFrame((_, dt) => {
     const t = palette.uTime.value;
-    root.current.rotation.y = THREE.MathUtils.lerp(root.current.rotation.y, -0.2 + mouse.current.x * 0.35, 0.08);
-    root.current.rotation.x = THREE.MathUtils.lerp(root.current.rotation.x, 0.08 - mouse.current.y * 0.12, 0.08);
-    const active = Math.floor(t / 2.4) % 4;
+    const d = Math.min(dt, 0.25);
+    root.current.rotation.y = THREE.MathUtils.damp(root.current.rotation.y, -0.12 + mouse.current.x * 0.3, 4, d);
+    root.current.rotation.x = THREE.MathUtils.damp(root.current.rotation.x, 0.22 - mouse.current.y * 0.1, 4, d);
+    const active = Math.floor(t / 2.6) % 4;
     mods.current.forEach((g, i) => {
       if (!g) return;
       const on = i === active;
-      g.position.y = MODULES[i].y + Math.sin(t * 1.1 + i * 1.6) * 0.07;
-      g.scale.setScalar(THREE.MathUtils.lerp(g.scale.x, on ? 1.12 : 1, 0.08));
+      g.position.y = THREE.MathUtils.damp(g.position.y, on ? 0.16 + Math.sin(t * 2) * 0.02 : 0.02, 5, d);
+      const r = rings.current[i];
+      if (r) r.opacity = THREE.MathUtils.damp(r.opacity, on ? 1 : 0.35, 6, d);
     });
-    net.current.rotation.y = t * 0.6;
-    orbit.current.rotation.z = t * 0.9;
-    bars.current.forEach((b, i) => {
-      if (b) b.scale.y = 0.35 + (Math.sin(t * 2 + i) * 0.5 + 0.5) * 0.65;
+    net.current.rotation.y = t * 0.5;
+    leds.current.forEach((l, i) => {
+      if (l) l.visible = Math.sin(t * 5 + i * 1.7) > -0.2;
     });
-    glow.color.copy(palette.uB.value).lerp(new THREE.Color("#4ade80"), 0.5);
+    cloud.current.position.y = 1.0 + Math.sin(t * 1.1) * 0.04;
   });
 
 
   return (
-    <group ref={root}>
-      {/* hub */}
-      <mesh>
-        <icosahedronGeometry args={[0.16, 1]} />
-        <meshBasicMaterial color="#facc15" toneMapped={false} />
-      </mesh>
-      <mesh ref={orbit} rotation={[1.2, 0, 0]}>
-        <torusGeometry args={[0.32, 0.012, 8, 64]} />
-        <meshBasicMaterial color="#22a559" toneMapped={false} />
-      </mesh>
-      <lineSegments geometry={lines}>
-        <lineBasicMaterial color="#22a559" transparent opacity={0.45} />
-      </lineSegments>
+    <group ref={root} scale={0.95}>
+      <ContactShadows position={[0, -0.12, 0.3]} opacity={0.4} scale={9} blur={2.4} far={2.2} color="#0b3b1f" resolution={512} frames={1} />
 
-      {/* 1 — AI & GenAI: a neural cluster */}
-      <group ref={(g) => {
-          if (g) mods.current[0] = g;
-        }} position={[MODULES[0].x, MODULES[0].y, 0]}>
-        <group ref={net}>
-          <mesh>
-            <icosahedronGeometry args={[0.5, 1]} />
-            <meshPhysicalMaterial color="#0f3d22" wireframe />
-          </mesh>
-          {[[0.5, 0, 0], [-0.5, 0.1, 0.1], [0, 0.5, 0], [0, -0.5, 0.1], [0.1, 0, 0.5], [-0.1, 0, -0.5]].map((p, i) => (
-            <mesh key={i} position={p as [number, number, number]} material={i % 2 ? gold : glow}>
-              <sphereGeometry args={[0.09, 20, 20]} />
-            </mesh>
-          ))}
-        </group>
-        <mesh position={[0, -0.88, 0.05]} scale={0.85}>
-          <planeGeometry args={[1.7, 0.37]} />
-          <meshBasicMaterial map={labels[0]} transparent toneMapped={false} />
-        </mesh>
-      </group>
-
-      {/* 2 — Enterprise Software: stacked app windows */}
-      <group ref={(g) => {
-          if (g) mods.current[1] = g;
-        }} position={[MODULES[1].x, MODULES[1].y, 0]}>
-        {[0, 1, 2].map((k) => (
-          <group key={k} position={[k * 0.14 - 0.14, k * -0.12 + 0.12, k * 0.12]}>
-            <RoundedBox args={[1.0, 0.68, 0.05]} radius={0.06} smoothness={4} material={white} />
-            <mesh position={[0, 0.25, 0.03]} material={green}>
-              <boxGeometry args={[1.0, 0.13, 0.02]} />
-            </mesh>
-            {[-0.28, 0, 0.28].map((x, j) => (
-              <mesh
-                key={j}
-                position={[x, -0.1, 0.035]}
-                material={k === 2 ? glow : gold}
-                ref={(m) => {
-                  if (m && k === 2) bars.current[j] = m;
-                }}
-              >
-                <boxGeometry args={[0.14, 0.3, 0.02]} />
+      {/* 1 — AI & GenAI: a glass sphere holding a living neural graph */}
+      <group position={[MODULES[0].x, MODULES[0].y, MODULES[0].z]}>
+        <Pedestal label={labels[0]} accent={MODULES[0].accent} idx={0} rings={rings} />
+        <group
+          ref={(g) => {
+            if (g) mods.current[0] = g;
+          }}
+        >
+          <group ref={net} position={[0, 0.62, 0]}>
+            <lineSegments geometry={graph.lines}>
+              <lineBasicMaterial color="#22c55e" transparent opacity={0.85} />
+            </lineSegments>
+            {graph.nodes.map((p, i) => (
+              <mesh key={i} position={p} material={i % 4 === 0 ? m.ledY : m.ledG}>
+                <sphereGeometry args={[i % 4 === 0 ? 0.038 : 0.026, 12, 12]} />
               </mesh>
             ))}
           </group>
-        ))}
-        <mesh position={[0, -0.88, 0.05]} scale={0.85}>
-          <planeGeometry args={[2.1, 0.46]} />
-          <meshBasicMaterial map={labels[1]} transparent toneMapped={false} />
-        </mesh>
-      </group>
-
-      {/* 3 — Cloud & DevOps: a cloud with a CI/CD loop */}
-      <group ref={(g) => {
-          if (g) mods.current[2] = g;
-        }} position={[MODULES[2].x, MODULES[2].y, 0]}>
-        {[[-0.28, -0.05, 0.22], [0, 0.1, 0.32], [0.3, -0.03, 0.24], [0.05, -0.12, 0.26]].map((p, i) => (
-          <mesh key={i} position={[p[0], p[1], 0]} material={white}>
-            <sphereGeometry args={[p[2], 32, 32]} />
+          <mesh position={[0, 0.62, 0]} material={m.glass}>
+            <sphereGeometry args={[0.5, 48, 48]} />
           </mesh>
-        ))}
-        <mesh rotation={[1.1, 0, 0]} material={glow}>
-          <torusGeometry args={[0.62, 0.02, 8, 64, Math.PI * 1.5]} />
-        </mesh>
-        <mesh position={[0.62, 0, 0]} material={gold}>
-          <coneGeometry args={[0.07, 0.16, 12]} />
-        </mesh>
-        <mesh position={[0, -0.88, 0.05]} scale={0.85}>
-          <planeGeometry args={[1.8, 0.39]} />
-          <meshBasicMaterial map={labels[2]} transparent toneMapped={false} />
-        </mesh>
+          <mesh position={[0, 0.1, 0]} material={m.alu}>
+            <cylinderGeometry args={[0.2, 0.28, 0.1, 32]} />
+          </mesh>
+        </group>
       </group>
 
-      {/* 4 — Digital Transformation: meshing gears */}
-      <group ref={(g) => {
-          if (g) mods.current[3] = g;
-        }} position={[MODULES[3].x, MODULES[3].y, 0]}>
-        <Gear r={0.38} teeth={11} speed={0.7} position={[-0.25, 0.1, 0]} color="#eab308" />
-        <Gear r={0.26} teeth={8} speed={0.7 * (11 / 8)} position={[0.3, -0.12, 0]} color="#16a34a" rev />
-        <mesh position={[0, -0.88, 0.05]} scale={0.85}>
-          <planeGeometry args={[2.3, 0.5]} />
-          <meshBasicMaterial map={labels[3]} transparent toneMapped={false} />
-        </mesh>
+      {/* 2 — Enterprise Software: a studio monitor showing a live dashboard */}
+      <group position={[MODULES[1].x, MODULES[1].y, MODULES[1].z]}>
+        <Pedestal label={labels[1]} accent={MODULES[1].accent} idx={1} rings={rings} />
+        <group
+          ref={(g) => {
+            if (g) mods.current[1] = g;
+          }}
+        >
+          <mesh position={[0, 0.07, 0.05]} material={m.alu}>
+            <cylinderGeometry args={[0.3, 0.34, 0.05, 40]} />
+          </mesh>
+          <mesh position={[0, 0.34, 0]} material={m.alu}>
+            <boxGeometry args={[0.06, 0.5, 0.05]} />
+          </mesh>
+          <group position={[0, 0.78, 0]} rotation={[0, 0.12, 0]}>
+            <RoundedBox args={[1.2, 0.76, 0.06]} radius={0.04} smoothness={4} material={m.black} />
+            <mesh position={[0, 0, 0.033]}>
+              <planeGeometry args={[1.12, 0.68]} />
+              <meshBasicMaterial map={screen} toneMapped={false} />
+            </mesh>
+          </group>
+        </group>
       </group>
+
+      {/* 3 — Cloud & DevOps: a server rack under a cloud */}
+      <group position={[MODULES[2].x, MODULES[2].y, MODULES[2].z]}>
+        <Pedestal label={labels[2]} accent={MODULES[2].accent} idx={2} rings={rings} />
+        <group
+          ref={(g) => {
+            if (g) mods.current[2] = g;
+          }}
+        >
+          {[0, 1, 2, 3].map((k) => (
+            <group key={k} position={[0, 0.12 + k * 0.17, 0]}>
+              <RoundedBox args={[0.78, 0.15, 0.5]} radius={0.015} smoothness={3} material={m.rack} />
+              <mesh position={[-0.28, 0, 0.255]} material={m.steel}>
+                <boxGeometry args={[0.2, 0.05, 0.005]} />
+              </mesh>
+              {[0, 1, 2].map((j) => (
+                <mesh
+                  key={j}
+                  position={[0.1 + j * 0.1, 0, 0.256]}
+                  material={(k + j) % 3 === 0 ? m.ledY : m.ledG}
+                  ref={(l) => {
+                    if (l) leds.current[k * 3 + j] = l;
+                  }}
+                >
+                  <sphereGeometry args={[0.013, 10, 10]} />
+                </mesh>
+              ))}
+            </group>
+          ))}
+          <group ref={cloud} position={[0, 1.0, 0]}>
+            {[[-0.2, -0.02, 0.2], [0.02, 0.08, 0.27], [0.24, -0.02, 0.2], [0.02, -0.08, 0.22]].map((c, i) => (
+              <mesh key={i} position={[c[0], c[1], 0]} material={m.white}>
+                <sphereGeometry args={[c[2], 32, 32]} />
+              </mesh>
+            ))}
+          </group>
+        </group>
+      </group>
+
+      {/* 4 — Digital Transformation: meshing precision gears */}
+      <group position={[MODULES[3].x, MODULES[3].y, MODULES[3].z]}>
+        <Pedestal label={labels[3]} accent={MODULES[3].accent} idx={3} rings={rings} />
+        <group
+          position={[0, 0.5, 0]}
+          rotation={[-0.35, 0, 0]}
+          ref={(g) => {
+            if (g) mods.current[3] = g;
+          }}
+        >
+          <GearMesh r={0.4} teeth={12} speed={0.55} x={-0.28} y={0} mat={m.brass} />
+          <GearMesh r={0.28} teeth={8} speed={-0.55 * (12 / 8)} x={0.32} y={-0.12} mat={m.steel} />
+        </group>
+      </group>
+    </group>
+  );
+}
+
+function GearMesh({ r, teeth, speed, x, y, mat }: { r: number; teeth: number; speed: number; x: number; y: number; mat: THREE.Material }) {
+  const g = useRef<THREE.Group>(null!);
+  useFrame((_, dt) => {
+    g.current.rotation.z += Math.min(dt, 0.1) * speed;
+  });
+  return (
+    <group ref={g} position={[x, y, 0]}>
+      <mesh rotation={[Math.PI / 2, 0, 0]} material={mat}>
+        <cylinderGeometry args={[r, r, 0.14, 48]} />
+      </mesh>
+      {Array.from({ length: teeth }).map((_, i) => {
+        const a = (i / teeth) * Math.PI * 2;
+        return (
+          <mesh key={i} position={[Math.cos(a) * (r + 0.05), Math.sin(a) * (r + 0.05), 0]} rotation={[0, 0, a]} material={mat}>
+            <boxGeometry args={[0.13, 0.1, 0.14]} />
+          </mesh>
+        );
+      })}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[r * 0.3, r * 0.3, 0.18, 24]} />
+        <meshStandardMaterial color="#0b0f0d" metalness={0.8} roughness={0.35} />
+      </mesh>
     </group>
   );
 }

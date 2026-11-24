@@ -39,12 +39,14 @@ export default function Home() {
               </span>
             </span>
           </div>
-          <h1 data-split data-delay="0.2" className="font-display text-[clamp(2.5rem,min(6.2vw,11vh),6.6rem)] leading-[0.92] text-grad shimmer">
+          <h1 data-split data-delay="0.2" className="font-display text-[clamp(2.3rem,min(6.2vw,11vh),6.6rem)] leading-[0.92] text-grad shimmer">
             AI-First Software Company
           </h1>
           <h2 data-split data-delay="0.9" className="font-display text-[clamp(1.1rem,min(2.3vw,3.6vh),2.1rem)] leading-tight mt-[clamp(0.7rem,2.2vh,1.6rem)] text-ink/90">
             Intelligence engineered into every line.
           </h2>
+          {/* mobile: reserve a clear stage for the 3D robot between the headline and the text */}
+          <div className="h-[min(44vh,21rem)] lg:hidden" aria-hidden />
           <p data-reveal data-delay="1.1" className="mt-[clamp(0.5rem,1.8vh,1.4rem)] max-w-xl text-muted text-[clamp(0.9rem,2.1vh,1.1rem)]">
             AI agents, GenAI and enterprise software that plug into real workflows — for healthcare, education, eCommerce, manufacturing and HR.
           </p>

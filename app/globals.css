@@ -460,3 +460,11 @@ html.lenis body {
     transform: translateX(520%) skewX(-12deg);
   }
 }
+
+/* never allow sideways scrolling on small screens (clip, unlike hidden, keeps position: sticky working) */
+html,
+body,
+main {
+  overflow-x: clip;
+  max-width: 100%;
+}

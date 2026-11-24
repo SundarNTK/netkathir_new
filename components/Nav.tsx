@@ -105,7 +105,7 @@ export default function Nav() {
           <Link
             href="/contact"
             data-magnetic
-            className="hidden lg:inline-flex btn btn-solid !py-2.5 !px-6 text-sm group"
+            className="max-lg:!hidden btn btn-solid !py-2.5 !px-6 text-sm group"
           >
             Contact Us
             <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
