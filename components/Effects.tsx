@@ -315,6 +315,23 @@ export default function Effects() {
           gsap.fromTo(el, { xPercent: dir * -14 }, { xPercent: dir * 14, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true } });
         });
 
+        // cards drift at different speeds (data-rise="1" / "-1") and their pictures slide inside the frame (data-pimg)
+        gsap.utils.toArray<HTMLElement>("[data-rise]").forEach((el) => {
+          const d = Number(el.dataset.rise) || 1;
+          gsap.fromTo(el, { y: d * 46 }, { y: d * -46, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 0.8 } });
+        });
+        gsap.utils.toArray<HTMLElement>("[data-pimg]").forEach((el) => {
+          gsap.fromTo(el, { yPercent: -7, scale: 1.08 }, { yPercent: 7, scale: 1, ease: "none", scrollTrigger: { trigger: el.parentElement, start: "top bottom", end: "bottom top", scrub: 0.6 } });
+        });
+
+        // content cards sweep in from alternating sides as their row scrolls up, and sink a little as they leave
+        if (pathRef.current !== "/") {
+          gsap.utils.toArray<HTMLElement>("main [data-tilt]").forEach((el, i) => {
+            if (el.closest("[data-stagger]")) return;
+            gsap.fromTo(el, { rotate: i % 2 ? 1.4 : -1.4 }, { rotate: 0, ease: "none", scrollTrigger: { trigger: el, start: "top 100%", end: "top 55%", scrub: 0.5 } });
+          });
+        }
+
         // magnetic buttons
         gsap.utils.toArray<HTMLElement>("[data-magnetic]").forEach((el) => {
           const mx = gsap.quickTo(el, "x", { duration: 0.6, ease: "elastic.out(1, 0.5)" });

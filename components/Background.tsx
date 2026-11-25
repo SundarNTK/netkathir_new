@@ -3,6 +3,8 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
+import ScrollBackdrop from "./ScrollBackdrop";
+
 const Scene = dynamic(() => import("./Scene"), { ssr: false });
 
 export default function Background() {
@@ -28,6 +30,7 @@ export default function Background() {
   }, []);
   return (
     <div className="fixed inset-0 z-0 overflow-hidden bg-white" aria-hidden>
+      <ScrollBackdrop />
       {gl && <Scene />}
       <div className={`pointer-events-none absolute right-[14%] top-[38%] flex items-center gap-3 rounded-full border border-[#14532d]/10 bg-white/90 px-4 py-2 shadow-lg transition-opacity duration-300 ${busy ? "opacity-100" : "opacity-0"}`}>
         <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#14532d]/20 border-t-[#16a34a]" />

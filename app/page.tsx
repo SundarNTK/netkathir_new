@@ -3,10 +3,10 @@ import HorizontalScroll from "@/components/HorizontalScroll";
 import { CLIENTS, IMAGES, PILLARS, SERVICE_GROUPS, TESTIMONIALS } from "@/lib/data";
 
 const SHOWCASE = [
-  { href: "/services", label: "Services", image: IMAGES.heroes.services },
-  { href: "/products", label: "Products", image: IMAGES.heroes.products },
-  { href: "/projects", label: "Projects", image: IMAGES.heroes.projects },
-  { href: "/about", label: "About", image: IMAGES.heroes.about },
+  { href: "/services", label: "Services", image: IMAGES.heroes.services, desc: "AI agents, ERP, cloud and automation built around your workflow." },
+  { href: "/products", label: "Products", image: IMAGES.heroes.products, desc: "Garage Bill and HRMS — our own software, live with real teams." },
+  { href: "/projects", label: "Projects", image: IMAGES.heroes.projects, desc: "Selected client work across retail, health, education and more." },
+  { href: "/about", label: "About", image: IMAGES.heroes.about, desc: "Eleven years, 50+ people and a team across six countries." },
 ];
 
 const AI_WORDS = ["Generative AI", "AI Agents", "RAG", "LLMs", "Chatbots", "Automation", "ERP", "Cloud", "DevOps"];
@@ -166,21 +166,31 @@ export default function Home() {
       <section className="py-14">
         <div className="mx-auto max-w-7xl px-6">
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-glow mb-4">Explore</p>
-          <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-12">
+          <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-20">
             The work, in color.
           </h2>
-          <div data-stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {SHOWCASE.map((s) => (
-              <Link key={s.href} href={s.href} data-tilt className="group relative h-80 overflow-hidden rounded-3xl border border-ink/10">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={s.image} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a2417]/85 via-[#0a2417]/25 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-br from-violet/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <span className="absolute bottom-5 left-5 font-display text-3xl text-white">{s.label}</span>
-                <span className="absolute top-5 right-5 grid h-10 w-10 place-items-center rounded-full bg-white/25 text-white backdrop-blur-xl opacity-0 -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">
-                  ↗
-                </span>
-              </Link>
+          <div data-stagger className="grid gap-5 pb-10 sm:grid-cols-2 lg:grid-cols-4">
+            {SHOWCASE.map((s, i) => (
+              <div key={s.href}>
+                <Link href={s.href} data-rise={i % 2 ? "-1" : "1"} className="block">
+                  <div data-tilt className="group relative h-[26rem] overflow-hidden rounded-[1.75rem] border border-[#14532d]/10 bg-[#0a2417] shadow-[0_30px_70px_-38px_rgba(20,83,45,0.7)]">
+                    <div data-pimg className="absolute -inset-x-2 -inset-y-10">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={s.image} alt="" className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#06190e]/95 via-[#06190e]/35 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#22a559]/35 via-transparent to-[#eab308]/25 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                    <span className="absolute left-5 top-5 rounded-full bg-white/90 px-3 py-1 font-mono text-[0.7rem] font-bold tracking-widest text-[#14532d]">0{i + 1}</span>
+                    <span className="absolute right-5 top-5 grid h-10 w-10 place-items-center rounded-full bg-white/25 text-white opacity-0 backdrop-blur-xl transition-all duration-500 -translate-y-2 group-hover:translate-y-0 group-hover:opacity-100">↗</span>
+                    <div className="absolute inset-x-0 bottom-0 p-6 text-white">
+                      <span className="mb-3 block h-[3px] w-10 origin-left rounded bg-gradient-to-r from-[#22c55e] to-[#eab308] transition-all duration-500 group-hover:w-24" />
+                      <h3 className="font-display text-3xl leading-none">{s.label}</h3>
+                      <p className="mt-2 text-sm leading-snug text-white/75">{s.desc}</p>
+                      <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#fde68a]">Explore <span className="transition-transform duration-300 group-hover:translate-x-1.5">→</span></span>
+                    </div>
+                  </div>
+                </Link>
+              </div>
             ))}
           </div>
         </div>
