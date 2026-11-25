@@ -23,15 +23,27 @@ const FINALE = "Now entering the AI era.".split(" ");
 const YEARS = Array.from({ length: 12 }, (_, i) => 2015 + i);
 
 const mixRgb = (a: number[], b: number[], t: number) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(",")})`;
-const WREATH = Array.from({ length: 22 }, (_, k) => {
-  // a laurel wreath: leaves climb both sides from the bottom, leaving the top open
-  const side = k < 11 ? -1 : 1;
-  const n = k % 11;
-  const ang = 158 - n * 12.8; // degrees clockwise from the top
-  const a = (ang * Math.PI) / 180;
-  const r = 86;
-  return { x: 100 + side * Math.sin(a) * r, y: 100 - Math.cos(a) * r, rot: side * (ang - 90) + side * -14 };
-});
+// a laurel wreath: each side is a curved stem with pairs of pointed leaves, bigger at the bottom, smaller at the tips
+const LEAVES = [-1, 1].flatMap((side) =>
+  Array.from({ length: 12 }, (_, n) => {
+    const ang = 160 - n * 11.4; // degrees clockwise from the top
+    const a = (ang * Math.PI) / 180;
+    const r = 80;
+    const head = side * (ang - 90); // direction of growth along the stem
+    const size = 1.12 - n * 0.045;
+    return { x: 100 + side * Math.sin(a) * r, y: 100 - Math.cos(a) * r, head, size, side, n };
+  })
+).flatMap((l) => [
+  { ...l, rot: l.head + l.side * 28, tone: 0, key: `${l.side}o${l.n}` }, // outer leaf
+  { ...l, rot: l.head - l.side * 40, size: l.size * 0.82, tone: 1, key: `${l.side}i${l.n}` }, // inner leaf
+]);
+const stemPath = (side: number) => {
+  const pt = (deg: number) => {
+    const a = (deg * Math.PI) / 180;
+    return `${(100 + side * Math.sin(a) * 80).toFixed(2)} ${(100 - Math.cos(a) * 80).toFixed(2)}`;
+  };
+  return `M ${pt(166)} A 80 80 0 0 ${side > 0 ? 0 : 1} ${pt(22)}`;
+};
 const STARS = [
   [8, 18, 14], [92, 12, 18], [4, 62, 10], [96, 58, 12], [18, 92, 12], [84, 90, 16], [50, -6, 12], [50, 104, 10],
 ];
@@ -198,15 +210,15 @@ export default function Intro() {
       const E3 = FL + 2.5;
       const GLOW3 = "drop-shadow(0 0 20px rgba(250,204,21,0.95)) drop-shadow(0 0 64px rgba(34,197,94,0.75))";
       t.set(".i-y3d", { opacity: 1 }, E3)
-        .fromTo(".i-y3d-in", { scale: 0.5, y: 18, rotateX: 64, rotateY: -52, opacity: 0, filter: "drop-shadow(0 0 0px rgba(250,204,21,0))" }, { scale: 1.2, y: -24, rotateX: 0, rotateY: 0, opacity: 1, duration: 1.35, ease: "expo.out" }, E3)
+        .fromTo(".i-y3d-in", { scale: 0.5, y: 18, rotateX: 64, rotateY: -52, opacity: 0, filter: "drop-shadow(0 0 0px rgba(250,204,21,0))" }, { scale: 1.15, y: -20, rotateX: 14, rotateY: -34, opacity: 1, duration: 1.35, ease: "expo.out" }, E3)
         .to(".i-flip", { rotateX: 88, opacity: 0, duration: 0.6, ease: "power2.in" }, E3 + 0.05)
         .fromTo(".i-ring", { scale: 0.3, opacity: 0.9 }, { scale: 3.2, opacity: 0, duration: 1.5, ease: "power2.out", stagger: 0.2 }, E3 + 0.2)
         .to(".i-y3d-in", { filter: GLOW3, duration: 0.8, ease: "power2.out" }, E3 + 0.8)
-        .to(".i-y3d-in", { rotateY: 16, duration: 1.3, ease: "sine.inOut" }, E3 + 1.2)
-        .fromTo(".i-y3d-shine", { xPercent: -140 }, { xPercent: 140, duration: 1.1, ease: "power2.inOut" }, E3 + 1.3)
+        .to(".i-y3d-in", { rotateY: 34, rotateX: 8, duration: 2.1, ease: "sine.inOut" }, E3 + 1.25)
+        .fromTo(".i-y3d-shine", { xPercent: -140 }, { xPercent: 140, duration: 1.2, ease: "power2.inOut" }, E3 + 1.5)
         .to(".i-cal, .i-track", { opacity: 0, y: 24, scale: 0.95, duration: 0.8, ease: "power2.in" }, E3 + 0.45)
         .to(".i-cal-glow", { opacity: 1, scale: 1.5, duration: 1.1, ease: "power2.out" }, E3 + 0.4);
-      const calEnd = E3 + 2.9;
+      const calEnd = E3 + 3.5;
       // page transition: dive through the glowing year into the logo
       t.to(".i-y3d-in", { scale: 9, opacity: 0, rotateY: -8, duration: 0.95, ease: "power3.in" }, calEnd - 0.25)
         .to(".i-cal-glow", { opacity: 0, scale: 3, duration: 0.9, ease: "power2.in" }, calEnd - 0.2)
@@ -230,7 +242,8 @@ export default function Intro() {
         .to(state, { logo: 1, duration: 1.7, ease: "power2.out" }, L)
         .fromTo(".i-fallback", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1, ease: "power2.out" }, L)
         .fromTo(".i-eleven", { opacity: 0, scale: 0.55, rotate: -10 }, { opacity: 1, scale: 1, rotate: 0, duration: 1.3, ease: "back.out(1.5)" }, L + 1.0)
-        .fromTo(".i-wl", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2.4)", stagger: { each: 0.035, from: "edges" } }, L + 1.25)
+        .fromTo(".i-stem", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.0, ease: "power2.inOut" }, L + 1.15)
+        .fromTo(".i-wl", { scale: 0, opacity: 0, transformOrigin: "50% 100%" }, { scale: 1, opacity: 1, duration: 0.55, ease: "back.out(2.2)", stagger: { each: 0.018, from: "start" } }, L + 1.45)
         .fromTo(".i-star", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.7, ease: "back.out(3)", stagger: 0.08 }, L + 1.5)
         .fromTo(".i-n11-shine", { xPercent: -150 }, { xPercent: 150, duration: 1.1, ease: "power2.inOut" }, L + 2.1)
         .fromTo(".i-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power3.inOut" }, L + 1.35)
@@ -415,19 +428,20 @@ export default function Intro() {
             <span key={n} className="i-ring absolute h-[min(22rem,70vw)] w-[min(22rem,70vw)] rounded-full border-2 border-[#eab308]/70 opacity-0" />
           ))}
           <div className="i-y3d-in relative" style={{ transformStyle: "preserve-3d" }}>
-            {Array.from({ length: 16 }, (_, k) => (
+            {Array.from({ length: 34 }, (_, k) => (
               <span
                 key={k}
                 aria-hidden
                 className="absolute inset-0 select-none font-display text-[clamp(5.2rem,min(22vh,24vw),11rem)] font-extrabold leading-none tracking-[-0.04em] tabular-nums"
-                style={{ transform: `translateZ(${-(k + 1) * 3.4}px)`, color: mixRgb([226, 182, 58], [10, 56, 30], k / 15) }}
+                style={{ transform: `translateZ(${-(k + 1) * 1.7}px)`, color: mixRgb([196, 148, 28], [6, 44, 24], Math.min(1, k / 20)), WebkitTextStroke: k === 0 ? "1.5px rgba(255,236,160,0.7)" : undefined }}
               >
                 2027
               </span>
             ))}
-            <span className="relative block select-none overflow-hidden bg-[linear-gradient(180deg,#fff3b0_0%,#f4c542_34%,#2f9e57_74%,#14532d_100%)] bg-clip-text font-display text-[clamp(5.2rem,min(22vh,24vw),11rem)] font-extrabold leading-none tracking-[-0.04em] text-transparent tabular-nums">
+            {/* gold face with a bright bevel line and a moving highlight */}
+            <span className="relative block select-none overflow-hidden bg-[linear-gradient(165deg,#fffbe0_0%,#fbe28a_16%,#e9b92f_34%,#b9831a_50%,#f1c94b_66%,#fff0a8_80%,#c9951f_100%)] bg-clip-text font-display text-[clamp(5.2rem,min(22vh,24vw),11rem)] font-extrabold leading-none tracking-[-0.04em] text-transparent tabular-nums [-webkit-text-stroke:1.5px_rgba(255,244,190,0.85)]">
               2027
-              <span className="i-y3d-shine absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/80 to-transparent mix-blend-overlay" />
+              <span className="i-y3d-shine absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/90 to-transparent mix-blend-overlay" />
             </span>
           </div>
         </div>
@@ -455,11 +469,17 @@ export default function Intro() {
                 <stop offset="0.5" stopColor="#c9a24d" />
                 <stop offset="1" stopColor="#8a6414" />
               </linearGradient>
-              <linearGradient id="in-leaf" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#4ade80" />
-                <stop offset="1" stopColor="#14532d" />
+              <linearGradient id="in-leaf" x1="0" y1="1" x2="1" y2="0">
+                <stop offset="0" stopColor="#14532d" />
+                <stop offset="0.55" stopColor="#2f9e57" />
+                <stop offset="1" stopColor="#8be0a2" />
               </linearGradient>
-              <path id="in-ring" d="M100,100 m-93,0 a93,93 0 1,1 186,0 a93,93 0 1,1 -186,0" />
+              <linearGradient id="in-leaf2" x1="1" y1="1" x2="0" y2="0">
+                <stop offset="0" stopColor="#0f3d22" />
+                <stop offset="0.55" stopColor="#237a45" />
+                <stop offset="1" stopColor="#6fcf8d" />
+              </linearGradient>
+              <path id="in-ring" d="M100,100 m-98,0 a98,98 0 1,1 196,0 a98,98 0 1,1 -196,0" />
             </defs>
             <circle cx="100" cy="100" r="70" fill="rgba(255,255,255,0.78)" stroke="url(#in-gold)" strokeWidth="3" />
             <circle cx="100" cy="100" r="64" fill="none" stroke="url(#in-gold)" strokeWidth="0.9" strokeDasharray="1.5 3.2" />
@@ -468,9 +488,29 @@ export default function Intro() {
                 <textPath href="#in-ring">ELEVEN YEARS · 2015 — 2026 · ELEVEN YEARS · 2015 — 2026 · ELEVEN YEARS ·</textPath>
               </text>
             </g>
-            {WREATH.map((l, k) => (
-              <ellipse key={k} className="i-wl" cx={l.x} cy={l.y} rx="3.6" ry="9" fill="url(#in-leaf)" transform={`rotate(${l.rot} ${l.x} ${l.y})`} style={{ transformOrigin: `${l.x}px ${l.y}px` }} />
+            {[-1, 1].map((side) => (
+              <path key={side} className="i-stem" d={stemPath(side)} pathLength={1} stroke="#2f6b3a" strokeWidth="1.8" strokeLinecap="round" fill="none" strokeDasharray="1" strokeDashoffset="1" />
             ))}
+            {LEAVES.map((l) => (
+              <g key={l.key} transform={`translate(${l.x.toFixed(2)} ${l.y.toFixed(2)}) rotate(${l.rot.toFixed(1)}) scale(${l.size.toFixed(3)})`}>
+                <g className="i-wl">
+                  <g className="[transform-box:fill-box] [transform-origin:50%_100%] [animation:nk-sway_4.2s_ease-in-out_infinite]" style={{ animationDelay: `${(l.n * 0.18 + l.tone * 0.5).toFixed(2)}s` }}>
+                    <path d="M0 0 C5 -5 8.4 -13 0 -25 C-8.4 -13 -5 -5 0 0Z" fill={l.tone ? "url(#in-leaf2)" : "url(#in-leaf)"} stroke="#14532d" strokeWidth="0.35" strokeOpacity="0.55" />
+                    <path d="M0 -1 L0 -21" stroke="rgba(255,255,255,0.5)" strokeWidth="0.55" strokeLinecap="round" />
+                    <path d="M0 -6 L3 -10 M0 -6 L-3 -10 M0 -11 L2.6 -15 M0 -11 L-2.6 -15 M0 -16 L1.7 -19 M0 -16 L-1.7 -19" stroke="rgba(255,255,255,0.28)" strokeWidth="0.35" fill="none" />
+                  </g>
+                </g>
+              </g>
+            ))}
+            {/* gold berries at the stem tips and a bow where the branches meet */}
+            {[-1, 1].map((side) => (
+              <circle key={`b${side}`} className="i-wl" cx={100 + side * 30} cy={26} r="2.6" fill="url(#in-gold)" stroke="#8a6414" strokeWidth="0.4" />
+            ))}
+            <g transform="translate(100 182)" className="i-wl">
+              <path d="M0 0 C-10 -7 -17 -2 -14 5 C-10 9 -3 4 0 0Z M0 0 C10 -7 17 -2 14 5 C10 9 3 4 0 0Z" fill="url(#in-gold)" stroke="#8a6414" strokeWidth="0.5" />
+              <path d="M0 0 L-6 12 L-2 10 L0 14 L2 10 L6 12Z" fill="url(#in-gold)" stroke="#8a6414" strokeWidth="0.4" />
+              <circle r="2.4" fill="#f6dc8a" stroke="#8a6414" strokeWidth="0.4" />
+            </g>
           </svg>
           {STARS.map(([x, y, sz], k) => (
             <span key={k} aria-hidden className="i-star absolute text-[#e6b422]" style={{ left: `${x}%`, top: `${y}%`, width: sz, height: sz }}>

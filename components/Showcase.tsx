@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -273,6 +273,110 @@ export function LetterWall({ rows, title, sub, stamp }: { rows: string[]; title:
           <h3 className="mt-4 font-display text-3xl leading-[1.02] sm:text-4xl">{title}</h3>
           <p className="mt-3 text-sm text-[#3f5a4a]">{sub}</p>
           <Link href="/contact" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#06190e] px-5 py-2.5 text-sm font-bold text-[#fde68a]">Start a project <span aria-hidden>→</span></Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────
+   ClientShowcase — scroll-driven client list: the big card on the left
+   follows whichever client is in the middle of the screen.
+   ────────────────────────────────────────────────────────────── */
+const CLIENT_TONES: [string, string, string][] = [
+  ["#d1fae5", "#a7f3d0", "#065f46"],
+  ["#fef3c7", "#fde68a", "#78350f"],
+  ["#dcfce7", "#bbf7d0", "#14532d"],
+  ["#e0f7f4", "#99f6e4", "#134e4a"],
+  ["#ecfccb", "#d9f99d", "#365314"],
+  ["#fff7d6", "#fcd34d", "#713f12"],
+  ["#dbf5e3", "#86efac", "#14532d"],
+  ["#e6fbf0", "#a7f3d0", "#064e3b"],
+  ["#fef9c3", "#fde047", "#713f12"],
+];
+
+export function ClientShowcase({ clients, notes }: { clients: { name: string; logo: string }[]; notes: Record<string, string> }) {
+  const sec = useRef<HTMLElement>(null);
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const root = sec.current;
+    if (!root) return;
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      const rows = Array.from(root.querySelectorAll<HTMLElement>("[data-cs-row]"));
+      rows.forEach((row, i) => {
+        const name = row.querySelector("[data-cs-name]");
+        const chip = row.querySelector("[data-cs-chip]");
+        const line = row.querySelector("[data-cs-line]");
+        // the row slides in as it rises, and settles back as it leaves
+        gsap.fromTo(name, { xPercent: 10, opacity: 0.12 }, { xPercent: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: row, start: "top 92%", end: "top 52%", scrub: 0.5 } });
+        gsap.fromTo(chip, { scale: 0.4, rotate: -14, opacity: 0 }, { scale: 1, rotate: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: row, start: "top 92%", end: "top 55%", scrub: 0.5 } });
+        gsap.fromTo(line, { scaleX: 0 }, { scaleX: 1, ease: "none", scrollTrigger: { trigger: row, start: "top 70%", end: "bottom 45%", scrub: true } });
+        gsap.to(name, { opacity: 0.28, ease: "none", scrollTrigger: { trigger: row, start: "bottom 45%", end: "bottom 12%", scrub: 0.5 } });
+        ScrollTrigger.create({ trigger: row, start: "top 58%", end: "bottom 58%", onToggle: (self) => self.isActive && setActive(i) });
+      });
+    });
+    return () => mm.revert();
+  }, [clients.length]);
+
+  const tone = CLIENT_TONES[active % CLIENT_TONES.length];
+  return (
+    <section ref={sec} data-nolift className="relative pb-20 pt-6">
+      <div className="mx-auto grid max-w-7xl gap-10 px-6 lg:grid-cols-[0.8fr_1.2fr]">
+        {/* preview card follows the list */}
+        <div className="relative hidden lg:block">
+          <div className="sticky top-28">
+            <p className="mb-4 font-mono text-xs uppercase tracking-[0.3em] text-ice">Everyone we have worked with</p>
+            <div data-tilt className="relative aspect-[4/5] w-full overflow-hidden rounded-[2rem] border border-[#14532d]/10 shadow-[0_40px_80px_-40px_rgba(20,83,45,0.65)]">
+              {clients.map((c, i) => {
+                const t = CLIENT_TONES[i % CLIENT_TONES.length];
+                const on = i === active;
+                return (
+                  <div key={c.name} className="absolute inset-0 transition-opacity duration-700" style={{ opacity: on ? 1 : 0, background: `linear-gradient(150deg, ${t[0]}, ${t[1]})` }}>
+                    <span aria-hidden className="absolute -right-6 -top-10 font-display text-[16rem] leading-none opacity-[0.12]" style={{ color: t[2] }}>{String(i + 1).padStart(2, "0")}</span>
+                    <div className="absolute inset-x-8 top-[22%] grid h-[34%] place-items-center rounded-[1.6rem] bg-white shadow-[0_30px_60px_-28px_rgba(0,0,0,0.5)] transition-all duration-700" style={{ transform: on ? "perspective(900px) translateY(0) rotateX(0) scale(1)" : "perspective(900px) translateY(40px) rotateX(-22deg) scale(0.9)", opacity: on ? 1 : 0 }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={c.logo} alt={c.name} className="max-h-[62%] max-w-[72%] object-contain" />
+                    </div>
+                    <div className="absolute inset-x-8 bottom-8 transition-all duration-700 delay-100" style={{ color: t[2], transform: on ? "translateY(0)" : "translateY(24px)", opacity: on ? 1 : 0 }}>
+                      <p className="font-mono text-xs uppercase tracking-[0.25em] opacity-70">{String(i + 1).padStart(2, "0")} / {String(clients.length).padStart(2, "0")}</p>
+                      <h3 className="mt-2 font-display text-[2.1rem] leading-[1.02]">{c.name}</h3>
+                      <p className="mt-2 text-sm opacity-80">{notes[c.name] ?? "Delivered by Netkathir."}</p>
+                    </div>
+                  </div>
+                );
+              })}
+              <span aria-hidden className="absolute bottom-0 left-0 h-1.5 origin-left bg-gradient-to-r from-[#14532d] to-[#eab308] transition-all duration-700" style={{ width: `${((active + 1) / clients.length) * 100}%` }} />
+            </div>
+          </div>
+        </div>
+
+        {/* the list */}
+        <div>
+          <p className="mb-6 font-mono text-xs uppercase tracking-[0.3em] text-ice lg:hidden">Everyone we have worked with</p>
+          <ol>
+            {clients.map((c, i) => {
+              const on = i === active;
+              return (
+                <li key={c.name} data-cs-row className="relative flex min-h-[22vh] items-center gap-5 border-t border-ink/10 py-8 last:border-b md:min-h-[30vh]">
+                  <span data-cs-line aria-hidden className="absolute inset-x-0 top-0 h-[2px] origin-left bg-gradient-to-r from-[#14532d] via-[#22a559] to-[#eab308]" />
+                  <span className="w-8 shrink-0 font-mono text-xs text-muted">{String(i + 1).padStart(2, "0")}</span>
+                  <span data-cs-chip className="grid h-16 w-24 shrink-0 place-items-center rounded-xl bg-white px-2 shadow-[0_14px_28px_-16px_rgba(20,83,45,0.5)] md:h-20 md:w-32 lg:hidden xl:grid">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={c.logo} alt="" className="max-h-[70%] w-full object-contain" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 data-cs-name className={`font-display text-[clamp(1.9rem,4.4vw,4.2rem)] leading-[1.02] transition-colors duration-500 ${on ? "text-[#14532d]" : "text-ink"}`}>
+                      {c.name}
+                    </h3>
+                    <p className={`mt-2 max-w-md text-sm transition-all duration-500 ${on ? "translate-y-0 opacity-80" : "translate-y-1 opacity-0"} lg:hidden`}>{notes[c.name] ?? "Delivered by Netkathir."}</p>
+                  </div>
+                  <span className={`text-3xl transition-all duration-500 ${on ? "rotate-0 text-[#eab308]" : "-rotate-45 text-ink/25"}`} style={{ color: on ? tone[2] : undefined }}>↗</span>
+                </li>
+              );
+            })}
+          </ol>
         </div>
       </div>
     </section>

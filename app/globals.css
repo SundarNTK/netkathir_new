@@ -515,3 +515,5 @@ main {
 
 @keyframes nk-spin { to { transform: rotate(360deg); } }
 @keyframes nk-twinkle { 0%, 100% { transform: scale(0.55) rotate(0deg); opacity: 0.45; } 50% { transform: scale(1.15) rotate(35deg); opacity: 1; } }
+
+@keyframes nk-sway { 0%, 100% { transform: rotate(-2.6deg); } 50% { transform: rotate(2.6deg); } }

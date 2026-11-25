@@ -1,6 +1,6 @@
 import PageHero from "@/components/PageHero";
 import { FlightStrip } from "@/components/Flight";
-import { LetterWall } from "@/components/Showcase";
+import { ClientShowcase, LetterWall } from "@/components/Showcase";
 import Ticker from "@/components/Ticker";
 import { CLIENTS } from "@/lib/data";
 
@@ -67,26 +67,7 @@ export default function Projects() {
         </div>
       </section>
 
-      <section className="pb-16">
-        <div className="mx-auto max-w-7xl px-6">
-          <p className="mb-6 font-mono text-xs uppercase tracking-[0.3em] text-ice">Everyone we have worked with</p>
-          <ul className="border-t border-ink/10">
-            {CLIENTS.map((c, i) => (
-              <li key={c.name} data-reveal data-hover className="group relative flex items-center justify-between gap-6 overflow-hidden border-b border-ink/10 py-6 md:py-8">
-                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-[#bbf7d0] via-[#fef3c7]/60 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-0" />
-                <span className="relative font-mono text-xs text-muted">{String(i + 1).padStart(2, "0")}</span>
-                <span className="relative hidden h-16 w-28 shrink-0 items-center justify-center rounded-xl bg-white px-2 shadow-sm sm:flex">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={c.logo} alt="" className="max-h-12 w-full object-contain" />
-                </span>
-                <h3 className="relative flex-1 font-display text-[clamp(1.6rem,4.5vw,4.2rem)] leading-none transition-transform duration-500 group-hover:translate-x-4">{c.name}</h3>
-                <span className="relative hidden max-w-xs text-right text-sm text-muted md:block">{CASES[c.name] ?? "Delivered by Netkathir"}</span>
-                <span className="relative text-3xl text-gold transition-transform duration-500 group-hover:rotate-45">↗</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      <ClientShowcase clients={CLIENTS} notes={CASES} />
     </div>
   );
 }
