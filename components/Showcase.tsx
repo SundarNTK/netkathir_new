@@ -103,7 +103,7 @@ export function ServiceReveal({ areas }: { areas: Area[] }) {
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
             {areas.map((a, i) => (
               <div key={a.name} data-sr-chip className="absolute bottom-5 left-5 max-w-[16rem] rounded-2xl bg-white/95 px-4 py-3 shadow-xl">
-                <p className="font-mono text-[0.65rem] uppercase tracking-[0.25em]" style={{ color: a.ink === "#ecfdf5" ? "#15803d" : a.accent }}>0{i + 1} / 0{areas.length}</p>
+                <p className="font-mono text-[0.8rem] font-extrabold uppercase tracking-[0.2em] text-black">0{i + 1} / 0{areas.length}</p>
                 <p className="mt-1 font-display text-xl leading-tight" style={{ color: a.ink === "#ecfdf5" ? "#052e16" : a.ink }}>{a.name}</p>
                 <p className="text-xs text-[#3f5a4a]">{a.items.length} services · {a.tags.slice(0, 2).join(" · ")}</p>
               </div>

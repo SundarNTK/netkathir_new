@@ -44,7 +44,7 @@ export function FlightJourney({ kicker, title, stops }: { kicker: string; title:
     if (!root || !p || !tr) return;
     const cards = Array.from(root.querySelectorAll<HTMLElement>("[data-stop]"));
     const dots = Array.from(root.querySelectorAll<HTMLElement>("[data-dot]"));
-    const plane = root.querySelector<HTMLElement>("[data-plane]")!;
+    const plane = root.querySelector<SVGGElement>("[data-plane]")!;
     const floats = Array.from(root.querySelectorAll<HTMLElement>("[data-float]"));
     const count = root.querySelector<HTMLElement>("[data-count-now]");
     const bar = root.querySelector<HTMLElement>("[data-bar]");
@@ -86,10 +86,11 @@ export function FlightJourney({ kicker, title, stops }: { kicker: string; title:
       const on = cards.map(() => 0);
       const st = { p: 0 };
       const setP = (v: number) => {
-        const a = p.getPointAtLength(Math.max(0, v * len - 3));
-        const b = p.getPointAtLength(Math.min(len, v * len + 3));
+        // plane is drawn inside the same SVG as the path, so it can never drift off the line
+        const a = p.getPointAtLength(Math.max(0, v * len - 14));
+        const b = p.getPointAtLength(Math.min(len, v * len + 14));
         const q = p.getPointAtLength(v * len);
-        gsap.set(plane, { left: `${(q.x / 1200) * 100}%`, top: `${(q.y / 520) * 100}%`, rotation: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI });
+        plane.setAttribute("transform", `translate(${q.x.toFixed(2)} ${q.y.toFixed(2)}) rotate(${((Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI).toFixed(2)})`);
         tr.style.strokeDashoffset = String(len * (1 - v));
         const reached = FRACS.filter((f) => v >= f - 0.02).length;
         FRACS.forEach((f, i) => {
@@ -187,9 +188,21 @@ export function FlightJourney({ kicker, title, stops }: { kicker: string; title:
               </div>
             </article>
           ))}
-          <div data-plane className="absolute z-30 h-12 w-12 drop-shadow-[0_10px_14px_rgba(0,0,0,0.3)]" style={{ left: 0, top: "69%", marginLeft: "-1.5rem", marginTop: "-1.5rem" }}>
-            <PlaneIcon className="h-full w-full" />
-          </div>
+          <svg viewBox="0 0 1200 520" className="pointer-events-none absolute inset-0 z-30 h-full w-full overflow-visible" fill="none" aria-hidden>
+            <defs>
+              <linearGradient id="fj-pl" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#22c55e" />
+                <stop offset="1" stopColor="#14532d" />
+              </linearGradient>
+            </defs>
+            <g data-plane transform="translate(0 358)" style={{ filter: "drop-shadow(0 8px 8px rgba(0,0,0,0.28))" }}>
+              <g transform="translate(-23 -22) scale(1.85)">
+                <polygon points="25,12 1,2 7.5,12 1,22" fill="url(#fj-pl)" />
+                <polygon points="25,12 7.5,12 1,22" fill="#0f3d22" opacity=".55" />
+                <polyline points="25,12 7.5,12" stroke="#fde68a" strokeWidth="1.3" />
+              </g>
+            </g>
+          </svg>
         </div>
 
         {/* mobile: simple vertical flight log */}
