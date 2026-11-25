@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 /** logo: reveal 0→1, burst: exit 0→1. year/turn/dive drive the 3D 2027 (appear, turn, dive-through). */
-export type IntroState = { logo: number; burst: number; year: number; turn: number; dive: number; bump: number; pop: number; glow: number; tx: number; ty: number; tw: number };
+export type IntroState = { logo: number; burst: number; year: number; turn: number; dive: number; bump: number; pop: number; glow: number; tx: number; ty: number; tw: number; fin: number };
 
 const LOGO_URL = "/images/brand/netkathir-logo-hd.png";
 const W = 8; // logo width in scene units
@@ -64,11 +64,12 @@ function Logo({ state, onReady, lite }: { state: IntroState; onReady?: () => voi
     const fit = Math.min(1, (viewport.width * (viewport.width < 9 ? 0.74 : 0.8)) / W, (viewport.height * (viewport.width < 9 ? 0.26 : 0.34)) / (W * aspect));
     const k = THREE.MathUtils.smootherstep(state.logo, 0, 1);
     const out = state.burst * state.burst;
-    grp.current.scale.setScalar(fit * (0.92 + 0.08 * k + out * 0.18));
-    grp.current.position.y = viewport.height * 0.22 + (1 - k) * -0.35 + Math.sin(t * 0.8) * 0.04;
+    const fin = THREE.MathUtils.smootherstep(state.fin, 0, 1); // finale: the logo settles lower and smaller, under the headline
+    grp.current.scale.setScalar(fit * (0.92 + 0.08 * k + out * 0.18) * (1 - 0.34 * fin));
+    grp.current.position.y = THREE.MathUtils.lerp(viewport.height * 0.22, -viewport.height * 0.23, fin) + (1 - k) * -0.35 + Math.sin(t * 0.8) * 0.04;
     grp.current.rotation.y = (1 - k) * -0.6 + Math.sin(t * 0.55) * 0.2 + s.pointer.x * 0.12;
     grp.current.rotation.x = Math.sin(t * 0.42) * 0.05 - s.pointer.y * 0.06;
-    const op = k * (1 - Math.min(1, state.burst * 1.4));
+    const op = k * (1 - Math.min(1, state.burst * 1.4) * (1 - fin));
     mats.current.forEach((m) => m && (m.opacity = op));
     if (glint.current) {
       glint.current.uniforms.uT.value = ((t * 0.22) % 1.6) - 0.3;

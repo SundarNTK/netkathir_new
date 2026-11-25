@@ -14,7 +14,6 @@ declare global {
   }
 }
 
-const FLAG_N = 40;
 const MESSAGES = [
   "Eleven years of innovation, trust & technology.",
   "Engineering intelligent software for clients across six countries.",
@@ -78,7 +77,7 @@ export default function Intro() {
   const sheetEls = useRef<(HTMLDivElement | null)[]>([]);
   const cardEl = useRef<HTMLDivElement>(null);
   const curEl = useRef<HTMLSpanElement>(null);
-  const [state] = useState<IntroState>(() => ({ logo: 0, burst: 0, year: 0, turn: 0, dive: 0, bump: 0, pop: 0, glow: 0, tx: 0, ty: 0, tw: 0 }));
+  const [state] = useState<IntroState>(() => ({ logo: 0, burst: 0, year: 0, turn: 0, dive: 0, bump: 0, pop: 0, glow: 0, tx: 0, ty: 0, tw: 0, fin: 0 }));
   const tl = useRef<gsap.core.Timeline | null>(null);
   const gate = useRef({ ready: false, waiting: false, timer: 0 });
   const closed = useRef(false);
@@ -153,10 +152,9 @@ export default function Intro() {
       cur.textContent = "2015";
       gsap.set(sheets, { opacity: 0 });
       gsap.set(".i-ch", { yPercent: 120, rotateX: -80, opacity: 0, transformPerspective: 700 });
-      gsap.set(".i-plate", { opacity: 0 });
-      gsap.set(".i-fbg, .i-warp, .i-flash, .i-shock", { opacity: 0 });
+      gsap.set(".i-fbg, .i-warp, .i-flash, .i-shock, .i-plate", { opacity: 0 });
+      gsap.set(".i-shock", { scale: 0.2 });
       gsap.set(".i-glow", { opacity: 0 });
-      gsap.set(".i-flag-strip", { opacity: 0, x: -36 });
 
       // ---- 1. calendar: the page turns from 2015 to 2026, slowing a little as it lands
       t.fromTo(".i-cal", { opacity: 0, y: 26, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" }, 0)
@@ -228,7 +226,10 @@ export default function Intro() {
         .call(() => { fl.fire = false; fl.confetti = false; }, undefined, E3 + 3.3);
       const calEnd = E3 + 3.9;
       // the whole lit-up calendar moves on to the logo, like every earlier year
-      t.to(".i-cal, .i-track, .i-cal-glow, .i-rays", { opacity: 0, y: -18, scale: 0.97, duration: 0.5, ease: "power2.in" }, calEnd + 0.02)
+      t.to(".i-fx", { opacity: 0, duration: 0.45, ease: "power2.in" }, calEnd - 0.2) // the party ends with the calendar
+        .call(() => { fl.fire = false; fl.confetti = false; fl.kill = true; }, undefined, calEnd + 0.3)
+        .set(".i-fx", { opacity: 1 }, calEnd + 0.4)
+        .to(".i-cal, .i-track, .i-cal-glow, .i-rays", { opacity: 0, y: -18, scale: 0.97, duration: 0.5, ease: "power2.in" }, calEnd + 0.02)
         // wait here only if the 3D logo is not built yet (never longer than 3.5 s)
         .call(
           () => {
@@ -275,11 +276,12 @@ export default function Intro() {
         .to(".i-glow", { opacity: 1, scale: 1.5, duration: 1.2, ease: "power3.out" }, X + 0.9)
         // the headline: letters rise and tilt into place
         .to(".i-ch", { yPercent: 0, rotateX: 0, opacity: 1, duration: 0.9, ease: "back.out(1.6)", stagger: 0.035 }, X + 1.1)
-        .fromTo(".i-shock", { scale: 0.2, opacity: 0.9 }, { scale: 3, opacity: 0, duration: 1.5, ease: "power2.out", stagger: 0.18 }, X + 1.3)
+        .fromTo(".i-shock", { scale: 0.2, opacity: 0.9 }, { scale: 3, opacity: 0, duration: 1.5, ease: "power2.out", stagger: 0.18, immediateRender: false }, X + 1.3)
         .to(".i-ai", { scale: 1.14, duration: 0.35, yoyo: true, repeat: 1, ease: "sine.inOut" }, X + 2.3)
-        // the logo flies in on a white plate and waves
-        .fromTo(".i-plate", { scale: 0.6, opacity: 0, y: 36 }, { scale: 1, opacity: 1, y: 0, duration: 0.9, ease: "back.out(1.7)" }, X + 2.0)
-        .to(".i-flag-strip", { opacity: 1, x: 0, duration: 0.8, ease: "power3.out", stagger: { each: 0.02, from: "start" } }, X + 2.3)
+        // the logo card rises in with a 3D tilt, a gold light runs round its edge, and a shine sweeps across
+        .fromTo(".i-plate", { y: 70, rotateX: 62, scale: 0.7, opacity: 0, transformPerspective: 900 }, { y: 0, rotateX: 0, scale: 1, opacity: 1, duration: 1.1, ease: "back.out(1.6)" }, X + 2.0)
+        .fromTo(".i-plate-shine", { xPercent: -160 }, { xPercent: 160, duration: 1.1, ease: "power2.inOut" }, X + 3.0)
+        .to(".i-plate", { y: -7, duration: 1.1, yoyo: true, repeat: 1, ease: "sine.inOut" }, X + 3.1)
         // hyper-jump: stars stretch, the headline rushes at the camera, light floods the screen, the site appears
         .to(fl, { warp: 4.5, duration: 1.1, ease: "power3.in" }, X + 3.7)
         .to(".i-finale", { scale: 3.4, opacity: 0, filter: "blur(10px)", duration: 0.95, ease: "power3.in" }, X + 4.05)
@@ -541,7 +543,7 @@ export default function Intro() {
         {[0, 1, 2].map((n) => (
           <span key={n} className="i-shock absolute h-[min(30rem,80vw)] w-[min(30rem,80vw)] rounded-full border-2 border-[#fde68a] opacity-0 shadow-[0_0_30px_rgba(250,204,21,0.6)]" />
         ))}
-        <h2 className="relative font-display text-[clamp(2rem,min(6.6vw,14vh),7rem)] font-bold leading-[1.04] tracking-tight [text-shadow:0_0_36px_rgba(134,239,172,0.55),0_6px_24px_rgba(0,0,0,0.35)]">
+        <h2 className="relative -translate-y-[3vh] font-display text-[clamp(2rem,min(6.6vw,14vh),7rem)] font-bold leading-[1.04] tracking-tight [text-shadow:0_0_36px_rgba(134,239,172,0.55),0_6px_24px_rgba(0,0,0,0.35)]">
           {FINALE.map((w, i) => {
             const ai = w === "AI";
             return (
@@ -553,24 +555,13 @@ export default function Intro() {
             );
           })}
         </h2>
-        {/* the logo on a white plate; it unfurls like a flag and keeps waving */}
-        <div className="i-plate relative mt-9 rounded-[1.6rem] bg-white px-8 py-5 shadow-[0_30px_70px_-20px_rgba(0,0,0,0.6),0_0_60px_rgba(250,204,21,0.35)]">
-          <div className="i-flag relative aspect-[1800/738] w-[min(16rem,54vw)]" role="img" aria-label="Netkathir Technologies">
-            {Array.from({ length: FLAG_N }, (_, k) => (
-              <span
-                key={k}
-                className="i-flag-strip nk-wave absolute inset-y-0"
-                style={{
-                  left: `${(k / FLAG_N) * 100}%`,
-                  width: `${100 / FLAG_N + 0.25}%`,
-                  backgroundImage: "url(/images/brand/netkathir-logo-hd.png)",
-                  backgroundSize: `${FLAG_N * 100}% 100%`,
-                  backgroundPosition: `${(k / (FLAG_N - 1)) * 100}% 0`,
-                  ["--amp" as string]: `${(0.4 + (k / FLAG_N) * 5.6).toFixed(2)}px`,
-                  animationDelay: `${(-k * 0.075).toFixed(3)}s`,
-                }}
-              />
-            ))}
+        {/* the logo card: white glass plate, a gold light circling its edge, shine sweep */}
+        <div className="i-plate relative mt-10 overflow-hidden rounded-[2rem] p-[3px] shadow-[0_34px_80px_-24px_rgba(0,0,0,0.65),0_0_70px_rgba(250,204,21,0.4)]">
+          <span aria-hidden className="absolute -inset-[80%] [animation:nk-spin_5s_linear_infinite]" style={{ background: "conic-gradient(from 0deg, transparent 0deg, #fde68a 40deg, #facc15 70deg, #22c55e 110deg, transparent 150deg, transparent 360deg)" }} />
+          <div className="relative overflow-hidden rounded-[calc(2rem-3px)] bg-[linear-gradient(160deg,#ffffff,#f1fbf4)] px-10 py-7">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/brand/netkathir-logo-hd.png" alt="Netkathir Technologies" className="relative w-[min(16rem,56vw)]" />
+            <span aria-hidden className="i-plate-shine pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/90 to-transparent" />
           </div>
         </div>
       </div>

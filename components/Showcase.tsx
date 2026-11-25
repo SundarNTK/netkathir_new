@@ -186,19 +186,52 @@ export function Collage({ tag, lines, text, cta, href, main, floats, sticker }: 
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       const st = (trigger: Element) => ({ trigger, start: "top bottom", end: "bottom top", scrub: 0.8 });
-      const m = root.querySelector("[data-c-main]");
-      const a = root.querySelector("[data-c-a]");
-      const b = root.querySelector("[data-c-b]");
-      const s = root.querySelector("[data-c-s]");
-      const t = root.querySelectorAll("[data-c-t]");
-      if (m) gsap.fromTo(m, { y: 90, scale: 0.94 }, { y: -50, scale: 1, ease: "none", scrollTrigger: st(root) });
-      if (a) gsap.fromTo(a, { y: 220, rotate: 4 }, { y: -170, rotate: -3, ease: "none", scrollTrigger: st(root) });
-      if (b) gsap.fromTo(b, { y: 260, rotate: -5 }, { y: -90, rotate: 2, ease: "none", scrollTrigger: st(root) });
-      if (s) gsap.fromTo(s, { y: 120 }, { y: -120, ease: "none", scrollTrigger: st(root) });
-      const ring = root.querySelector("[data-c-ring]");
+      const enter = (trigger: Element, start = "top 80%", end = "top 25%") => ({ trigger, start, end, scrub: 0.7 });
+      const q = (x: string) => root.querySelector<HTMLElement>(x);
+      const m = q("[data-c-main]");
+      const a = q("[data-c-a]");
+      const b = q("[data-c-b]");
+      const s = q("[data-c-s]");
+
+      // dome edge: the section rises into place as the page above leaves
+      gsap.fromTo(root, { y: 70 }, { y: 0, ease: "none", scrollTrigger: { trigger: root, start: "top 100%", end: "top 55%", scrub: 0.6 } });
+
+      // the contour lines draw themselves, then drift
+      root.querySelectorAll<SVGPathElement>("[data-c-topo] path").forEach((p, i) => {
+        gsap.fromTo(p, { strokeDasharray: 2400, strokeDashoffset: 2400 }, { strokeDashoffset: 0, ease: "none", scrollTrigger: { trigger: root, start: "top 90%", end: `top ${20 - i * 4}%`, scrub: 0.8 } });
+      });
+      gsap.fromTo(q("[data-c-topo]"), { yPercent: 8 }, { yPercent: -8, ease: "none", scrollTrigger: st(root) });
+
+      // headline: letters rise out of a mask, line by line, tied to the scroll
+      root.querySelectorAll<HTMLElement>("[data-c-line]").forEach((line, i) => {
+        const chs = line.querySelectorAll("[data-c-ch]");
+        gsap.fromTo(chs, { yPercent: 118, rotateX: -75, opacity: 0, transformPerspective: 700 }, { yPercent: 0, rotateX: 0, opacity: 1, stagger: 0.04, ease: "none", scrollTrigger: enter(root, `top ${78 - i * 6}%`, `top ${34 - i * 6}%`) });
+      });
+      gsap.fromTo(q("[data-c-tag]"), { x: -40, opacity: 0 }, { x: 0, opacity: 1, ease: "none", scrollTrigger: enter(root, "top 80%", "top 50%") });
+      const para = q("[data-c-p]");
+      if (para) {
+        para.innerHTML = (para.textContent ?? "").split(/\s+/).map((w) => `<span style="opacity:.15">${w}</span>`).join(" ");
+        gsap.to(para.querySelectorAll("span"), { opacity: 1, stagger: 0.12, ease: "none", scrollTrigger: { trigger: para, start: "top 85%", end: "bottom 50%", scrub: true } });
+      }
+      gsap.fromTo(q("[data-c-cta]"), { y: 40, opacity: 0, scale: 0.9 }, { y: 0, opacity: 1, scale: 1, ease: "none", scrollTrigger: enter(root, "top 40%", "top 5%") });
+
+      // pictures: each one is unmasked by a wipe from a different side, then keeps drifting at its own speed
+      const wipe = (el: HTMLElement | null, from: string, y0: number, y1: number, rot0: number, rot1: number, delay: number) => {
+        if (!el) return;
+        const img = el.querySelector("img");
+        gsap.fromTo(el, { clipPath: from }, { clipPath: "inset(0% 0% 0% 0%)", ease: "none", scrollTrigger: enter(root, `top ${82 - delay}%`, `top ${30 - delay}%`) });
+        if (img) gsap.fromTo(img, { scale: 1.5 }, { scale: 1, ease: "none", scrollTrigger: st(root) });
+        gsap.fromTo(el, { y: y0, rotate: rot0 }, { y: y1, rotate: rot1, ease: "none", scrollTrigger: st(root) });
+      };
+      wipe(m, "inset(100% 0% 0% 0%)", 90, -50, 0, 0, 0);
+      wipe(a, "inset(0% 0% 0% 100%)", 220, -170, 5, -3, 8);
+      wipe(b, "inset(0% 100% 0% 0%)", 260, -90, -6, 2, 14);
+      if (s) {
+        gsap.fromTo(s, { scale: 0, rotate: -120 }, { scale: 1, rotate: 0, ease: "back.out(1.8)", scrollTrigger: { trigger: root, start: "top 35%", toggleActions: "play none none reverse" } });
+        gsap.fromTo(s, { y: 120 }, { y: -120, ease: "none", scrollTrigger: st(root), immediateRender: false, overwrite: false });
+      }
+      const ring = q("[data-c-ring]");
       if (ring) gsap.fromTo(ring, { rotate: 0 }, { rotate: 300, ease: "none", scrollTrigger: st(root) });
-      gsap.fromTo(t, { yPercent: 60, opacity: 0 }, { yPercent: 0, opacity: 1, stagger: 0.12, ease: "none", scrollTrigger: { trigger: root, start: "top 70%", end: "top 15%", scrub: 0.6 } });
-      gsap.fromTo(root.querySelector("[data-c-topo]"), { yPercent: 8 }, { yPercent: -8, ease: "none", scrollTrigger: st(root) });
     });
     return () => mm.revert();
   }, []);
@@ -212,17 +245,23 @@ export function Collage({ tag, lines, text, cta, href, main, floats, sticker }: 
       </svg>
       <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-[1fr_1fr]">
         <div className="relative z-10">
-          <p data-c-t className="mb-5 inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.25em] text-[#14532d]">
+          <p data-c-tag className="mb-5 inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.25em] text-[#14532d]">
             <span className="h-2 w-2 rounded-full bg-[#84cc16]" />
             {tag}
           </p>
-          <h2 className="font-display text-[clamp(3rem,8.4vw,7.6rem)] font-bold uppercase leading-[0.86] tracking-tight text-[#10241a]">
-            <span data-c-t className="block">{lines[0]}</span>
-            <span data-c-t className="block">{lines[1]}</span>
-            <span data-c-t className="block bg-gradient-to-r from-[#14532d] via-[#22a559] to-[#eab308] bg-clip-text font-light italic text-transparent">{lines[2]}</span>
+          <h2 className="font-display text-[clamp(3rem,7.4vw,6.6rem)] leading-[0.98] tracking-[-0.02em] text-[#10241a]">
+            {lines.map((ln, li) => (
+              <span key={li} data-c-line className="block overflow-hidden pb-[0.14em]">
+                {ln.split("").map((ch, k) => (
+                  <span key={k} data-c-ch className="inline-block" style={{ color: li === 2 ? `hsl(${150 - (k / Math.max(1, ln.length - 1)) * 105} ${62 + (k % 2) * 4}% ${30 + (k / Math.max(1, ln.length - 1)) * 18}%)` : undefined }}>
+                    {ch === " " ? " " : ch}
+                  </span>
+                ))}
+              </span>
+            ))}
           </h2>
-          <p data-c-t className="mt-8 max-w-md text-lg leading-relaxed text-[#10241a]/80">{text}</p>
-          <Link data-c-t href={href} className="mt-8 inline-flex items-center gap-2 rounded-md bg-[#d4f63a] px-5 py-3 text-sm font-extrabold uppercase tracking-wide text-[#10241a] shadow-[0_14px_30px_-14px_rgba(132,204,22,0.9)] transition-transform hover:-translate-y-1">
+          <p data-c-p className="mt-8 max-w-md text-lg leading-relaxed text-[#10241a]/80">{text}</p>
+          <Link data-c-cta href={href} className="mt-8 inline-flex items-center gap-2 rounded-md bg-[#d4f63a] px-5 py-3 text-sm font-extrabold uppercase tracking-wide text-[#10241a] shadow-[0_14px_30px_-14px_rgba(132,204,22,0.9)] transition-transform hover:-translate-y-1">
             {cta} <span aria-hidden>↗</span>
           </Link>
         </div>

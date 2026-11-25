@@ -1,7 +1,7 @@
 /* Canvas effects for the opening: real-looking fireworks + confetti for the celebration, and a warp-speed
    tunnel for the "AI era" finale. Plain 2D canvas, one shared ticker, nothing runs unless a flag is on. */
 
-export type FxFlags = { fire: boolean; confetti: boolean; warpOn: boolean; warp: number };
+export type FxFlags = { fire: boolean; confetti: boolean; warpOn: boolean; warp: number; kill?: boolean };
 
 const GOLD = ["#facc15", "#fbbf24", "#f59e0b", "#fde68a"];
 const GREEN = ["#16a34a", "#22c55e", "#15803d", "#4ade80"];
@@ -56,6 +56,12 @@ export function createFx(fxCv: HTMLCanvasElement, wpCv: HTMLCanvasElement, f: Fx
   };
 
   const tickFx = (dt: number) => {
+    if (f.kill) {
+      rockets.length = 0;
+      sparks.length = 0;
+      chips.length = 0;
+      f.kill = false;
+    }
     if (f.fire) {
       launchT -= dt;
       if (launchT <= 0) {
