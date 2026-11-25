@@ -253,7 +253,6 @@ export default function Intro() {
         .fromTo(".i-stem", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.0, ease: "power2.inOut" }, L + 1.15)
         .fromTo(".i-wl", { scale: 0, opacity: 0, transformOrigin: "50% 100%" }, { scale: 1, opacity: 1, duration: 0.55, ease: "back.out(2.2)", stagger: { each: 0.018, from: "start" } }, L + 1.45)
         .fromTo(".i-star", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.7, ease: "back.out(3)", stagger: 0.08 }, L + 1.5)
-        .fromTo(".i-n11-shine", { xPercent: -150 }, { xPercent: 150, duration: 1.1, ease: "power2.inOut" }, L + 2.1)
         .fromTo(".i-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power3.inOut" }, L + 1.35)
         .fromTo(".i-label", { opacity: 0, y: 10, letterSpacing: "0.7em" }, { opacity: 1, y: 0, letterSpacing: compact ? "0.18em" : "0.44em", duration: 0.9, ease: "power3.out" }, L + 1.5)
         .fromTo(".i-m0", { opacity: 0, y: 14, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.9, ease: "power3.out" }, L + 2.0)
@@ -518,7 +517,6 @@ export default function Intro() {
           ))}
           <span className="relative block overflow-hidden px-1">
             <span className="block bg-[linear-gradient(180deg,#14532d_0%,#1f7a43_44%,#c9a24d_100%)] bg-clip-text font-display text-[clamp(3.4rem,min(11.5vh,10vw),6.6rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-transparent [filter:drop-shadow(0_1px_0_rgba(255,255,255,0.9))_drop-shadow(0_8px_12px_rgba(20,83,45,0.25))]">11</span>
-            <span className="i-n11-shine absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/90 to-transparent" />
           </span>
         </div>
         <div className="mt-[clamp(0.6rem,1.8vh,1.2rem)] flex w-full max-w-[calc(100vw-3rem)] items-center justify-center gap-3 sm:gap-6">
