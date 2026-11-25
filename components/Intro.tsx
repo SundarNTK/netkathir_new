@@ -225,17 +225,13 @@ export default function Intro() {
         .to(cur, { opacity: 0, duration: 0.3, ease: "none" }, E3 + 0.02)
         .to(state, { bump: 1, duration: 1.15, ease: "back.out(1.7)" }, E3 + 0.1) // the bump: flat -> raised lettering
         .to(state, { glow: 1, duration: 0.9, ease: "power2.out" }, E3 + 0.7)
-        .fromTo(".i-ring", { scale: 0.3, opacity: 0.9 }, { scale: 3.2, opacity: 0, duration: 1.5, ease: "power2.out", stagger: 0.2 }, E3 + 0.8)
-        .to(state, { pop: 1, duration: 1.3, ease: "power3.out" }, E3 + 0.8) // steps forward out of the calendar
-        .to(state, { turn: 1, duration: 2.2, ease: "sine.inOut" }, E3 + 1.0)
-        .to(".i-cal, .i-track", { opacity: 0, y: 26, scale: 0.95, duration: 0.8, ease: "power2.in" }, E3 + 1.0)
-        .to(".i-cal-glow", { opacity: 1, scale: 1.5, duration: 1.0, ease: "power2.out" }, E3 + 0.9);
-      const calEnd = E3 + 3.7;
-      // page transition: dive through the glowing year into the logo
-      t.to(state, { dive: 1, duration: 0.95, ease: "power3.in" }, calEnd - 0.25)
-        .to(".i-y3d", { opacity: 0, duration: 0.5, ease: "power2.in" }, calEnd + 0.4)
-        .call(() => { setYearRun(false); setYearOn(false); }, undefined, calEnd + 1.0)
-        .to(".i-cal-glow", { opacity: 0, scale: 3, duration: 0.9, ease: "power2.in" }, calEnd - 0.2)
+        .to(state, { turn: 1, duration: 1.6, ease: "sine.inOut" }, E3 + 0.6) // a gentle sway so the depth catches the light
+        .to(".i-cal-glow", { opacity: 1, scale: 1.2, duration: 0.8, ease: "power2.out" }, E3 + 0.6)
+        .to(".i-cal-glow", { opacity: 0.55, duration: 0.5, yoyo: true, repeat: 1, ease: "sine.inOut" }, E3 + 1.5);
+      const calEnd = E3 + 2.9;
+      // the year stays on its calendar page: highlighted, then the whole calendar moves on to the logo (like every earlier year)
+      t.to(".i-cal, .i-track, .i-y3d, .i-cal-glow", { opacity: 0, y: -18, scale: 0.97, duration: 0.5, ease: "power2.in" }, calEnd + 0.02)
+        .call(() => { setYearRun(false); setYearOn(false); }, undefined, calEnd + 0.7)
         // wait here only if the 3D logo is not built yet (never longer than 3.5 s)
         .call(
           () => {

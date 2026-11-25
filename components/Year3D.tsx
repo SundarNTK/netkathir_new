@@ -75,8 +75,8 @@ function Year({ state }: { state: IntroState }) {
     grp.current.visible = state.year > 0.002;
     grp.current.scale.setScalar(fit * (1 + 0.32 * state.pop) * (1 + dive * 9));
     grp.current.position.set(state.tx * (1 - state.pop * 0.35), state.ty * (1 - state.pop * 0.35) + Math.sin(t * 1.2) * 0.03 * state.pop, dive * 6 + state.pop * 0.6);
-    grp.current.rotation.y = (-0.62 + 0.2 * THREE.MathUtils.smootherstep(state.turn, 0, 1)) * state.pop + s.pointer.x * 0.08;
-    grp.current.rotation.x = -0.04 * state.pop - s.pointer.y * 0.05;
+    grp.current.rotation.y = -0.42 * state.bump + 0.16 * Math.sin(Math.PI * state.turn) + s.pointer.x * 0.05; // angled so its depth shows, swaying a little
+    grp.current.rotation.x = -0.06 * state.bump - s.pointer.y * 0.04;
     mesh.current.scale.z = Math.max(0.001, state.bump); // the flat year bumps out into depth
     built.mat.opacity = state.year * (1 - Math.min(1, state.dive * 1.4));
     built.mat.emissiveIntensity = 0.05 + 0.16 * state.glow * (0.75 + 0.25 * Math.sin(t * 3));
@@ -117,6 +117,8 @@ export default function Year3D({ state, run }: { state: IntroState; run: boolean
         <Lightformer form="rect" intensity={4} position={[9, 0, 2]} rotation-y={-Math.PI / 2} scale={[4, 9, 1]} color="#ffe28a" />
         <Lightformer form="rect" intensity={3} position={[0, -4, 4]} scale={[16, 2, 1]} color="#ffb21f" />
         <Lightformer form="rect" intensity={2.2} position={[0, 0, -8]} scale={[20, 9, 1]} color="#e08a10" />
+        <Lightformer form="rect" intensity={3.2} position={[0, 0.5, 10]} scale={[16, 9, 1]} color="#ffcf55" />
+        <Lightformer form="rect" intensity={4.5} position={[0, 3, 9]} scale={[10, 2.5, 1]} color="#fff3c2" />
         <Lightformer form="rect" intensity={7} position={[-2.2, 0, 8]} scale={[0.5, 9, 1]} color="#ffffff" />
         <Lightformer form="rect" intensity={6} position={[2.6, 0, 8]} scale={[0.7, 9, 1]} color="#fff0b0" />
         <Lightformer form="rect" intensity={3} position={[5, 3, 6]} scale={[1.2, 5, 1]} color="#ffcc55" />
