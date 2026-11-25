@@ -22,6 +22,20 @@ const MESSAGES = [
 const FINALE = "Now entering the AI era.".split(" ");
 const YEARS = Array.from({ length: 12 }, (_, i) => 2015 + i);
 
+const mixRgb = (a: number[], b: number[], t: number) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(",")})`;
+const WREATH = Array.from({ length: 22 }, (_, k) => {
+  // a laurel wreath: leaves climb both sides from the bottom, leaving the top open
+  const side = k < 11 ? -1 : 1;
+  const n = k % 11;
+  const ang = 158 - n * 12.8; // degrees clockwise from the top
+  const a = (ang * Math.PI) / 180;
+  const r = 86;
+  return { x: 100 + side * Math.sin(a) * r, y: 100 - Math.cos(a) * r, rot: side * (ang - 90) + side * -14 };
+});
+const STARS = [
+  [8, 18, 14], [92, 12, 18], [4, 62, 10], [96, 58, 12], [18, 92, 12], [84, 90, 16], [50, -6, 12], [50, 104, 10],
+];
+
 function canRender3D() {
   try {
     const c = document.createElement("canvas");
@@ -166,11 +180,36 @@ export default function Intro() {
           .to(barEl.current, { width: `${(i / (YEARS.length - 1)) * 100}%`, duration: gap, ease: "none" }, at);
         at += gap;
       }
-      const calEnd = at + 1.3;
-      t.to(cur, { filter: "drop-shadow(0 0 14px rgba(250,204,21,0.9)) drop-shadow(0 0 38px rgba(34,197,94,0.65))", duration: 0.5, ease: "power2.out" }, at + 0.05)
-        .fromTo(".i-cal-glow", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1.15, duration: 0.7, ease: "power2.out" }, at + 0.05)
-        .to(".i-cal-glow", { opacity: 0.55, duration: 0.45, yoyo: true, repeat: 1, ease: "sine.inOut" }, at + 0.75)
-        .fromTo(".i-shine", { xPercent: -130 }, { xPercent: 130, duration: 0.9, ease: "power2.inOut" }, at + 0.15)
+      // 2026 has landed: it glows, then its page lifts on the calendar rings (never torn off) and 2027 waits underneath
+      const FL = at + 0.05;
+      const GLOW = "drop-shadow(0 0 14px rgba(250,204,21,0.9)) drop-shadow(0 0 38px rgba(34,197,94,0.65))";
+      t.to(cur, { filter: GLOW, duration: 0.5, ease: "power2.out" }, FL)
+        .to(".i-flip-word", { filter: GLOW, duration: 0.5, ease: "power2.out" }, FL)
+        .fromTo(".i-cal-glow", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1.15, duration: 0.7, ease: "power2.out" }, FL)
+        .fromTo(".i-shine", { xPercent: -130 }, { xPercent: 130, duration: 0.9, ease: "power2.inOut" }, FL + 0.15)
+        .set(".i-flip", { opacity: 1, transformPerspective: 900, rotateX: 0 }, FL + 0.95)
+        .call(() => { cur.textContent = "2027"; }, undefined, FL + 1.0)
+        .set(cur, { filter: "none", opacity: 0.45, scale: 0.9 }, FL + 1.0)
+        .to(".i-flip", { rotateX: 62, duration: 1.25, ease: "power2.inOut" }, FL + 1.05)
+        .to(".i-flip-shadow", { opacity: 1, duration: 1.2, ease: "power1.out" }, FL + 1.05)
+        .to(cur, { opacity: 1, scale: 1, duration: 1.2, ease: "power2.out" }, FL + 1.05);
+
+      // 2027 comes out of the calendar as solid 3D lettering, turns to show its depth, glows, then the screen dives through it
+      const E3 = FL + 2.5;
+      const GLOW3 = "drop-shadow(0 0 20px rgba(250,204,21,0.95)) drop-shadow(0 0 64px rgba(34,197,94,0.75))";
+      t.set(".i-y3d", { opacity: 1 }, E3)
+        .fromTo(".i-y3d-in", { scale: 0.5, y: 18, rotateX: 64, rotateY: -52, opacity: 0, filter: "drop-shadow(0 0 0px rgba(250,204,21,0))" }, { scale: 1.2, y: -24, rotateX: 0, rotateY: 0, opacity: 1, duration: 1.35, ease: "expo.out" }, E3)
+        .to(".i-flip", { rotateX: 88, opacity: 0, duration: 0.6, ease: "power2.in" }, E3 + 0.05)
+        .fromTo(".i-ring", { scale: 0.3, opacity: 0.9 }, { scale: 3.2, opacity: 0, duration: 1.5, ease: "power2.out", stagger: 0.2 }, E3 + 0.2)
+        .to(".i-y3d-in", { filter: GLOW3, duration: 0.8, ease: "power2.out" }, E3 + 0.8)
+        .to(".i-y3d-in", { rotateY: 16, duration: 1.3, ease: "sine.inOut" }, E3 + 1.2)
+        .fromTo(".i-y3d-shine", { xPercent: -140 }, { xPercent: 140, duration: 1.1, ease: "power2.inOut" }, E3 + 1.3)
+        .to(".i-cal, .i-track", { opacity: 0, y: 24, scale: 0.95, duration: 0.8, ease: "power2.in" }, E3 + 0.45)
+        .to(".i-cal-glow", { opacity: 1, scale: 1.5, duration: 1.1, ease: "power2.out" }, E3 + 0.4);
+      const calEnd = E3 + 2.9;
+      // page transition: dive through the glowing year into the logo
+      t.to(".i-y3d-in", { scale: 9, opacity: 0, rotateY: -8, duration: 0.95, ease: "power3.in" }, calEnd - 0.25)
+        .to(".i-cal-glow", { opacity: 0, scale: 3, duration: 0.9, ease: "power2.in" }, calEnd - 0.2)
         // wait here only if the 3D logo is not built yet (never longer than 3.5 s)
         .call(
           () => {
@@ -182,8 +221,7 @@ export default function Intro() {
           },
           undefined,
           calEnd
-        )
-        .to(".i-cal, .i-track, .i-cal-glow", { opacity: 0, y: -18, scale: 0.97, duration: 0.45, ease: "power2.in" }, calEnd + 0.02);
+        );
 
       // ---- 2. the 3D logo + anniversary lockup
       const L = calEnd + 0.4;
@@ -191,7 +229,10 @@ export default function Intro() {
       t.fromTo(".i-scene", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, L)
         .to(state, { logo: 1, duration: 1.7, ease: "power2.out" }, L)
         .fromTo(".i-fallback", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1, ease: "power2.out" }, L)
-        .fromTo(".i-eleven", { opacity: 0, y: 26, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1, ease: "expo.out" }, L + 1.1)
+        .fromTo(".i-eleven", { opacity: 0, scale: 0.55, rotate: -10 }, { opacity: 1, scale: 1, rotate: 0, duration: 1.3, ease: "back.out(1.5)" }, L + 1.0)
+        .fromTo(".i-wl", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2.4)", stagger: { each: 0.035, from: "edges" } }, L + 1.25)
+        .fromTo(".i-star", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.7, ease: "back.out(3)", stagger: 0.08 }, L + 1.5)
+        .fromTo(".i-n11-shine", { xPercent: -150 }, { xPercent: 150, duration: 1.1, ease: "power2.inOut" }, L + 2.1)
         .fromTo(".i-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power3.inOut" }, L + 1.35)
         .fromTo(".i-label", { opacity: 0, y: 10, letterSpacing: "0.7em" }, { opacity: 1, y: 0, letterSpacing: compact ? "0.18em" : "0.44em", duration: 0.9, ease: "power3.out" }, L + 1.5)
         .fromTo(".i-m0", { opacity: 0, y: 14, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.9, ease: "power3.out" }, L + 2.0)
@@ -351,6 +392,11 @@ export default function Intro() {
                 </div>
               </div>
             ))}
+            {/* the 2026 page, hinged at the top, lifts to show 2027 underneath */}
+            <div className="i-flip pointer-events-none absolute inset-0 z-20 rounded-b-[1.3rem] bg-white opacity-0 [backface-visibility:hidden]" style={{ transformOrigin: "50% 0%" }}>
+              <span className="i-flip-word absolute inset-0 flex items-center justify-center bg-[linear-gradient(180deg,#14532d_0%,#1f7a43_55%,#c9a24d_115%)] bg-clip-text font-display text-[clamp(4.6rem,min(17vh,19vw),8rem)] font-light leading-none tracking-[-0.05em] text-transparent tabular-nums">2026</span>
+            </div>
+            <span className="i-flip-shadow pointer-events-none absolute inset-0 z-[15] rounded-b-[1.3rem] bg-gradient-to-b from-black/35 via-black/5 to-transparent opacity-0" />
           </div>
         </div>
         <div className="i-track relative z-0 mt-6 flex w-[min(18rem,70vw)] items-center gap-3 opacity-0">
@@ -359,6 +405,31 @@ export default function Intro() {
             <span ref={barEl} className="absolute inset-y-0 left-0 w-0 rounded-full bg-gradient-to-r from-[#1f7a43] to-[#c9a24d]" />
           </span>
           <span className="font-mono text-[0.62rem] tracking-[0.16em] text-[#c9a24d]">2026</span>
+        </div>
+      </div>
+
+      {/* 1b — 2027 as solid 3D lettering that rises out of the calendar */}
+      <div className="i-y3d pointer-events-none absolute inset-0 z-[45] grid place-items-center opacity-0" style={{ perspective: "1100px" }}>
+        <div className="relative grid place-items-center">
+          {[0, 1].map((n) => (
+            <span key={n} className="i-ring absolute h-[min(22rem,70vw)] w-[min(22rem,70vw)] rounded-full border-2 border-[#eab308]/70 opacity-0" />
+          ))}
+          <div className="i-y3d-in relative" style={{ transformStyle: "preserve-3d" }}>
+            {Array.from({ length: 16 }, (_, k) => (
+              <span
+                key={k}
+                aria-hidden
+                className="absolute inset-0 select-none font-display text-[clamp(5.2rem,min(22vh,24vw),11rem)] font-extrabold leading-none tracking-[-0.04em] tabular-nums"
+                style={{ transform: `translateZ(${-(k + 1) * 3.4}px)`, color: mixRgb([226, 182, 58], [10, 56, 30], k / 15) }}
+              >
+                2027
+              </span>
+            ))}
+            <span className="relative block select-none overflow-hidden bg-[linear-gradient(180deg,#fff3b0_0%,#f4c542_34%,#2f9e57_74%,#14532d_100%)] bg-clip-text font-display text-[clamp(5.2rem,min(22vh,24vw),11rem)] font-extrabold leading-none tracking-[-0.04em] text-transparent tabular-nums">
+              2027
+              <span className="i-y3d-shine absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/80 to-transparent mix-blend-overlay" />
+            </span>
+          </div>
         </div>
       </div>
 
@@ -371,15 +442,49 @@ export default function Intro() {
         <img src="/images/brand/netkathir-logo-hd.png" alt="Netkathir Technologies" className="i-fallback absolute left-1/2 top-[28%] w-[min(34rem,78vw)] -translate-x-1/2 -translate-y-1/2 opacity-0 drop-shadow-[0_18px_30px_rgba(20,83,45,0.25)]" />
       )}
 
-      <div className="i-content pointer-events-none absolute inset-x-0 top-[50%] flex flex-col items-center px-6 text-center">
-        <div className="i-eleven opacity-0">
-          <span className="block bg-[linear-gradient(180deg,#14532d_0%,#1f7a43_46%,#c9a24d_100%)] bg-clip-text font-display text-[clamp(4.2rem,min(15vh,13vw),9rem)] font-light leading-[0.95] tracking-[-0.04em] text-transparent [filter:drop-shadow(0_1px_0_rgba(255,255,255,0.8))_drop-shadow(0_12px_18px_rgba(20,83,45,0.22))]">
-            11
+      <div className="i-content pointer-events-none absolute inset-x-0 top-[44%] flex flex-col items-center px-6 text-center">
+        <div className="i-eleven relative grid place-items-center opacity-0" style={{ width: "clamp(9.6rem,25vh,13.4rem)", height: "clamp(9.6rem,25vh,13.4rem)" }}>
+          {/* slow rotating light rays */}
+          <span aria-hidden className="absolute -inset-[70%] rounded-full opacity-80 [animation:nk-spin_32s_linear_infinite]" style={{ background: "repeating-conic-gradient(from 0deg, rgba(234,179,8,0.34) 0deg 3.5deg, transparent 3.5deg 15deg)", WebkitMaskImage: "radial-gradient(circle, #000 14%, transparent 62%)", maskImage: "radial-gradient(circle, #000 14%, transparent 62%)" }} />
+          <span aria-hidden className="absolute -inset-[18%] rounded-full bg-[radial-gradient(circle,rgba(250,204,21,0.34),rgba(34,150,80,0.14)_55%,transparent_72%)]" />
+          {/* gold rings, laurel wreath and a ring of lettering that turns */}
+          <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full overflow-visible" aria-hidden>
+            <defs>
+              <linearGradient id="in-gold" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#f6dc8a" />
+                <stop offset="0.5" stopColor="#c9a24d" />
+                <stop offset="1" stopColor="#8a6414" />
+              </linearGradient>
+              <linearGradient id="in-leaf" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#4ade80" />
+                <stop offset="1" stopColor="#14532d" />
+              </linearGradient>
+              <path id="in-ring" d="M100,100 m-93,0 a93,93 0 1,1 186,0 a93,93 0 1,1 -186,0" />
+            </defs>
+            <circle cx="100" cy="100" r="70" fill="rgba(255,255,255,0.78)" stroke="url(#in-gold)" strokeWidth="3" />
+            <circle cx="100" cy="100" r="64" fill="none" stroke="url(#in-gold)" strokeWidth="0.9" strokeDasharray="1.5 3.2" />
+            <g className="origin-center [animation:nk-spin_38s_linear_infinite]" style={{ transformOrigin: "100px 100px" }}>
+              <text fontSize="8.2" fontWeight="700" letterSpacing="3.2" fill="#9a6f12" fontFamily="var(--font-display), sans-serif">
+                <textPath href="#in-ring">ELEVEN YEARS · 2015 — 2026 · ELEVEN YEARS · 2015 — 2026 · ELEVEN YEARS ·</textPath>
+              </text>
+            </g>
+            {WREATH.map((l, k) => (
+              <ellipse key={k} className="i-wl" cx={l.x} cy={l.y} rx="3.6" ry="9" fill="url(#in-leaf)" transform={`rotate(${l.rot} ${l.x} ${l.y})`} style={{ transformOrigin: `${l.x}px ${l.y}px` }} />
+            ))}
+          </svg>
+          {STARS.map(([x, y, sz], k) => (
+            <span key={k} aria-hidden className="i-star absolute text-[#e6b422]" style={{ left: `${x}%`, top: `${y}%`, width: sz, height: sz }}>
+              <svg viewBox="0 0 20 20" className="h-full w-full [animation:nk-twinkle_2.2s_ease-in-out_infinite]" style={{ animationDelay: `${k * 0.27}s` }} fill="currentColor"><path d="M10 0l2.2 7.8L20 10l-7.8 2.2L10 20l-2.2-7.8L0 10l7.8-2.2z" /></svg>
+            </span>
+          ))}
+          <span className="relative block overflow-hidden px-1">
+            <span className="block bg-[linear-gradient(180deg,#14532d_0%,#1f7a43_44%,#c9a24d_100%)] bg-clip-text font-display text-[clamp(3.4rem,min(11.5vh,10vw),6.6rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-transparent [filter:drop-shadow(0_1px_0_rgba(255,255,255,0.9))_drop-shadow(0_8px_12px_rgba(20,83,45,0.25))]">11</span>
+            <span className="i-n11-shine absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/90 to-transparent" />
           </span>
         </div>
-        <div className="mt-[clamp(0.3rem,1.2vh,0.8rem)] flex w-full max-w-[calc(100vw-3rem)] items-center justify-center gap-3 sm:gap-6">
+        <div className="mt-[clamp(0.6rem,1.8vh,1.2rem)] flex w-full max-w-[calc(100vw-3rem)] items-center justify-center gap-3 sm:gap-6">
           <span className="i-rule h-px w-6 shrink-0 origin-right scale-x-0 bg-gradient-to-l from-[#c9a24d] to-transparent sm:w-16" />
-          <span className="i-label whitespace-nowrap font-display text-[0.62rem] font-semibold uppercase text-[#14532d] opacity-0 sm:text-[0.78rem]">Years of Excellence</span>
+          <span className="i-label whitespace-nowrap rounded-full bg-[linear-gradient(100deg,#f3dc8f,#d9b254_50%,#f3dc8f)] px-4 py-1.5 font-display text-[0.62rem] font-bold uppercase text-[#3a2a05] opacity-0 shadow-[0_8px_18px_-8px_rgba(154,111,18,0.7)] sm:text-[0.78rem]">Years of Excellence</span>
           <span className="i-rule h-px w-6 shrink-0 origin-left scale-x-0 bg-gradient-to-r from-[#c9a24d] to-transparent sm:w-16" />
         </div>
         <div className="relative mt-[clamp(1rem,3.4vh,2rem)] h-[clamp(7rem,19vh,10.5rem)] w-full max-w-3xl">
