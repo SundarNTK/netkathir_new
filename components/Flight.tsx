@@ -30,7 +30,7 @@ export function PlaneIcon({ className = "", style }: { className?: string; style
 const PATH = "M0 440 C170 440 190 190 340 190 S 520 450 660 450 S 860 170 990 190 S 1130 330 1200 250";
 const FRACS = [0.07, 0.29, 0.5, 0.72, 0.93];
 
-export type Stop = { k: string; t: string; d: string; tags: string[] };
+export type Stop = { k: string; t: string; d: string; tags: string[]; image?: string };
 
 export function FlightJourney({ kicker, title, stops }: { kicker: string; title: string; stops: Stop[] }) {
   const sec = useRef<HTMLElement>(null);
@@ -157,9 +157,16 @@ export function FlightJourney({ kicker, title, stops }: { kicker: string; title:
             <span key={`d${i}`} data-dot aria-hidden className="absolute z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white bg-[#16a34a] shadow-[0_0_0_6px_rgba(34,197,94,0.25)]" />
           ))}
           {stops.map((s, i) => (
-            <article key={s.k} data-stop className="absolute z-20 w-[14rem] rounded-2xl border border-[#14532d]/10 bg-white p-4 text-[#0a2417] shadow-[0_26px_60px_-30px_rgba(0,0,0,0.5)]">
+            <article key={s.k} data-stop className="absolute z-20 w-[14.5rem] rounded-2xl border border-[#14532d]/10 bg-white p-4 text-[#0a2417] shadow-[0_26px_60px_-30px_rgba(0,0,0,0.5)]">
+              {s.image && (
+                <div className="relative -mx-1 -mt-1 mb-3 h-24 overflow-hidden rounded-xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={s.image} alt="" className="h-full w-full object-cover" />
+                  <span className="absolute left-2 top-2 rounded-full bg-gradient-to-r from-[#14532d] to-[#22a559] px-2.5 py-0.5 font-mono text-[0.65rem] font-bold tracking-widest text-white">0{i + 1}</span>
+                </div>
+              )}
               <div className="mb-2 flex items-center justify-between">
-                <span className="rounded-full bg-gradient-to-r from-[#14532d] to-[#22a559] px-2.5 py-0.5 font-mono text-[0.65rem] font-bold tracking-widest text-white">0{i + 1}</span>
+                <span className={`rounded-full bg-gradient-to-r from-[#14532d] to-[#22a559] px-2.5 py-0.5 font-mono text-[0.65rem] font-bold tracking-widest text-white ${s.image ? "hidden" : ""}`}>0{i + 1}</span>
                 <span className="text-[0.7rem] font-semibold uppercase tracking-widest text-[#15803d]">{s.k}</span>
               </div>
               <h3 className="font-display text-lg leading-tight">{s.t}</h3>
@@ -301,9 +308,11 @@ export function FlightStrip({ from, to, note }: { from: string; to: string; note
         <div data-sx className="absolute z-10 h-9 w-9 -ml-[1.125rem] -mt-[1.125rem] drop-shadow-[0_8px_10px_rgba(0,0,0,0.25)]">
           <PlaneIcon className="h-full w-full" />
         </div>
-        <span className="absolute -bottom-1 left-0 rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#14532d] shadow-sm">{from}</span>
-        <span className="absolute right-0 -top-1 rounded-full bg-gradient-to-r from-[#14532d] to-[#22a559] px-3 py-1 text-xs font-bold uppercase tracking-widest text-white shadow-sm">{to}</span>
-        <p data-sm className="absolute left-1/2 top-[58%] -translate-x-1/2 text-center font-display text-lg text-[#14532d] sm:text-2xl">{note}</p>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <span className="rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#14532d] shadow-sm">{from}</span>
+        <p data-sm className="order-last w-full text-center font-display text-lg text-[#14532d] sm:order-none sm:w-auto sm:text-2xl">{note}</p>
+        <span className="rounded-full bg-gradient-to-r from-[#14532d] to-[#22a559] px-3 py-1 text-xs font-bold uppercase tracking-widest text-white shadow-sm">{to}</span>
       </div>
     </div>
   );

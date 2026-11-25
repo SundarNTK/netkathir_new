@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { FlightJourney, FlyAnywhere } from "@/components/Flight";
 import { Collage } from "@/components/Showcase";
-import HorizontalScroll from "@/components/HorizontalScroll";
-import { CLIENTS, IMAGES, PILLARS, SERVICE_GROUPS, TESTIMONIALS } from "@/lib/data";
+import { CLIENTS, IMAGES, SERVICE_GROUPS, TESTIMONIALS } from "@/lib/data";
 
 const SHOWCASE = [
   { href: "/services", label: "Services", image: IMAGES.heroes.services, desc: "AI agents, ERP, cloud and automation built around your workflow." },
@@ -12,11 +11,11 @@ const SHOWCASE = [
 ];
 
 const JOURNEY = [
-  { k: "Discover", t: "We map your workflow", d: "Sit with your team, find the slow, manual steps worth automating.", tags: ["Workshops", "Process maps"] },
-  { k: "Design", t: "Architecture & UX", d: "Clear screens and a system that fits how you already work.", tags: ["Next.js", "Figma"] },
-  { k: "Build AI", t: "Agents, RAG & LLMs", d: "Chatbots and assistants wired into your own data and tools.", tags: ["LLMs", "RAG", "Python"] },
-  { k: "Deploy", t: "Cloud & DevOps", d: "Secure releases on AWS or Azure with automated pipelines.", tags: ["AWS", "Docker", "CI/CD"] },
-  { k: "Support", t: "Run it, improve it", d: "Monitoring and a team that stays after launch. ISO 27001.", tags: ["24/7", "ISO 27001"] },
+  { k: "Discover", image: IMAGES.heroes.about, t: "We map your workflow", d: "Sit with your team, find the slow, manual steps worth automating.", tags: ["Workshops", "Process maps"] },
+  { k: "Design", image: IMAGES.heroes.products, t: "Architecture & UX", d: "Clear screens and a system that fits how you already work.", tags: ["Next.js", "Figma"] },
+  { k: "Build AI", image: IMAGES.heroes.services, t: "Agents, RAG & LLMs", d: "Chatbots and assistants wired into your own data and tools.", tags: ["LLMs", "RAG", "Python"] },
+  { k: "Deploy", image: IMAGES.heroes.projects, t: "Cloud & DevOps", d: "Secure releases on AWS or Azure with automated pipelines.", tags: ["AWS", "Docker", "CI/CD"] },
+  { k: "Support", image: IMAGES.heroes.contact, t: "Run it, improve it", d: "Monitoring and a team that stays after launch. ISO 27001.", tags: ["24/7", "ISO 27001"] },
 ];
 
 const REACH = ["ERP systems", "CRM platforms", "AI chatbots", "AI agents", "RAG search", "Workflow automation", "Garage Bill", "HRMS", "Cloud migration", "DevOps pipelines"];
@@ -171,8 +170,6 @@ export default function Home() {
           </ol>
         </div>
       </section>
-
-      <HorizontalScroll kicker="What we do" title="Four ways we move you forward." items={PILLARS} />
 
       <FlightJourney kicker="How we deliver" title="From idea to AI, in flight." stops={JOURNEY} />
 

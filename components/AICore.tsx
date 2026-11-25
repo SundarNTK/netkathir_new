@@ -10,7 +10,7 @@ import type { RobotPalette } from "./Hero3D";
 
 /* ============================ living holographic interfaces ============================ */
 
-const TITLES = ["GARAGE BILL · INVOICES", "WORKFLOW AUTOMATION", "CLOUD & DEVOPS", "HRMS · TEAM TODAY", "AI SUPPORT BOT", "AI SERVICES"];
+const TITLES = ["GARAGE BILL", "NETKATHIR AI ASSISTANT", "HRMS", "CI/CD · CLOUD", "OUR CLIENTS", "WORKFLOW AUTOMATION"];
 const PW = 512;
 const PH = 340;
 const ease = (x: number) => x * x * (3 - 2 * x);
@@ -54,157 +54,235 @@ function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t:
   c.moveTo(24, 56);
   c.lineTo(488, 56);
   c.stroke();
-  const rnd = seeded(11 + kind * 7 + variant * 31);
 
+  c.textBaseline = "alphabetic";
+  const pill = (x: number, y: number, w: number, label: string, col: string, ink = "#06240f") => {
+    c.fillStyle = col;
+    c.beginPath();
+    c.roundRect(x, y, w, 24, 12);
+    c.fill();
+    c.fillStyle = ink;
+    c.font = "700 14px Arial";
+    c.textAlign = "center";
+    c.fillText(label, x + w / 2, y + 17);
+    c.textAlign = "left";
+  };
   if (kind === 0) {
+    // Garage Bill: live invoices
+    const rows = [["INV-1042", "Toyota Innova", "₹8,450"], ["INV-1043", "Honda City", "₹3,200"], ["INV-1044", "Hyundai i20", "₹12,780"], ["INV-1045", "Maruti Swift", "₹5,640"]];
+    const paid = Math.floor(t * 0.7 + variant) % 5;
+    rows.forEach(([id, car, amt], i) => {
+      const y = 70 + i * 48;
+      c.fillStyle = "rgba(255,255,255,0.07)";
+      c.beginPath();
+      c.roundRect(20, y, 472, 40, 10);
+      c.fill();
+      c.fillStyle = "#bef264";
+      c.font = "600 15px monospace";
+      c.fillText(id, 32, y + 25);
+      c.fillStyle = "#e7f8e8";
+      c.font = "600 18px Arial";
+      c.fillText(car, 130, y + 26);
+      c.font = "700 18px Arial";
+      c.textAlign = "right";
+      c.fillText(amt, 388, y + 26);
+      c.textAlign = "left";
+      const ok = i < paid;
+      pill(400, y + 8, 80, ok ? "Paid" : "Pending", ok ? "#4ade80" : "#facc15");
+    });
+    c.fillStyle = "rgba(190,242,100,0.8)";
+    c.font = "600 15px Arial";
+    c.fillText("Today", 24, 292);
+    c.fillStyle = "#ffffff";
+    c.font = "700 30px Arial";
+    c.fillText("₹" + (42300 + Math.floor(Math.sin(t) * 40 + 40) * 10).toLocaleString("en-IN"), 24, 322);
+    c.fillStyle = "rgba(190,242,100,0.8)";
+    c.font = "600 15px Arial";
+    c.fillText("Job cards open: 12", 300, 322);
+  } else if (kind === 1) {
+    // AI assistant chat that types itself out
+    const q = variant ? "Which invoices are pending?" : "Summarise today's sales";
+    const a = variant ? "4 pending · ₹21,100 due this week." : "42 bills · ₹42,300 · up 12% on last week.";
+    const s2 = (t * 0.55 + variant * 0.5) % 3;
+    const bubble = (txt: string, x: number, y: number, w: number, mine: boolean) => {
+      c.fillStyle = mine ? "#facc15" : "rgba(74,222,128,0.2)";
+      c.beginPath();
+      c.roundRect(x, y, w, 46, 16);
+      c.fill();
+      c.fillStyle = mine ? "#2d2400" : "#e7f8e8";
+      c.font = "600 18px Arial";
+      c.fillText(txt, x + 14, y + 29);
+    };
+    if (s2 > 0.15) bubble(q, 230, 76, 262, true);
+    if (s2 > 1.0) {
+      const n = Math.min(a.length, Math.floor((s2 - 1.0) * 26));
+      if (s2 < 1.3) {
+        c.fillStyle = "#4ade80";
+        for (let i = 0; i < 3; i++) {
+          c.beginPath();
+          c.arc(40 + i * 18, 160 + Math.sin(t * 8 + i) * 3, 5, 0, 7);
+          c.fill();
+        }
+      } else {
+        bubble(a.slice(0, n), 20, 134, 400, false);
+      }
+    }
+    if (s2 > 2.0) {
+      pill(20, 200, 130, "Send reminders", "#4ade80");
+      pill(160, 200, 110, "Export PDF", "rgba(255,255,255,0.8)");
+    }
+    c.fillStyle = "rgba(255,255,255,0.12)";
+    c.beginPath();
+    c.roundRect(20, 280, 472, 40, 20);
+    c.fill();
+    c.fillStyle = "rgba(231,248,232,0.55)";
+    c.font = "17px Arial";
+    c.fillText("Ask Netkathir AI anything…", 40, 306);
+  } else if (kind === 2) {
+    // HRMS: attendance + leave requests
+    const present = 46 + Math.round(Math.sin(t * 0.8 + variant) * 2);
+    c.lineWidth = 16;
+    c.strokeStyle = "rgba(74,222,128,0.2)";
+    c.beginPath();
+    c.arc(100, 170, 56, 0, 7);
+    c.stroke();
+    c.strokeStyle = "#4ade80";
+    c.lineCap = "round";
+    c.beginPath();
+    c.arc(100, 170, 56, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (present / 50));
+    c.stroke();
+    c.lineCap = "butt";
+    c.fillStyle = "#fff";
+    c.font = "700 34px Arial";
+    c.textAlign = "center";
+    c.fillText(String(present), 100, 182);
+    c.font = "14px Arial";
+    c.fillStyle = "rgba(231,248,232,0.75)";
+    c.fillText("of 50 present", 100, 252);
+    c.textAlign = "left";
+    c.fillStyle = "rgba(190,242,100,0.85)";
+    c.font = "600 15px Arial";
+    c.fillText("Leave requests", 200, 82);
+    [["Anitha", "2 days"], ["Karthik", "1 day"], ["Meena", "3 days"]].forEach(([n, d], i) => {
+      const y = 96 + i * 50;
+      c.fillStyle = "rgba(255,255,255,0.07)";
+      c.beginPath();
+      c.roundRect(200, y, 292, 42, 10);
+      c.fill();
+      c.fillStyle = "#facc15";
+      c.beginPath();
+      c.arc(222, y + 21, 12, 0, 7);
+      c.fill();
+      c.fillStyle = "#e7f8e8";
+      c.font = "600 17px Arial";
+      c.fillText(n, 244, y + 20);
+      c.font = "13px Arial";
+      c.fillStyle = "rgba(231,248,232,0.6)";
+      c.fillText(d, 244, y + 36);
+      const ok = Math.floor(t * 0.6 + i + variant) % 3 !== 0;
+      pill(406, y + 9, 76, ok ? "Approved" : "Review", ok ? "#4ade80" : "#fde047");
+    });
     c.fillStyle = "rgba(190,242,100,0.75)";
     c.font = "15px Arial";
-    c.fillText("Invoices this week", 24, 80);
-    for (let i = 0; i < 16; i++) {
-      const h = 30 + (Math.sin(t * 1.4 + i * 0.7 + variant * 2) * 0.5 + 0.5) * 165;
-      const bg = c.createLinearGradient(0, 320 - h, 0, 320);
-      bg.addColorStop(0, "#facc15");
-      bg.addColorStop(1, "#16a34a");
-      c.fillStyle = bg;
-      c.fillRect(26 + i * 28, 320 - h, 18, h);
-    }
-    c.strokeStyle = "#d9f99d";
-    c.lineWidth = 3;
-    c.beginPath();
-    for (let i = 0; i <= 24; i++) {
-      const x = 28 + i * 19, y = 140 - Math.sin(i * 0.5 + t * 1.6 + variant) * 38 - Math.sin(i * 0.17 + t * 0.7) * 18;
-      i ? c.lineTo(x, y) : c.moveTo(x, y);
-    }
-    c.stroke();
-  } else if (kind === 1) {
-    const pts = Array.from({ length: 22 }, () => [40 + rnd() * 430, 78 + rnd() * 240]);
-    c.strokeStyle = "rgba(190,242,100,0.45)";
-    c.lineWidth = 1.5;
-    const edges: [number, number][] = [];
-    pts.forEach((p, i) =>
-      pts.slice(i + 1, i + 4).forEach((q, k) => {
-        edges.push([i, i + 1 + k]);
-        c.beginPath();
-        c.moveTo(p[0], p[1]);
-        c.lineTo(q[0], q[1]);
-        c.stroke();
-      })
-    );
-    pts.forEach((p, i) => {
-      const hot = i % 5 === variant;
-      c.fillStyle = hot ? "#facc15" : "#4ade80";
-      c.beginPath();
-      c.arc(p[0], p[1], (hot ? 8 : 4.5) + Math.sin(t * 3 + i) * 1.6, 0, 7);
-      c.fill();
-    });
-    // signals travelling along the connections
-    for (let s = 0; s < 3; s++) {
-      const e = edges[(Math.floor(t * 2 + s * 7) * 5) % edges.length];
-      const f = (t * 2 + s * 0.33) % 1;
-      const a = pts[e[0]], b = pts[e[1]];
-      c.fillStyle = "#ffffff";
-      c.beginPath();
-      c.arc(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, 5, 0, 7);
-      c.fill();
-    }
-  } else if (kind === 2) {
-    const steps = ["Build", "Test", "Review", "Deploy"];
+    c.fillText("Payroll · Leave · Attendance · Hiring", 24, 322);
+  } else if (kind === 3) {
+    // CI/CD pipeline
+    const steps = ["Build", "Test", "Review", "Deploy to AWS"];
     const cur = (t * 0.55 + variant) % (steps.length + 1);
     steps.forEach((label, i) => {
       const done = cur > i + 0.6;
       const active = !done && cur > i;
-      const y = 92 + i * 52;
+      const y = 78 + i * 54;
       c.fillStyle = done ? "#4ade80" : active ? "#facc15" : "rgba(255,255,255,0.18)";
       c.beginPath();
-      c.arc(46, y + 14, 15, 0, 7);
+      c.arc(46, y + 16, 16, 0, 7);
       c.fill();
       c.fillStyle = "#06240f";
       c.font = "700 18px Arial";
       c.textAlign = "center";
-      c.fillText(done ? "✓" : String(i + 1), 46, y + 20);
+      c.fillText(done ? "✓" : String(i + 1), 46, y + 22);
       c.textAlign = "left";
       c.fillStyle = "#e7f8e8";
       c.font = "600 24px Arial";
-      c.fillText(label, 80, y + 22);
+      c.fillText(label, 80, y + 24);
       c.fillStyle = done ? "#86efac" : active ? "#fde047" : "rgba(231,248,232,0.4)";
       c.font = "16px monospace";
-      c.fillText(done ? "passed" : active ? "running" + ".".repeat(1 + (Math.floor(t * 3) % 3)) : "queued", 300, y + 21);
+      c.fillText(done ? "passed" : active ? "running" + ".".repeat(1 + (Math.floor(t * 3) % 3)) : "queued", 340, y + 23);
     });
     const p = Math.min(1, cur / steps.length);
     c.fillStyle = "rgba(255,255,255,0.15)";
     c.fillRect(24, 306, 464, 12);
     c.fillStyle = "#4ade80";
     c.fillRect(24, 306, 464 * p, 12);
-  } else if (kind === 3) {
-    const rows = [["Present", 0.86, "#4ade80"], ["On leave", 0.12, "#facc15"], ["Remote", 0.34, "#86efac"], ["Interviews", 0.2, "#d9f99d"]] as const;
-    rows.forEach(([label, base, col], i) => {
-      const v = Math.min(1, Math.max(0.05, base + Math.sin(t * 0.9 + i * 1.7 + variant) * 0.05));
-      const y = 94 + i * 56;
+  } else if (kind === 4) {
+    // real client projects
+    const cl = [["HEB", "Retail platform"], ["MedConnect AI", "Healthcare AI"], ["WhyScience", "Education"], ["APPGM", "Web portal"]];
+    cl.forEach(([n, d], i) => {
+      const y = 72 + i * 56;
+      const v = clamp01(0.62 + Math.sin(t * 0.8 + i * 1.4 + variant) * 0.12 + i * 0.07);
+      c.fillStyle = "rgba(255,255,255,0.07)";
+      c.beginPath();
+      c.roundRect(20, y, 472, 48, 10);
+      c.fill();
+      c.fillStyle = ["#4ade80", "#facc15", "#86efac", "#fde047"][i];
+      c.beginPath();
+      c.arc(46, y + 24, 14, 0, 7);
+      c.fill();
+      c.fillStyle = "#06240f";
+      c.font = "800 15px Arial";
+      c.textAlign = "center";
+      c.fillText(n[0], 46, y + 30);
+      c.textAlign = "left";
       c.fillStyle = "#e7f8e8";
-      c.font = "22px Arial";
-      c.fillText(label, 28, y + 14);
+      c.font = "700 19px Arial";
+      c.fillText(n, 72, y + 22);
+      c.font = "13px Arial";
+      c.fillStyle = "rgba(231,248,232,0.6)";
+      c.fillText(d, 72, y + 40);
       c.fillStyle = "rgba(255,255,255,0.14)";
       c.beginPath();
-      c.roundRect(190, y, 290, 18, 9);
+      c.roundRect(280, y + 18, 190, 12, 6);
       c.fill();
-      c.fillStyle = col;
+      c.fillStyle = "#4ade80";
       c.beginPath();
-      c.roundRect(190, y, 290 * v, 18, 9);
+      c.roundRect(280, y + 18, 190 * v, 12, 6);
       c.fill();
     });
-    c.fillStyle = "rgba(190,242,100,0.75)";
-    c.font = "15px Arial";
-    c.fillText("Payroll · Leave · Attendance · Recruitment", 28, 322);
-  } else if (kind === 4) {
-    const pct = 0.9 + 0.09 * (Math.sin(t * 0.9 + variant * 2) * 0.5 + 0.5);
-    c.lineWidth = 26;
-    c.strokeStyle = "rgba(74,222,128,0.2)";
-    c.beginPath();
-    c.arc(256, 195, 82, 0, 7);
-    c.stroke();
-    c.strokeStyle = variant ? "#facc15" : "#4ade80";
-    c.lineCap = "round";
-    c.beginPath();
-    c.arc(256, 195, 82, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct);
-    c.stroke();
-    c.lineCap = "butt";
-    c.fillStyle = "#ffffff";
-    c.font = "700 50px Arial";
-    c.textAlign = "center";
-    c.fillText((pct * 100).toFixed(1) + "%", 256, 212);
-    c.font = "16px Arial";
-    c.fillStyle = "rgba(231,248,232,0.75)";
-    c.fillText("Queries resolved", 256, 242);
-    c.textAlign = "left";
-    c.strokeStyle = "#bef264";
-    c.lineWidth = 2.5;
-    c.beginPath();
-    for (let i = 0; i <= 30; i++) {
-      const x = 40 + i * 14.5, y = 312 - (Math.sin(i * 0.4 + t * 2) * 0.5 + 0.5) * 18;
-      i ? c.lineTo(x, y) : c.moveTo(x, y);
-    }
-    c.stroke();
   } else {
-    const labels = ["Chatbot", "RAG Search", "Agents", "Auto-reply"];
-    labels.forEach((label, i) => {
-      const phase = t * 0.8 + i * 0.9 + variant;
-      const on = Math.sin(phase) > -0.2;
-      const k = ease(clamp01(Math.sin(phase) * 2.2 + 0.5));
+    // workflow automation: Lead, CRM, AI, Email
+    const nodes = [["Lead in", 60], ["CRM", 190], ["AI score", 320], ["Email", 450]] as const;
+    const f = (t * 0.7 + variant) % 4;
+    nodes.forEach(([label, x], i) => {
+      if (i < 3) {
+        c.strokeStyle = "rgba(190,242,100,0.5)";
+        c.lineWidth = 2.5;
+        c.beginPath();
+        c.moveTo(x + 26, 170);
+        c.lineTo(nodes[i + 1][1] - 26, 170);
+        c.stroke();
+      }
+      const on = f > i && f < i + 2;
+      c.fillStyle = on ? "#facc15" : "#4ade80";
+      c.beginPath();
+      c.arc(x, 170, on ? 28 : 24, 0, 7);
+      c.fill();
+      c.fillStyle = "#06240f";
+      c.font = "800 16px Arial";
+      c.textAlign = "center";
+      c.fillText(String(i + 1), x, 176);
       c.fillStyle = "#e7f8e8";
-      c.font = "26px Arial";
-      c.fillText(label, 28, 108 + i * 52);
-      c.fillStyle = on ? "#16a34a" : "rgba(255,255,255,0.18)";
-      c.beginPath();
-      c.roundRect(390, 84 + i * 52, 88, 38, 19);
-      c.fill();
-      c.fillStyle = on ? "#facc15" : "#9aa8a0";
-      c.beginPath();
-      c.arc(409 + 50 * k, 103 + i * 52, 14, 0, 7);
-      c.fill();
+      c.font = "600 16px Arial";
+      c.fillText(label, x, 222);
+      c.textAlign = "left";
     });
-    c.fillStyle = "#bef264";
+    const px = 60 + (f / 3) * 390;
+    c.fillStyle = "#fff";
+    c.beginPath();
+    c.arc(Math.min(450, px), 170, 7, 0, 7);
+    c.fill();
+    c.fillStyle = "rgba(190,242,100,0.85)";
     c.font = "600 16px Arial";
-    c.fillText("Processing" + ".".repeat(1 + (Math.floor(t * 3) % 3)), 28, 318);
+    c.fillText("Hours saved this week: " + (28 + (Math.floor(t) % 9)), 24, 306);
   }
 }
 
@@ -229,12 +307,12 @@ function renderInterface(c: CanvasRenderingContext2D, kind: number, i: number, t
 
 // stage coordinates (robot stands at x = -0.6): a symmetric arc of interfaces
 const PANELS: { pos: [number, number, number]; w: number; kind: number; ry: number }[] = [
-  { pos: [2.35, 2.95, 0.1], w: 1.6, kind: 0, ry: -0.5 },
-  { pos: [-2.75, 2.45, 0.6], w: 1.75, kind: 4, ry: 0.45 },
-  { pos: [1.25, 3.95, 0.1], w: 1.5, kind: 1, ry: -0.35 },
-  { pos: [-2.45, 3.95, 0.2], w: 1.5, kind: 3, ry: 0.35 },
-  { pos: [2.5, 1.2, 0.1], w: 1.4, kind: 5, ry: -0.5 },
-  { pos: [-2.95, 1.1, 0.4], w: 1.4, kind: 2, ry: 0.5 },
+  { pos: [2.35, 2.95, 0.1], w: 1.7, kind: 0, ry: -0.5 },
+  { pos: [-2.75, 2.45, 0.6], w: 1.8, kind: 1, ry: 0.45 },
+  { pos: [1.25, 3.95, 0.1], w: 1.55, kind: 2, ry: -0.35 },
+  { pos: [-2.45, 3.95, 0.2], w: 1.55, kind: 5, ry: 0.35 },
+  { pos: [2.5, 1.2, 0.1], w: 1.5, kind: 4, ry: -0.5 },
+  { pos: [-2.95, 1.1, 0.4], w: 1.5, kind: 3, ry: 0.5 },
 ];
 const SEG = 14;
 const DOWN = new THREE.Vector3(0, -1, 0);
@@ -455,7 +533,9 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
   const shots = useRef<THREE.MeshBasicMaterial[]>([]);
   const mouse = useRef({ x: 0, y: 0 });
   const scroll = useRef(0);
-  const K = useMemo(() => ({ S: new THREE.Vector3(), E: new THREE.Vector3(), W: new THREE.Vector3(), a: new THREE.Vector3(), b: new THREE.Vector3(), pole: new THREE.Vector3(), t: new THREE.Vector3(), u: new THREE.Vector3(), bp: new THREE.Vector3() }), []);
+  const en = useRef(0); // seconds since the robot started entering
+  const rings = useRef<THREE.Group[]>([]);
+  const K = useMemo(() => ({ S: new THREE.Vector3(), E: new THREE.Vector3(), W: new THREE.Vector3(), a: new THREE.Vector3(), b: new THREE.Vector3(), pole: new THREE.Vector3(), t: new THREE.Vector3(), r: new THREE.Vector3(), u: new THREE.Vector3(), bp: new THREE.Vector3() }), []);
   const count = mobile ? 3 : PANELS.length;
 
   useEffect(() => {
@@ -571,11 +651,20 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
     const e = ease(sc);
     void s;
     const visible = mobile ? 3 : 3 + Math.min(3, Math.floor(sc * 3.2));
+    // entrance: robot rises and turns in, raises its hand, the AI pops up, the wave opens, screens appear one by one
+    en.current += Math.min(d, 0.05);
+    const E = en.current;
+    const sg = (a: number, b: number) => ease(clamp01((E - a) / (b - a)));
+    const back = (x: number) => 1 + 2.7 * Math.pow(x - 1, 3) + 1.7 * Math.pow(x - 1, 2);
+    const rIn = sg(0, 1.6);
+    const armIn = sg(1.3, 2.5);
+    const aiIn = clamp01((E - 2.2) / 0.9);
 
     // ---- body: hover, breathing, turns with the cursor (and a little with scroll)
-    robot.current.rotation.y = THREE.MathUtils.damp(robot.current.rotation.y, -0.05 + e * 0.3 + mouse.current.x * 0.75, 3.2, d);
+    robot.current.rotation.y = THREE.MathUtils.damp(robot.current.rotation.y, -0.05 + e * 0.3 + mouse.current.x * 0.75 + (1 - rIn) * 2.4, 3.2, d);
     robot.current.rotation.x = THREE.MathUtils.damp(robot.current.rotation.x, -mouse.current.y * 0.07, 3.2, d);
-    robot.current.position.y = Math.sin(t * 1.6) * 0.04;
+    robot.current.position.y = Math.sin(t * 1.6) * 0.04 - (1 - rIn) * 3.2;
+    robot.current.scale.setScalar(0.72 + 0.28 * rIn);
     torso.current.scale.set(1, 1 + Math.sin(t * 1.7) * 0.01, 1 + Math.sin(t * 1.7) * 0.012);
     antenna.current.rotation.z = 0.28 + Math.sin(t * 2.1) * 0.06;
     robot.current.updateWorldMatrix(true, true);
@@ -587,6 +676,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
       const S = K.S.set(side * 0.98, 2.55, 0);
       const pole = K.pole.set(side * 0.5, -0.9, -0.35);
       const wrist = a === 0 ? K.t.set(1.0, 1.95 + bob, 0.92) : K.t.set(-1.0 + Math.sin(t * 1.1) * 0.03, 1.72 + Math.sin(t * 1.3) * 0.03, 0.3);
+      wrist.lerp(K.r.set(side * 0.42, 1.2, 0.3), 1 - armIn);
       solveArm(S, wrist, pole, 0.62, 0.62, K.E, K.W, K.a, K.b);
       const up = (a === 0 ? upP : upR).current;
       const fo = (a === 0 ? foP : foR).current;
@@ -601,6 +691,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
         K.bp.y += 0.72 + Math.sin(t * 1.8) * 0.05;
         K.bp.z += 0.12;
         brain.current.position.copy(K.bp);
+        brain.current.scale.setScalar(0.64 * Math.max(0.001, back(aiIn)));
       }
     }
 
@@ -617,7 +708,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
     PANELS.slice(0, count).forEach((p, i) => {
       const g = panels.current[i];
       if (!g) return;
-      const appear = i < 3 || mobile ? 1 : ease(clamp01((sc - (i - 3) * 0.2) / 0.3 + 0.05));
+      const appear = (i < 3 || mobile ? 1 : ease(clamp01((sc - (i - 3) * 0.2) / 0.3 + 0.05))) * sg(3.0 + i * 0.45, 4.0 + i * 0.45);
       const spread = mobile ? 0.72 : 1 + e * 0.1;
       const ox = mobile ? 0.6 : 0;
       g.position.set(p.pos[0] * spread + ox, p.pos[1] + Math.sin(t * 1.2 + i * 1.3) * 0.07, p.pos[2]);
@@ -632,6 +723,12 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
         renderInterface(L.ctx, p.kind, i, t);
         L.tex.needsUpdate = true;
       }
+    });
+
+    rings.current.forEach((g, i) => {
+      if (!g) return;
+      const k = sg(1.8 + i * 0.4, 3.2 + i * 0.4);
+      g.scale.set(Math.max(0.001, k), 1, Math.max(0.001, k));
     });
 
     // ---- data streams from the chest into every active interface
@@ -816,8 +913,14 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
 
 
       {/* circular AI data wave wrapped around the robot */}
-      <AiWaveRing palette={palette} R={mobile ? 2.7 : 3.6} H={0.95} y={1.7} tilt={0.22} x={mobile ? 0 : -0.6} Nu={mobile ? 60 : 96} Nv={6} />
-      {!mobile && <AiWaveRing palette={palette} R={2.9} H={0.6} y={3.7} tilt={-0.2} Nu={80} Nv={5} speed={1.3} />}
+      <group ref={(g) => { if (g) rings.current[0] = g; }} position={[mobile ? 0 : -0.6, 0, 0]}>
+        <AiWaveRing palette={palette} R={mobile ? 2.7 : 3.6} H={0.95} y={1.7} tilt={0.22} x={0} Nu={mobile ? 60 : 96} Nv={6} />
+      </group>
+      {!mobile && (
+        <group ref={(g) => { if (g) rings.current[1] = g; }} position={[-0.6, 0, 0]}>
+          <AiWaveRing palette={palette} R={2.9} H={0.6} y={3.7} tilt={-0.2} x={0} Nu={80} Nv={5} speed={1.3} />
+        </group>
+      )}
 
     </group>
   );

@@ -1,5 +1,4 @@
 import PageHero from "@/components/PageHero";
-import { FlyAnywhere } from "@/components/Flight";
 import Ticker from "@/components/Ticker";
 import Founder from "@/components/Founder";
 import WorldMap from "@/components/WorldMap";
@@ -94,7 +93,6 @@ export default function About() {
           </div>
         </div>
       </section>
-      <FlyAnywhere caption="Global presence" lead="We build from Puducherry for" items={COUNTRIES} mark="Global" />
       <Ticker items={VALUES.map((v) => v[0])} />
       <section className="py-14">
         <div className="mx-auto max-w-7xl px-6">

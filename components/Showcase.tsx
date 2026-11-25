@@ -23,15 +23,24 @@ export function ServiceReveal({ areas }: { areas: Area[] }) {
     mm.add("(min-width: 768px) and (prefers-reduced-motion: no-preference)", () => {
       const panel = root.querySelector<HTMLElement>("[data-sr-panel]")!;
       const groups = Array.from(root.querySelectorAll<HTMLElement>("[data-sr-g]"));
-      const idx = Array.from(root.querySelectorAll<HTMLElement>("[data-sr-i]"));
+      const tabs = Array.from(root.querySelectorAll<HTMLElement>("[data-sr-i]"));
+      const fills = Array.from(root.querySelectorAll<HTMLElement>("[data-sr-fill]"));
       const imgs = Array.from(root.querySelectorAll<HTMLElement>("[data-sr-img]"));
+      const chips = Array.from(root.querySelectorAll<HTMLElement>("[data-sr-chip]"));
       const head = root.querySelector<HTMLElement>("[data-sr-head]")!;
       const n = groups.length;
       const E = 0.16; // expand phase
       const seg = (1 - E) / n;
       gsap.set(groups, { autoAlpha: 0 });
-      gsap.set(imgs, { autoAlpha: 0, scale: 1.12 });
-      groups.forEach((g) => gsap.set(g.querySelectorAll("[data-sr-a]"), { y: 36, autoAlpha: 0 }));
+      gsap.set(imgs, { clipPath: "inset(100% 0% 0% 0%)", scale: 1.18 });
+      gsap.set(chips, { autoAlpha: 0, y: 40, scale: 0.9 });
+      gsap.set(fills, { scaleX: 0 });
+      groups.forEach((g) => {
+        gsap.set(g.querySelectorAll("[data-sr-n]"), { yPercent: 45, autoAlpha: 0, rotate: 4 });
+        gsap.set(g.querySelectorAll("[data-sr-a]"), { y: 40, autoAlpha: 0 });
+        gsap.set(g.querySelectorAll("[data-sr-x]"), { x: -34, autoAlpha: 0 });
+        gsap.set(g.querySelectorAll("[data-sr-t]"), { scale: 0.7, autoAlpha: 0 });
+      });
 
       const tl = gsap.timeline({ scrollTrigger: { trigger: root, start: "top top", end: `+=${n * 1500 + 700}`, pin: true, scrub: 0.7, anticipatePin: 1 } });
       tl.to({}, { duration: 1 }, 0); // fixes total length at 1
@@ -39,22 +48,38 @@ export function ServiceReveal({ areas }: { areas: Area[] }) {
       tl.fromTo(head, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -60, ease: "none", duration: E * 0.7 }, 0);
       groups.forEach((g, i) => {
         const s = E + i * seg;
+        const num = g.querySelectorAll("[data-sr-n]");
         const a = g.querySelectorAll("[data-sr-a]");
-        tl.to(panel, { backgroundColor: areas[i].bg, duration: 0.03, ease: "none" }, s);
-        tl.to(g, { autoAlpha: 1, duration: 0.02 }, s);
-        tl.to(imgs[i], { autoAlpha: 1, duration: 0.04, ease: "none" }, s);
+        const xs = g.querySelectorAll("[data-sr-x]");
+        const ts = g.querySelectorAll("[data-sr-t]");
+        // colours of the panel follow the step
+        tl.to(panel, { backgroundColor: areas[i].bg, "--sr-ink": areas[i].ink, duration: 0.03, ease: "none" }, s);
+        // picture wipes up over the previous one, then slowly settles
+        tl.to(imgs[i], { clipPath: "inset(0% 0% 0% 0%)", duration: 0.05, ease: "power2.inOut" }, s);
         tl.to(imgs[i], { scale: 1, duration: seg, ease: "none" }, s);
-        tl.to(a, { y: 0, autoAlpha: 1, stagger: 0.012, duration: 0.05, ease: "power3.out" }, s + 0.01);
+        tl.to(chips[i], { autoAlpha: 1, y: 0, scale: 1, duration: 0.05, ease: "back.out(1.6)" }, s + 0.03);
+        // text arrives piece by piece
+        tl.to(g, { autoAlpha: 1, duration: 0.01 }, s);
+        tl.to(num, { yPercent: 0, autoAlpha: 1, rotate: 0, duration: 0.06, ease: "power3.out" }, s + 0.005);
+        tl.to(a, { y: 0, autoAlpha: 1, stagger: 0.012, duration: 0.05, ease: "power3.out" }, s + 0.012);
+        tl.to(xs, { x: 0, autoAlpha: 1, stagger: 0.01, duration: 0.05, ease: "power3.out" }, s + 0.03);
+        tl.to(ts, { scale: 1, autoAlpha: 1, stagger: 0.008, duration: 0.04, ease: "back.out(2)" }, s + 0.06);
+        // progress line of this step fills while it is on screen
+        tl.to(fills[i], { scaleX: 1, duration: seg, ease: "none" }, s);
         if (i < n - 1) {
-          tl.to(a, { y: -26, autoAlpha: 0, stagger: 0.004, duration: 0.035, ease: "power2.in" }, s + seg - 0.04);
-          tl.to(g, { autoAlpha: 0, duration: 0.01 }, s + seg - 0.005);
-          tl.to(imgs[i], { autoAlpha: 0, duration: 0.04, ease: "none" }, s + seg - 0.03);
+          const o = s + seg - 0.045;
+          tl.to(xs, { x: 30, autoAlpha: 0, stagger: 0.004, duration: 0.03, ease: "power2.in" }, o);
+          tl.to(a, { y: -30, autoAlpha: 0, stagger: 0.004, duration: 0.035, ease: "power2.in" }, o);
+          tl.to(num, { yPercent: -45, autoAlpha: 0, duration: 0.035, ease: "power2.in" }, o);
+          tl.to(ts, { scale: 0.7, autoAlpha: 0, duration: 0.03 }, o);
+          tl.to(chips[i], { autoAlpha: 0, y: -30, duration: 0.03 }, o);
+          tl.to(g, { autoAlpha: 0, duration: 0.005 }, s + seg - 0.006);
         }
       });
       tl.eventCallback("onUpdate", () => {
         const p = tl.progress();
         const k = p < E ? -1 : Math.min(n - 1, Math.floor((p - E) / seg));
-        idx.forEach((el, j) => el.setAttribute("data-on", j === k ? "1" : "0"));
+        tabs.forEach((el, j) => el.setAttribute("data-on", j === k ? "1" : "0"));
       });
     });
     return () => mm.revert();
@@ -68,42 +93,54 @@ export function ServiceReveal({ areas }: { areas: Area[] }) {
           <p className="mb-3 font-mono text-xs uppercase tracking-[0.3em] text-[#15803d]">What we offer</p>
           <h2 className="font-display text-[clamp(2.4rem,5.6vw,5rem)] leading-[1] text-[#0a2417]">Twenty capabilities.<br />Four disciplines.</h2>
         </div>
-        <div data-sr-panel className="relative mt-16 h-[calc(100vh-7rem)] w-full max-w-[84rem] overflow-hidden" style={{ backgroundColor: areas[0].bg, clipPath: "inset(16% 26% 16% 26% round 3rem)" }}>
-          {/* right: image */}
-          <div className="absolute inset-y-0 right-0 w-[42%] overflow-hidden">
-            {areas.map((a, i) => (
+        <div data-sr-panel className="relative mt-16 h-[calc(100vh-7rem)] w-full max-w-[84rem] overflow-hidden" style={{ backgroundColor: areas[0].bg, clipPath: "inset(16% 26% 16% 26% round 3rem)", ["--sr-ink" as string]: areas[0].ink, color: "var(--sr-ink)" }}>
+          {/* right: pictures wipe over each other */}
+          <div className="absolute inset-y-0 right-0 w-[40%] overflow-hidden">
+            {areas.map((a) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={a.name} data-sr-img src={a.image} alt="" className="absolute inset-0 h-full w-full object-cover" style={i === 0 ? undefined : { opacity: 0 }} />
+              <img key={a.name} data-sr-img src={a.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
             ))}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/10" />
-          </div>
-          {/* index rail */}
-          <ol className="absolute left-6 top-1/2 z-10 -translate-y-1/2 space-y-4">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/10" />
             {areas.map((a, i) => (
-              <li key={a.name} data-sr-i data-on={i === 0 ? "1" : "0"} className="group flex items-center gap-3 font-mono text-[0.7rem] uppercase tracking-widest opacity-40 transition-opacity data-[on='1']:opacity-100" style={{ color: a.ink }}>
-                <span className="h-px w-6 bg-current transition-all duration-500 group-data-[on='1']:w-12" />0{i + 1}
+              <div key={a.name} data-sr-chip className="absolute bottom-6 left-6 right-6 rounded-2xl bg-white/90 p-4 shadow-xl backdrop-blur">
+                <p className="font-mono text-[0.65rem] uppercase tracking-[0.25em]" style={{ color: a.accent }}>0{i + 1} / 0{areas.length}</p>
+                <p className="mt-1 font-display text-xl leading-tight" style={{ color: a.ink === "#ecfdf5" ? "#052e16" : a.ink }}>{a.name}</p>
+                <p className="text-xs text-[#3f5a4a]">{a.items.length} services · {a.tags.slice(0, 2).join(" · ")}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* step tabs with progress lines */}
+          <ol className="absolute left-0 top-0 z-10 flex w-[60%] gap-3 px-8 pt-7 lg:px-12">
+            {areas.map((a, i) => (
+              <li key={a.name} data-sr-i data-on="0" className="group min-w-0 flex-1 opacity-45 transition-opacity duration-500 data-[on='1']:opacity-100">
+                <span className="block truncate font-mono text-[0.62rem] font-bold uppercase tracking-widest">0{i + 1} · {a.name.split(" ")[0]}</span>
+                <span className="relative mt-2 block h-[3px] overflow-hidden rounded bg-current/20">
+                  <span data-sr-fill className="absolute inset-0 origin-left rounded bg-current" />
+                </span>
               </li>
             ))}
           </ol>
+
           {/* content */}
-          <div className="absolute inset-y-0 left-0 w-[58%]">
+          <div className="absolute inset-y-0 left-0 w-[60%]">
             {areas.map((a, i) => (
-              <div key={a.name} data-sr-g className="absolute inset-0 flex flex-col justify-center pl-32 pr-8" style={{ color: a.ink }}>
-                <span data-sr-a className="pointer-events-none absolute top-4 left-32 font-display text-[7rem] leading-none opacity-[0.08]">0{i + 1}</span>
+              <div key={a.name} data-sr-g className="absolute inset-0 flex flex-col justify-center px-8 pt-10 lg:px-12" style={{ color: a.ink }}>
+                <span data-sr-n className="pointer-events-none absolute right-6 top-24 font-display text-[6rem] leading-none opacity-[0.09] lg:text-[8rem]">0{i + 1}</span>
                 <p data-sr-a className="relative font-mono text-xs uppercase tracking-[0.3em]" style={{ color: a.accent }}>{a.items.length} services</p>
-                <h3 data-sr-a className="relative mt-3 font-display text-[clamp(2.2rem,4.2vw,3.8rem)] leading-[0.98]">{a.name}</h3>
+                <h3 data-sr-a className="relative mt-3 font-display text-[clamp(2rem,3.9vw,3.6rem)] leading-[0.98]">{a.name}</h3>
                 <p data-sr-a className="relative mt-3 max-w-md text-[0.95rem] opacity-75">{a.blurb}</p>
-                <ul className="relative mt-6 grid max-w-xl grid-cols-1 gap-x-8 gap-y-1.5 lg:grid-cols-2">
+                <ul className="relative mt-6 grid max-w-xl grid-cols-1 gap-x-8 gap-y-1.5 xl:grid-cols-2">
                   {a.items.map((s) => (
-                    <li key={s} data-sr-a className="flex items-start gap-2 text-[0.88rem] leading-snug">
+                    <li key={s} data-sr-x className="flex items-start gap-2 text-[0.88rem] leading-snug">
                       <span className="mt-[0.4rem] h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: a.accent }} />
                       {s.replace(/ \(.*\)/, "")}
                     </li>
                   ))}
                 </ul>
-                <div data-sr-a className="relative mt-6 flex flex-wrap gap-2">
+                <div className="relative mt-6 flex flex-wrap gap-2">
                   {a.tags.map((t) => (
-                    <span key={t} className="rounded-full border px-3 py-1 text-xs font-semibold" style={{ borderColor: `${a.ink}33`, background: "rgba(255,255,255,.55)" }}>{t}</span>
+                    <span key={t} data-sr-t className="rounded-full border px-3 py-1 text-xs font-semibold" style={{ borderColor: `${a.ink}33`, background: "rgba(255,255,255,.55)", color: a.ink === "#ecfdf5" ? "#052e16" : a.ink }}>{t}</span>
                   ))}
                 </div>
                 <Link data-sr-a href="/contact#contact-form" className="btn btn-solid relative mt-7 w-fit">Discuss this →</Link>
