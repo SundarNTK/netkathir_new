@@ -45,6 +45,7 @@ export default function Intro() {
   const [show, setShow] = useState(true); // rendered on the server so there is no flash of the site
   const [gl, setGl] = useState(true);
   const [sceneOn, setSceneOn] = useState(false);
+  const [logoRun, setLogoRun] = useState(false); // the 3D logo canvas only renders while the logo is on screen
   const root = useRef<HTMLDivElement>(null);
   const barEl = useRef<HTMLSpanElement>(null);
   const sheetEls = useRef<(HTMLDivElement | null)[]>([]);
@@ -63,8 +64,10 @@ export default function Intro() {
     window.clearTimeout(g.timer);
     tl.current?.resume();
   }, []);
+  const readyWaiter = useRef<(() => void) | null>(null);
   const onReady = useCallback(() => {
     gate.current.ready = true;
+    readyWaiter.current?.();
     resume();
   }, [resume]);
 
@@ -78,6 +81,7 @@ export default function Intro() {
     window.dispatchEvent(new Event("nk:intro-reveal"));
     window.dispatchEvent(new Event("nk:intro-done"));
     setSceneOn(false);
+    setLogoRun(false);
     setShow(false);
   }, []);
 
@@ -122,7 +126,6 @@ export default function Intro() {
         const from = String(YEARS[i - 1]);
         const to = String(YEARS[i]);
         const gap = 0.7 + Math.max(0, i - 8) * 0.12;
-        if (use3D && i === YEARS.length - 2) t.call(() => setSceneOn(true), undefined, at); // build the 3D logo while the last pages fly
         const item = sheets[i % sheets.length];
         const paper = item.querySelector(".nk-paper") as HTMLElement;
         const word = paper.querySelector(".nk-word") as HTMLElement;
@@ -152,15 +155,14 @@ export default function Intro() {
           .set(word, { opacity: 1 }, at)
           .set(plane, { opacity: 0 }, at)
           .to(paper, { y: 9, rotate: -3, duration: 0.2, ease: "sine.out" }, at) // the tear
-          .to(paper, { x: px, y: py, rotate: (Math.random() - 0.5) * 30, scale: 0.85, duration: 0.7, ease: "power2.out" }, at + 0.2) // out of the calendar
+          .to(paper, { x: px, y: py, rotate: (Math.random() - 0.5) * 30, scale: 0.85, duration: 0.8, ease: "power3.out", force3D: true }, at + 0.2) // out of the calendar
           .to(word, { opacity: 0, duration: 0.3, ease: "sine.inOut" }, at + 0.55)
           // the fold is a squash + cross-fade into a pre-drawn paper plane (transform/opacity only, so it stays on the GPU)
           .to(paper, { scaleX: 0.44, scaleY: 0.8, rotate: a, duration: 0.85, ease: "sine.inOut" }, at + 0.7)
           .to(sheet, { opacity: 0, duration: 0.45, ease: "sine.inOut" }, at + 0.95)
           .to(plane, { opacity: 1, duration: 0.45, ease: "sine.inOut" }, at + 0.95)
-          .to(paper, { x: px + Math.sin(rad) * 24, y: py - Math.cos(rad) * 24, duration: 0.35, ease: "sine.out" }, at + 1.5) // lift
-          .to(paper, { x: tx, y: ty, scale: 0.6, duration: 1.3, ease: "power2.in" }, at + 1.8) // glide away
-          .set(item, { opacity: 0 }, at + 3.2)
+          .to(paper, { x: tx, y: ty, scale: 0.6, duration: 1.5, ease: "power1.in", force3D: true }, at + 1.0) // glide away
+          .set(item, { opacity: 0 }, at + 2.6)
           .to(barEl.current, { width: `${(i / (YEARS.length - 1)) * 100}%`, duration: gap, ease: "none" }, at);
         at += gap;
       }
@@ -185,6 +187,7 @@ export default function Intro() {
 
       // ---- 2. the 3D logo + anniversary lockup
       const L = calEnd + 0.4;
+      t.call(() => setLogoRun(true), undefined, L - 0.15);
       t.fromTo(".i-scene", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, L)
         .to(state, { logo: 1, duration: 1.7, ease: "power2.out" }, L)
         .fromTo(".i-fallback", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1, ease: "power2.out" }, L)
@@ -243,6 +246,8 @@ export default function Intro() {
         )
       );
       if (use3D) {
+        setSceneOn(true); // build the 3D logo now, while the loader covers the screen, so the calendar never hitches
+        track(new Promise((res) => { readyWaiter.current = () => res(null); }));
         track(import("./IntroScene"));
         track(import("./Scene"));
         track(
@@ -302,7 +307,7 @@ export default function Intro() {
         </div>
         <div className="relative mt-9 w-[min(14rem,56vw)]">
           <span className="block h-[3px] overflow-hidden rounded-full bg-[#14532d]/12">
-            <span ref={ldBar} className="block h-full origin-left scale-x-0 rounded-full bg-gradient-to-r from-[#14532d] via-[#22a559] to-[#eab308]" />
+            <span ref={ldBar} style={{ transform: "scaleX(0)" }} className="block h-full origin-left rounded-full bg-gradient-to-r from-[#14532d] via-[#22a559] to-[#eab308]" />
           </span>
           <p className="mt-3 text-center font-mono text-[0.68rem] uppercase tracking-[0.34em] text-[#14532d]/65">Loading</p>
         </div>
@@ -338,7 +343,7 @@ export default function Intro() {
                     <span className="nk-word font-display text-[clamp(4.6rem,min(17vh,19vw),8rem)] font-light leading-none tracking-[-0.05em] text-[#1f7a43] tabular-nums">2015</span>
                   </div>
                   {/* the paper plane (nose up): shaded half, crease, lit half */}
-                  <svg className="nk-plane absolute inset-0 h-full w-full opacity-0 [filter:drop-shadow(0_10px_10px_rgba(20,83,45,0.3))]" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+                  <svg className="nk-plane absolute inset-0 h-full w-full opacity-0 " viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
                     <polygon points="46,14 50,0 50,74 0,94" fill="#dbe4f0" />
                     <polygon points="50,0 54,14 100,94 50,74" fill="#ffffff" />
                     <line x1="50" y1="0" x2="50" y2="74" stroke="#9fb0c8" strokeWidth="0.6" vectorEffect="non-scaling-stroke" />
@@ -360,7 +365,7 @@ export default function Intro() {
       {/* 2 — 3D logo (mounted only while needed) or the static logo on weak devices */}
       {gl ? (
         // the wrapper always exists (the timeline targets it); the heavy 3D scene inside mounts only while needed
-        <div className="i-scene absolute inset-0 opacity-0">{sceneOn && <IntroScene state={state} onReady={onReady} />}</div>
+        <div className="i-scene absolute inset-0 opacity-0">{sceneOn && <IntroScene state={state} onReady={onReady} run={logoRun} />}</div>
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img src="/images/brand/netkathir-logo-hd.png" alt="Netkathir Technologies" className="i-fallback absolute left-1/2 top-[28%] w-[min(34rem,78vw)] -translate-x-1/2 -translate-y-1/2 opacity-0 drop-shadow-[0_18px_30px_rgba(20,83,45,0.25)]" />

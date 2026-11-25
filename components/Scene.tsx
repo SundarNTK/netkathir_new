@@ -421,6 +421,20 @@ export default function Scene() {
   const reduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   // pause the GPU entirely when the tab is hidden or the hero has scrolled away
   const [active, setActive] = useState(true);
+  // While the intro plays (after the first frame is drawn) the hero scene sleeps, so the intro animation owns the GPU.
+  const [asleep, setAsleep] = useState(false);
+  useEffect(() => {
+    const sleep = () => {
+      if ((window as unknown as { __nkIntro?: string }).__nkIntro === "playing") setAsleep(true);
+    };
+    const wake = () => setAsleep(false);
+    window.addEventListener("nk:scene-ready", sleep);
+    window.addEventListener("nk:intro-done", wake);
+    return () => {
+      window.removeEventListener("nk:scene-ready", sleep);
+      window.removeEventListener("nk:intro-done", wake);
+    };
+  }, []);
   useEffect(() => {
     // The home hero stays pinned for a little over one screen. After that the
     // model must be gone, or it paints through the sections underneath.
@@ -437,7 +451,7 @@ export default function Scene() {
   if (variant === "none") return null;
   return (
     <Canvas
-      frameloop={active ? "always" : "never"}
+      frameloop={active && !asleep ? "always" : "never"}
       dpr={[1, mobile ? 1.25 : 1.5]}
       camera={{ position: [0, 0, 8.5], fov: 45 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}

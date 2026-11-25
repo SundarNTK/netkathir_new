@@ -27,7 +27,7 @@ void main(){
  * crosses the front face. No tracing, so nothing can distort the artwork.
  */
 function Logo({ state, onReady, lite }: { state: IntroState; onReady?: () => void; lite: boolean }) {
-  const { viewport, gl } = useThree();
+  const { viewport, gl, invalidate } = useThree();
   const grp = useRef<THREE.Group>(null!);
   const mats = useRef<THREE.MeshBasicMaterial[]>([]);
   const glint = useRef<THREE.ShaderMaterial>(null!);
@@ -48,6 +48,7 @@ function Logo({ state, onReady, lite }: { state: IntroState; onReady?: () => voi
         t.minFilter = THREE.LinearMipmapLinearFilter;
         t.needsUpdate = true;
         setTex(t);
+        invalidate(); // draw one frame now, so the texture is uploaded to the GPU before the animation needs it
         requestAnimationFrame(() => requestAnimationFrame(() => onReady?.()));
       },
       undefined,
@@ -107,11 +108,12 @@ function Logo({ state, onReady, lite }: { state: IntroState; onReady?: () => voi
   );
 }
 
-export default function IntroScene({ state, onReady }: { state: IntroState; onReady?: () => void }) {
+export default function IntroScene({ state, onReady, run }: { state: IntroState; onReady?: () => void; run: boolean }) {
   const mobile = typeof window !== "undefined" && window.innerWidth < 800;
   const lite = mobile || (typeof navigator !== "undefined" && (navigator.hardwareConcurrency ?? 8) <= 4);
   return (
     <Canvas
+      frameloop={run ? "always" : "demand"}
       dpr={[1, lite ? 1.5 : 2]}
       camera={{ position: [0, 0, 13], fov: 50 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
