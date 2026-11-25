@@ -6,6 +6,7 @@ import gsap from "gsap";
 import type { IntroState } from "./IntroScene";
 
 const IntroScene = dynamic(() => import("./IntroScene"), { ssr: false });
+const Year3D = dynamic(() => import("./Year3D"), { ssr: false });
 
 declare global {
   interface Window {
@@ -20,9 +21,8 @@ const MESSAGES = [
   "With gratitude to every client, partner and team member on this journey.",
 ];
 const FINALE = "Now entering the AI era.".split(" ");
-const YEARS = Array.from({ length: 12 }, (_, i) => 2015 + i);
+const YEARS = Array.from({ length: 13 }, (_, i) => 2015 + i); // the last page torn is 2026, which reveals 2027
 
-const mixRgb = (a: number[], b: number[], t: number) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(",")})`;
 // a laurel wreath: each side is a curved stem with pairs of pointed leaves, bigger at the bottom, smaller at the tips
 const LEAVES = [-1, 1].flatMap((side) =>
   Array.from({ length: 12 }, (_, n) => {
@@ -71,13 +71,15 @@ export default function Intro() {
   const [show, setShow] = useState(true); // rendered on the server so there is no flash of the site
   const [gl, setGl] = useState(true);
   const [sceneOn, setSceneOn] = useState(false);
+  const [yearOn, setYearOn] = useState(false); // the 3D 2027 canvas is built during the loader, rendered only while it is on screen
+  const [yearRun, setYearRun] = useState(false);
   const [logoRun, setLogoRun] = useState(false); // the 3D logo canvas only renders while the logo is on screen
   const root = useRef<HTMLDivElement>(null);
   const barEl = useRef<HTMLSpanElement>(null);
   const sheetEls = useRef<(HTMLDivElement | null)[]>([]);
   const cardEl = useRef<HTMLDivElement>(null);
   const curEl = useRef<HTMLSpanElement>(null);
-  const [state] = useState<IntroState>(() => ({ logo: 0, burst: 0 }));
+  const [state] = useState<IntroState>(() => ({ logo: 0, burst: 0, year: 0, turn: 0, dive: 0, bump: 0, pop: 0, glow: 0, tx: 0, ty: 0, tw: 0 }));
   const tl = useRef<gsap.core.Timeline | null>(null);
   const gate = useRef({ ready: false, waiting: false, timer: 0 });
   const closed = useRef(false);
@@ -107,6 +109,8 @@ export default function Intro() {
     window.dispatchEvent(new Event("nk:intro-reveal"));
     window.dispatchEvent(new Event("nk:intro-done"));
     setSceneOn(false);
+    setYearOn(false);
+    setYearRun(false);
     setLogoRun(false);
     setShow(false);
   }, []);
@@ -192,35 +196,45 @@ export default function Intro() {
           .to(barEl.current, { width: `${(i / (YEARS.length - 1)) * 100}%`, duration: gap, ease: "none" }, at);
         at += gap;
       }
-      // 2026 has landed: it glows, then its page lifts on the calendar rings (never torn off) and 2027 waits underneath
+      // 2027 has landed on the calendar: it glows, then the flat year bumps out of the page into 3D lettering
       const FL = at + 0.05;
       const GLOW = "drop-shadow(0 0 14px rgba(250,204,21,0.9)) drop-shadow(0 0 38px rgba(34,197,94,0.65))";
       t.to(cur, { filter: GLOW, duration: 0.5, ease: "power2.out" }, FL)
-        .to(".i-flip-word", { filter: GLOW, duration: 0.5, ease: "power2.out" }, FL)
         .fromTo(".i-cal-glow", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1.15, duration: 0.7, ease: "power2.out" }, FL)
-        .fromTo(".i-shine", { xPercent: -130 }, { xPercent: 130, duration: 0.9, ease: "power2.inOut" }, FL + 0.15)
-        .set(".i-flip", { opacity: 1, transformPerspective: 900, rotateX: 0 }, FL + 0.95)
-        .call(() => { cur.textContent = "2027"; }, undefined, FL + 1.0)
-        .set(cur, { filter: "none", opacity: 0.45, scale: 0.9 }, FL + 1.0)
-        .to(".i-flip", { rotateX: 62, duration: 1.25, ease: "power2.inOut" }, FL + 1.05)
-        .to(".i-flip-shadow", { opacity: 1, duration: 1.2, ease: "power1.out" }, FL + 1.05)
-        .to(cur, { opacity: 1, scale: 1, duration: 1.2, ease: "power2.out" }, FL + 1.05);
+        .fromTo(".i-shine", { xPercent: -130 }, { xPercent: 130, duration: 0.9, ease: "power2.inOut" }, FL + 0.15);
 
-      // 2027 comes out of the calendar as solid 3D lettering, turns to show its depth, glows, then the screen dives through it
-      const E3 = FL + 2.5;
-      const GLOW3 = "drop-shadow(0 0 20px rgba(250,204,21,0.95)) drop-shadow(0 0 64px rgba(34,197,94,0.75))";
-      t.set(".i-y3d", { opacity: 1 }, E3)
-        .fromTo(".i-y3d-in", { scale: 0.5, y: 18, rotateX: 64, rotateY: -52, opacity: 0, filter: "drop-shadow(0 0 0px rgba(250,204,21,0))" }, { scale: 1.15, y: -20, rotateX: 14, rotateY: -34, opacity: 1, duration: 1.35, ease: "expo.out" }, E3)
-        .to(".i-flip", { rotateX: 88, opacity: 0, duration: 0.6, ease: "power2.in" }, E3 + 0.05)
-        .fromTo(".i-ring", { scale: 0.3, opacity: 0.9 }, { scale: 3.2, opacity: 0, duration: 1.5, ease: "power2.out", stagger: 0.2 }, E3 + 0.2)
-        .to(".i-y3d-in", { filter: GLOW3, duration: 0.8, ease: "power2.out" }, E3 + 0.8)
-        .to(".i-y3d-in", { rotateY: 34, rotateX: 8, duration: 2.1, ease: "sine.inOut" }, E3 + 1.25)
-        .fromTo(".i-y3d-shine", { xPercent: -140 }, { xPercent: 140, duration: 1.2, ease: "power2.inOut" }, E3 + 1.5)
-        .to(".i-cal, .i-track", { opacity: 0, y: 24, scale: 0.95, duration: 0.8, ease: "power2.in" }, E3 + 0.45)
-        .to(".i-cal-glow", { opacity: 1, scale: 1.5, duration: 1.1, ease: "power2.out" }, E3 + 0.4);
-      const calEnd = E3 + 3.5;
+      const E3 = FL + 1.0;
+      // measure the calendar's own year so the 3D one starts exactly on top of it
+      t.call(
+        () => {
+          const rr = root.current!.getBoundingClientRect();
+          const range = document.createRange();
+          range.selectNodeContents(cur);
+          const r = range.getBoundingClientRect();
+          const k = (2 * 14 * Math.tan((20 * Math.PI) / 180)) / rr.height; // pixels -> scene units at the year's depth
+          state.tx = (r.left + r.width / 2 - rr.left - rr.width / 2) * k;
+          state.ty = -(r.top + r.height / 2 - rr.top - rr.height / 2) * k;
+          state.tw = r.width * k;
+        },
+        undefined,
+        E3 - 0.3
+      )
+        .call(() => setYearRun(true), undefined, E3 - 0.2)
+        .set(".i-y3d", { opacity: 1 }, E3 - 0.05)
+        .to(state, { year: 1, duration: 0.3, ease: "none" }, E3) // cross-fade from the flat year to the 3D one
+        .to(cur, { opacity: 0, duration: 0.3, ease: "none" }, E3 + 0.02)
+        .to(state, { bump: 1, duration: 1.15, ease: "back.out(1.7)" }, E3 + 0.1) // the bump: flat -> raised lettering
+        .to(state, { glow: 1, duration: 0.9, ease: "power2.out" }, E3 + 0.7)
+        .fromTo(".i-ring", { scale: 0.3, opacity: 0.9 }, { scale: 3.2, opacity: 0, duration: 1.5, ease: "power2.out", stagger: 0.2 }, E3 + 0.8)
+        .to(state, { pop: 1, duration: 1.3, ease: "power3.out" }, E3 + 0.8) // steps forward out of the calendar
+        .to(state, { turn: 1, duration: 2.2, ease: "sine.inOut" }, E3 + 1.0)
+        .to(".i-cal, .i-track", { opacity: 0, y: 26, scale: 0.95, duration: 0.8, ease: "power2.in" }, E3 + 1.0)
+        .to(".i-cal-glow", { opacity: 1, scale: 1.5, duration: 1.0, ease: "power2.out" }, E3 + 0.9);
+      const calEnd = E3 + 3.7;
       // page transition: dive through the glowing year into the logo
-      t.to(".i-y3d-in", { scale: 9, opacity: 0, rotateY: -8, duration: 0.95, ease: "power3.in" }, calEnd - 0.25)
+      t.to(state, { dive: 1, duration: 0.95, ease: "power3.in" }, calEnd - 0.25)
+        .to(".i-y3d", { opacity: 0, duration: 0.5, ease: "power2.in" }, calEnd + 0.4)
+        .call(() => { setYearRun(false); setYearOn(false); }, undefined, calEnd + 1.0)
         .to(".i-cal-glow", { opacity: 0, scale: 3, duration: 0.9, ease: "power2.in" }, calEnd - 0.2)
         // wait here only if the 3D logo is not built yet (never longer than 3.5 s)
         .call(
@@ -275,6 +289,7 @@ export default function Intro() {
       gate.current.ready = true;
       gsap.set(".ld", { autoAlpha: 0 });
       setSceneOn(true);
+      setYearOn(true);
       tl.current?.pause().time(Number(at));
     } else {
       // ---- loader: wait until the page is genuinely ready, then play the intro on a warm, idle main thread
@@ -300,6 +315,7 @@ export default function Intro() {
         )
       );
       if (use3D) {
+        setYearOn(true);
         setSceneOn(true); // build the 3D logo now, while the loader covers the screen, so the calendar never hitches
         track(new Promise((res) => { readyWaiter.current = () => res(null); }));
         track(import("./IntroScene"));
@@ -405,11 +421,6 @@ export default function Intro() {
                 </div>
               </div>
             ))}
-            {/* the 2026 page, hinged at the top, lifts to show 2027 underneath */}
-            <div className="i-flip pointer-events-none absolute inset-0 z-20 rounded-b-[1.3rem] bg-white opacity-0 [backface-visibility:hidden]" style={{ transformOrigin: "50% 0%" }}>
-              <span className="i-flip-word absolute inset-0 flex items-center justify-center bg-[linear-gradient(180deg,#14532d_0%,#1f7a43_55%,#c9a24d_115%)] bg-clip-text font-display text-[clamp(4.6rem,min(17vh,19vw),8rem)] font-light leading-none tracking-[-0.05em] text-transparent tabular-nums">2026</span>
-            </div>
-            <span className="i-flip-shadow pointer-events-none absolute inset-0 z-[15] rounded-b-[1.3rem] bg-gradient-to-b from-black/35 via-black/5 to-transparent opacity-0" />
           </div>
         </div>
         <div className="i-track relative z-0 mt-6 flex w-[min(18rem,70vw)] items-center gap-3 opacity-0">
@@ -417,34 +428,24 @@ export default function Intro() {
           <span className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-[#14532d]/12">
             <span ref={barEl} className="absolute inset-y-0 left-0 w-0 rounded-full bg-gradient-to-r from-[#1f7a43] to-[#c9a24d]" />
           </span>
-          <span className="font-mono text-[0.62rem] tracking-[0.16em] text-[#c9a24d]">2026</span>
+          <span className="font-mono text-[0.62rem] tracking-[0.16em] text-[#c9a24d]">2027</span>
         </div>
       </div>
 
-      {/* 1b — 2027 as solid 3D lettering that rises out of the calendar */}
-      <div className="i-y3d pointer-events-none absolute inset-0 z-[45] grid place-items-center opacity-0" style={{ perspective: "1100px" }}>
-        <div className="relative grid place-items-center">
+      {/* 1b — 2027 as a real 3D object that rises out of the calendar */}
+      <div className="i-y3d pointer-events-none absolute inset-0 z-[45] opacity-0">
+        <div className="absolute inset-0 grid place-items-center">
           {[0, 1].map((n) => (
             <span key={n} className="i-ring absolute h-[min(22rem,70vw)] w-[min(22rem,70vw)] rounded-full border-2 border-[#eab308]/70 opacity-0" />
           ))}
-          <div className="i-y3d-in relative" style={{ transformStyle: "preserve-3d" }}>
-            {Array.from({ length: 34 }, (_, k) => (
-              <span
-                key={k}
-                aria-hidden
-                className="absolute inset-0 select-none font-display text-[clamp(5.2rem,min(22vh,24vw),11rem)] font-extrabold leading-none tracking-[-0.04em] tabular-nums"
-                style={{ transform: `translateZ(${-(k + 1) * 1.7}px)`, color: mixRgb([196, 148, 28], [6, 44, 24], Math.min(1, k / 20)), WebkitTextStroke: k === 0 ? "1.5px rgba(255,236,160,0.7)" : undefined }}
-              >
-                2027
-              </span>
-            ))}
-            {/* gold face with a bright bevel line and a moving highlight */}
-            <span className="relative block select-none overflow-hidden bg-[linear-gradient(165deg,#fffbe0_0%,#fbe28a_16%,#e9b92f_34%,#b9831a_50%,#f1c94b_66%,#fff0a8_80%,#c9951f_100%)] bg-clip-text font-display text-[clamp(5.2rem,min(22vh,24vw),11rem)] font-extrabold leading-none tracking-[-0.04em] text-transparent tabular-nums [-webkit-text-stroke:1.5px_rgba(255,244,190,0.85)]">
-              2027
-              <span className="i-y3d-shine absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/90 to-transparent mix-blend-overlay" />
-            </span>
-          </div>
         </div>
+        {gl ? (
+          yearOn && <Year3D state={state} run={yearRun} />
+        ) : (
+          <div className="absolute inset-0 grid place-items-center">
+            <span className="bg-[linear-gradient(180deg,#fff3b0,#f4c542_45%,#1f7a43)] bg-clip-text font-display text-[clamp(5rem,22vw,11rem)] font-extrabold text-transparent">2027</span>
+          </div>
+        )}
       </div>
 
       {/* 2 — 3D logo (mounted only while needed) or the static logo on weak devices */}

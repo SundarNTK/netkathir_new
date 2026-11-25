@@ -5,8 +5,8 @@ import { Environment, Lightformer, Sparkles } from "@react-three/drei";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
-/** logo: reveal 0→1, burst: exit 0→1. */
-export type IntroState = { logo: number; burst: number };
+/** logo: reveal 0→1, burst: exit 0→1. year/turn/dive drive the 3D 2027 (appear, turn, dive-through). */
+export type IntroState = { logo: number; burst: number; year: number; turn: number; dive: number; bump: number; pop: number; glow: number; tx: number; ty: number; tw: number };
 
 const LOGO_URL = "/images/brand/netkathir-logo-hd.png";
 const W = 8; // logo width in scene units
