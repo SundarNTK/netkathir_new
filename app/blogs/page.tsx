@@ -1,4 +1,5 @@
 import PageHero from "@/components/PageHero";
+import { FlightStrip } from "@/components/Flight";
 import Ticker from "@/components/Ticker";
 import { BLOGS } from "@/lib/data";
 
@@ -14,6 +15,7 @@ export default function Blogs() {
         sub="Notes on AI, cloud, DevOps and building software that lasts."
       />
       <Ticker items={["AI", "Cloud", "DevOps", "ERP", "Software engineering"]} />
+      <FlightStrip from="Question" to="Answer" note="Notes from the cockpit." />
 
       <section className="py-10">
         <div className="mx-auto max-w-7xl px-6">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
+import { FlightStrip } from "@/components/Flight";
 import Ticker from "@/components/Ticker";
 import { PRODUCTS } from "@/lib/data";
 
@@ -14,6 +15,7 @@ export default function Products() {
         sub="Software we design, run and stand behind ourselves."
       />
       <Ticker items={["Garage Bill", "HRMS", "Designed in-house", "Run and supported by Netkathir"]} />
+      <FlightStrip from="Prototype" to="In production" note="Built in-house. Flown by real teams." />
 
       <div className="space-y-6 pb-16 md:space-y-10">
         {PRODUCTS.map((p, i) => (

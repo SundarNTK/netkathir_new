@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { FlightJourney, FlyAnywhere } from "@/components/Flight";
+import { Collage } from "@/components/Showcase";
 import HorizontalScroll from "@/components/HorizontalScroll";
 import { CLIENTS, IMAGES, PILLARS, SERVICE_GROUPS, TESTIMONIALS } from "@/lib/data";
 
@@ -8,6 +10,16 @@ const SHOWCASE = [
   { href: "/projects", label: "Projects", image: IMAGES.heroes.projects, desc: "Selected client work across retail, health, education and more." },
   { href: "/about", label: "About", image: IMAGES.heroes.about, desc: "Eleven years, 50+ people and a team across six countries." },
 ];
+
+const JOURNEY = [
+  { k: "Discover", t: "We map your workflow", d: "Sit with your team, find the slow, manual steps worth automating.", tags: ["Workshops", "Process maps"] },
+  { k: "Design", t: "Architecture & UX", d: "Clear screens and a system that fits how you already work.", tags: ["Next.js", "Figma"] },
+  { k: "Build AI", t: "Agents, RAG & LLMs", d: "Chatbots and assistants wired into your own data and tools.", tags: ["LLMs", "RAG", "Python"] },
+  { k: "Deploy", t: "Cloud & DevOps", d: "Secure releases on AWS or Azure with automated pipelines.", tags: ["AWS", "Docker", "CI/CD"] },
+  { k: "Support", t: "Run it, improve it", d: "Monitoring and a team that stays after launch. ISO 27001.", tags: ["24/7", "ISO 27001"] },
+];
+
+const REACH = ["ERP systems", "CRM platforms", "AI chatbots", "AI agents", "RAG search", "Workflow automation", "Garage Bill", "HRMS", "Cloud migration", "DevOps pipelines"];
 
 const AI_WORDS = ["Generative AI", "AI Agents", "RAG", "LLMs", "Chatbots", "Automation", "ERP", "Cloud", "DevOps"];
 
@@ -162,6 +174,8 @@ export default function Home() {
 
       <HorizontalScroll kicker="What we do" title="Four ways we move you forward." items={PILLARS} />
 
+      <FlightJourney kicker="How we deliver" title="From idea to AI, in flight." stops={JOURNEY} />
+
       {/* ───────────── SHOWCASE ───────────── */}
       <section className="py-14">
         <div className="mx-auto max-w-7xl px-6">
@@ -195,6 +209,19 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <FlyAnywhere caption="What we automate" lead="We build" items={REACH} mark="Technology" />
+
+      <Collage
+        tag="Our product · Garage Bill"
+        lines={["Wrenches", "to", "Wallets."]}
+        text="Billing, invoicing and workshop management built for garages and service centres — designed, run and supported by Netkathir."
+        cta="See Garage Bill"
+        href="/products"
+        main="/images/garage-bill/garage-owners.jpg"
+        floats={["/images/garage-bill/digital-invoicing.jpg", "/images/garage-bill/mechanics.jpg"]}
+        sticker="Built in-house"
+      />
 
       {/* ───────────── SERVICE GROUPS ───────────── */}
       <section className="py-14">

@@ -1,4 +1,5 @@
 import PageHero from "@/components/PageHero";
+import { FlightStrip } from "@/components/Flight";
 import ContactForm from "@/components/ContactForm";
 import { IMAGES, SITE } from "@/lib/data";
 
@@ -13,6 +14,7 @@ export default function Contact() {
         image={IMAGES.heroes.contact}
         room
       />
+      <FlightStrip from="Your message" to="Our inbox" note="We reply within one working day." />
       <section className="pb-16">
         <div className="mx-auto max-w-7xl px-6 grid lg:grid-cols-[1.3fr_1fr] gap-12">
           <ContactForm />

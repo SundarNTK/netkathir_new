@@ -284,7 +284,7 @@ export default function Effects() {
         if (pathRef.current !== "/") {
           const secs = gsap.utils.toArray<HTMLElement>("main section").filter((s) => !s.parentElement?.closest("section"));
           secs.forEach((sec, i) => {
-            if (i === 0 || sec.hasAttribute("data-panel") || sec.querySelector("[data-stack], [data-panel], .sticky")) return;
+            if (i === 0 || sec.hasAttribute("data-panel") || sec.hasAttribute("data-nolift") || sec.querySelector("[data-stack], [data-panel], .sticky")) return;
             gsap.fromTo(sec, { y: 80, opacity: 0 }, { y: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: sec, start: "top 96%", end: "top 62%", scrub: 0.6 } });
           });
         }

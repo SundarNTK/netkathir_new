@@ -1,16 +1,11 @@
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
+import { FlightStrip } from "@/components/Flight";
+import { ServiceReveal } from "@/components/Showcase";
 import Ticker from "@/components/Ticker";
-import { SERVICE_GROUPS } from "@/lib/data";
+import { IMAGES, SERVICE_GROUPS } from "@/lib/data";
 
 export const metadata = { title: "Services — Netkathir Technologies" };
-
-const TONES = [
-  { bg: "#dcfce7", dark: false, accent: "#15803d" },
-  { bg: "#f0fdd4", dark: false, accent: "#4d7c0f" },
-  { bg: "#fff3c4", dark: false, accent: "#a16207" },
-  { bg: "#14532d", dark: true, accent: "#fde68a" },
-];
 
 const STEPS = [
   ["Discover", "We map your workflows, data and goals before a single line is written."],
@@ -18,6 +13,13 @@ const STEPS = [
   ["Build", "Iterative delivery with testing and security built in from the first sprint."],
   ["Scale", "Cloud, monitoring and continuous improvement so it keeps performing."],
 ];
+
+const AREAS = [
+  { tags: ["OpenAI", "LangChain", "Python", "Vector DB"], image: IMAGES.heroes.services, bg: "#dcfce7", ink: "#052e16", accent: "#15803d" },
+  { tags: [".NET", "React", "Angular", "Flutter"], image: IMAGES.heroes.products, bg: "#fef3c7", ink: "#422006", accent: "#b45309" },
+  { tags: ["AWS", "Azure", "Docker", "Jenkins"], image: IMAGES.heroes.projects, bg: "#d9f2f4", ink: "#083344", accent: "#0e7490" },
+  { tags: ["Roadmaps", "Architecture", "Modernization"], image: IMAGES.heroes.about, bg: "#0f3d22", ink: "#ecfdf5", accent: "#fde68a" },
+].map((a, i) => ({ ...a, name: SERVICE_GROUPS[i].name, blurb: SERVICE_GROUPS[i].blurb, items: SERVICE_GROUPS[i].items }));
 
 export default function Services() {
   return (
@@ -28,42 +30,9 @@ export default function Services() {
         sub="Twenty capabilities across four disciplines — one team to take you from idea to scale."
       />
       <Ticker items={["AI & GenAI", "Enterprise Software", "Cloud & DevOps", "Digital Transformation"]} />
+      <FlightStrip from="Your idea" to="Live" note="Brief in. Working software out." />
 
-      <section className="pb-6">
-        <div className="mx-auto max-w-7xl px-6 space-y-5">
-          {SERVICE_GROUPS.map((g, i) => {
-            const t = TONES[i % TONES.length];
-            return (
-              <div
-                key={g.name}
-                data-stack
-                className="sticky isolate grid gap-6 overflow-hidden rounded-[1.8rem] border border-[#14532d]/10 p-6 shadow-[0_-18px_40px_-28px_rgba(20,83,45,0.5)] md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:gap-10 md:p-9"
-                style={{ top: `${5.25 + i * 0.7}rem`, background: t.bg }}
-              >
-                <div className="relative">
-                  <span className="pointer-events-none absolute -top-4 -left-2 font-display text-[7rem] leading-none opacity-[0.1] md:text-[10rem]" style={{ color: t.accent }}>0{i + 1}</span>
-                  <span className="relative font-mono text-xs" style={{ color: t.accent }}>0{i + 1} / 04</span>
-                  <h2 className={`relative mt-3 font-display text-[clamp(1.9rem,3.4vw,3rem)] leading-none ${t.dark ? "text-white" : "text-[#14532d]"}`}>{g.name}</h2>
-                  <p className={`relative mt-4 max-w-sm text-sm ${t.dark ? "text-white/75" : "text-muted"}`}>{g.blurb}</p>
-                </div>
-                <ul className={`divide-y ${t.dark ? "divide-white/15" : "divide-[#14532d]/10"}`}>
-                  {g.items.map((s, n) => (
-                    <li key={s} className="group">
-                      <Link href="/contact#contact-form" className="flex items-center justify-between gap-4 py-2.5">
-                        <span className="flex items-baseline gap-3">
-                          <span className="font-mono text-xs" style={{ color: t.accent }}>{String(n + 1).padStart(2, "0")}</span>
-                          <span className={`text-base transition-all duration-300 group-hover:translate-x-2 ${t.dark ? "text-white" : "text-ink"}`}>{s}</span>
-                        </span>
-                        <span className="-translate-x-2 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" style={{ color: t.accent }}>→</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      <ServiceReveal areas={AREAS} />
 
       <section className="px-3 py-20 sm:px-6">
         <div data-panel className="mx-auto max-w-7xl rounded-[2rem] bg-gradient-to-br from-[#052e16] via-[#14532d] to-[#166534] px-6 py-16 text-white md:px-12 md:py-24">
