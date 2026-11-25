@@ -667,8 +667,8 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
       const side = a === 0 ? 1 : -1;
       const S = K.S.set(side * 0.98, 2.55, 0);
       const pole = K.pole.set(side * 0.5, -0.9, -0.35);
-      const wrist = a === 0 ? K.t.set(1.0, 1.95 + bob, 0.92) : K.t.set(-1.0 + Math.sin(t * 1.1) * 0.03, 1.72 + Math.sin(t * 1.3) * 0.03, 0.3);
-      wrist.lerp(K.r.set(side * 0.42, 1.2, 0.3), 1 - armIn);
+      const wrist = a === 0 ? K.t.set(1.0, 1.95 + bob, 0.92) : K.t.set(-1.42 + Math.sin(t * 1.1) * 0.03, 1.66 + Math.sin(t * 1.3) * 0.03, 0.22);
+      wrist.lerp(K.r.set(side * 1.3, 1.55, 0.2), 1 - armIn);
       solveArm(S, wrist, pole, 0.62, 0.62, K.E, K.W, K.a, K.b);
       const up = (a === 0 ? upP : upR).current;
       const fo = (a === 0 ? foP : foR).current;
@@ -721,7 +721,8 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
     rings.current.forEach((g, i) => {
       if (!g) return;
       const k = sg(3.4 + i * 0.35, 4.7 + i * 0.35);
-      g.scale.set(Math.max(0.001, k), 1, Math.max(0.001, k));
+      g.visible = k > 0.02; // a collapsed ring would show as a thin vertical dotted line
+      g.scale.set(Math.max(0.001, k), 0.4 + 0.6 * k, Math.max(0.001, k));
     });
 
     // ---- data streams from the chest into every active interface
