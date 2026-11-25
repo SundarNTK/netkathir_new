@@ -1,6 +1,6 @@
 import PageHero from "@/components/PageHero";
 import { FlightStrip } from "@/components/Flight";
-import { ClientShowcase, LetterWall } from "@/components/Showcase";
+import { ClientReel, LetterWall } from "@/components/Showcase";
 import Ticker from "@/components/Ticker";
 import { CLIENTS } from "@/lib/data";
 
@@ -67,7 +67,7 @@ export default function Projects() {
         </div>
       </section>
 
-      <ClientShowcase clients={CLIENTS} notes={CASES} />
+      <ClientReel clients={CLIENTS} notes={CASES} />
     </div>
   );
 }

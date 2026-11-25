@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -280,104 +280,152 @@ export function LetterWall({ rows, title, sub, stamp }: { rows: string[]; title:
 }
 
 /* ──────────────────────────────────────────────────────────────
-   ClientShowcase — scroll-driven client list: the big card on the left
-   follows whichever client is in the middle of the screen.
+   ClientReel — a pinned horizontal reel of big client cards. The cards glide sideways as you scroll,
+   turn and scale toward the centre, and the whole section tints to the card in focus.
    ────────────────────────────────────────────────────────────── */
-const CLIENT_TONES: [string, string, string][] = [
-  ["#d1fae5", "#a7f3d0", "#065f46"],
-  ["#fef3c7", "#fde68a", "#78350f"],
-  ["#dcfce7", "#bbf7d0", "#14532d"],
+const REEL_TONES: [string, string, string][] = [
+  ["#e3f8ec", "#a7f3d0", "#065f46"],
+  ["#fff6d8", "#fde68a", "#78350f"],
+  ["#e4f9ef", "#86efac", "#14532d"],
   ["#e0f7f4", "#99f6e4", "#134e4a"],
-  ["#ecfccb", "#d9f99d", "#365314"],
-  ["#fff7d6", "#fcd34d", "#713f12"],
-  ["#dbf5e3", "#86efac", "#14532d"],
-  ["#e6fbf0", "#a7f3d0", "#064e3b"],
-  ["#fef9c3", "#fde047", "#713f12"],
+  ["#f0fbd8", "#d9f99d", "#365314"],
+  ["#fff3cf", "#fcd34d", "#713f12"],
+  ["#e5f7ea", "#bbf7d0", "#14532d"],
+  ["#e2f8f1", "#a7f3d0", "#064e3b"],
+  ["#fdf6c8", "#fde047", "#713f12"],
 ];
+const SECTORS: Record<string, string> = {
+  "MedConnect AI": "Healthcare · AI",
+  HEB: "Public sector · Bookings",
+  "Auroville Learning": "Education",
+  WhyScience: "Education",
+  "Meena Fiberglas Industries": "Manufacturing",
+  APPGM: "Portal · Malaysia",
+};
 
-export function ClientShowcase({ clients, notes }: { clients: { name: string; logo: string }[]; notes: Record<string, string> }) {
+export function ClientReel({ clients, notes }: { clients: { name: string; logo: string }[]; notes: Record<string, string> }) {
   const sec = useRef<HTMLElement>(null);
-  const [active, setActive] = useState(0);
 
   useEffect(() => {
     const root = sec.current;
     if (!root) return;
     const mm = gsap.matchMedia();
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
-      const rows = Array.from(root.querySelectorAll<HTMLElement>("[data-cs-row]"));
-      rows.forEach((row, i) => {
-        const name = row.querySelector("[data-cs-name]");
-        const chip = row.querySelector("[data-cs-chip]");
-        const line = row.querySelector("[data-cs-line]");
-        // the row slides in as it rises, and settles back as it leaves
-        gsap.fromTo(name, { xPercent: 10, opacity: 0.12 }, { xPercent: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: row, start: "top 92%", end: "top 52%", scrub: 0.5 } });
-        gsap.fromTo(chip, { scale: 0.4, rotate: -14, opacity: 0 }, { scale: 1, rotate: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: row, start: "top 92%", end: "top 55%", scrub: 0.5 } });
-        gsap.fromTo(line, { scaleX: 0 }, { scaleX: 1, ease: "none", scrollTrigger: { trigger: row, start: "top 70%", end: "bottom 45%", scrub: true } });
-        gsap.to(name, { opacity: 0.28, ease: "none", scrollTrigger: { trigger: row, start: "bottom 45%", end: "bottom 12%", scrub: 0.5 } });
-        ScrollTrigger.create({ trigger: row, start: "top 58%", end: "bottom 58%", onToggle: (self) => self.isActive && setActive(i) });
+    mm.add("(min-width: 768px) and (prefers-reduced-motion: no-preference)", () => {
+      const track = root.querySelector<HTMLElement>("[data-rl-track]")!;
+      const cards = Array.from(root.querySelectorAll<HTMLElement>("[data-rl-card]"));
+      const plates = Array.from(root.querySelectorAll<HTMLElement>("[data-rl-plate]"));
+      const counter = root.querySelector<HTMLElement>("[data-rl-now]");
+      const bar = root.querySelector<HTMLElement>("[data-rl-bar]");
+      const n = cards.length;
+      const dist = () => Math.max(0, track.scrollWidth - window.innerWidth);
+      let current = -1;
+      const paint = () => {
+        const vw = window.innerWidth;
+        let best = 0;
+        let bestD = 1e9;
+        cards.forEach((c, i) => {
+          const r = c.getBoundingClientRect();
+          const off = (r.left + r.width / 2 - vw / 2) / vw; // -1 .. 1, 0 = centred
+          const a = Math.abs(off);
+          gsap.set(c, { rotateY: off * -16, scale: 1 - Math.min(0.2, a * 0.2), opacity: 1 - Math.min(0.55, a * 0.6), transformPerspective: 1200 });
+          gsap.set(plates[i], { x: off * 70 });
+          if (a < bestD) {
+            bestD = a;
+            best = i;
+          }
+        });
+        if (best !== current) {
+          current = best;
+          if (counter) counter.textContent = String(best + 1).padStart(2, "0");
+          gsap.to(root, { backgroundColor: REEL_TONES[best % REEL_TONES.length][0], duration: 0.7, ease: "power2.out", overwrite: "auto" });
+        }
+      };
+      gsap.set(root, { backgroundColor: REEL_TONES[0][0] });
+      const tween = gsap.to(track, {
+        x: () => -dist(),
+        ease: "none",
+        scrollTrigger: {
+          trigger: root,
+          start: "top top",
+          end: () => `+=${dist() + window.innerHeight * 0.5}`,
+          pin: true,
+          scrub: 0.6,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            if (bar) bar.style.transform = `scaleX(${self.progress.toFixed(3)})`;
+            paint();
+          },
+        },
       });
+      paint();
+      return () => {
+        tween.kill();
+        gsap.set(root, { clearProps: "backgroundColor" });
+      };
     });
     return () => mm.revert();
   }, [clients.length]);
 
-  const tone = CLIENT_TONES[active % CLIENT_TONES.length];
   return (
-    <section ref={sec} data-nolift className="relative pb-20 pt-6">
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 lg:grid-cols-[0.8fr_1.2fr]">
-        {/* preview card follows the list */}
-        <div className="relative hidden lg:block">
-          <div className="sticky top-28">
-            <p className="mb-4 font-mono text-xs uppercase tracking-[0.3em] text-ice">Everyone we have worked with</p>
-            <div data-tilt className="relative aspect-[4/5] w-full overflow-hidden rounded-[2rem] border border-[#14532d]/10 shadow-[0_40px_80px_-40px_rgba(20,83,45,0.65)]">
-              {clients.map((c, i) => {
-                const t = CLIENT_TONES[i % CLIENT_TONES.length];
-                const on = i === active;
-                return (
-                  <div key={c.name} className="absolute inset-0 transition-opacity duration-700" style={{ opacity: on ? 1 : 0, background: `linear-gradient(150deg, ${t[0]}, ${t[1]})` }}>
-                    <span aria-hidden className="absolute -right-6 -top-10 font-display text-[16rem] leading-none opacity-[0.12]" style={{ color: t[2] }}>{String(i + 1).padStart(2, "0")}</span>
-                    <div className="absolute inset-x-8 top-[22%] grid h-[34%] place-items-center rounded-[1.6rem] bg-white shadow-[0_30px_60px_-28px_rgba(0,0,0,0.5)] transition-all duration-700" style={{ transform: on ? "perspective(900px) translateY(0) rotateX(0) scale(1)" : "perspective(900px) translateY(40px) rotateX(-22deg) scale(0.9)", opacity: on ? 1 : 0 }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={c.logo} alt={c.name} className="max-h-[62%] max-w-[72%] object-contain" />
-                    </div>
-                    <div className="absolute inset-x-8 bottom-8 transition-all duration-700 delay-100" style={{ color: t[2], transform: on ? "translateY(0)" : "translateY(24px)", opacity: on ? 1 : 0 }}>
-                      <p className="font-mono text-xs uppercase tracking-[0.25em] opacity-70">{String(i + 1).padStart(2, "0")} / {String(clients.length).padStart(2, "0")}</p>
-                      <h3 className="mt-2 font-display text-[2.1rem] leading-[1.02]">{c.name}</h3>
-                      <p className="mt-2 text-sm opacity-80">{notes[c.name] ?? "Delivered by Netkathir."}</p>
-                    </div>
-                  </div>
-                );
-              })}
-              <span aria-hidden className="absolute bottom-0 left-0 h-1.5 origin-left bg-gradient-to-r from-[#14532d] to-[#eab308] transition-all duration-700" style={{ width: `${((active + 1) / clients.length) * 100}%` }} />
-            </div>
+    <section ref={sec} data-nolift className="relative overflow-hidden bg-[#e3f8ec]">
+      {/* desktop: pinned reel */}
+      <div className="hidden h-screen flex-col justify-center md:flex">
+        <div className="mx-auto mb-8 flex w-full max-w-7xl items-end justify-between gap-6 px-6 pt-20">
+          <div>
+            <p className="mb-3 font-mono text-xs uppercase tracking-[0.3em] text-[#15803d]">Everyone we have worked with</p>
+            <h2 className="font-display text-[clamp(2.2rem,4.6vw,4.2rem)] leading-[1] text-[#0a2417]">Clients who trust us.</h2>
+          </div>
+          <div className="text-right font-mono text-xs uppercase tracking-[0.3em] text-[#0a2417]/70">
+            <span data-rl-now className="font-display text-5xl normal-case tracking-normal text-[#0a2417]">01</span> / {String(clients.length).padStart(2, "0")}
+            <span className="mt-3 block h-[3px] w-40 overflow-hidden rounded bg-[#0a2417]/15">
+              <span data-rl-bar className="block h-full origin-left bg-gradient-to-r from-[#14532d] to-[#eab308]" style={{ transform: "scaleX(0)" }} />
+            </span>
           </div>
         </div>
-
-        {/* the list */}
-        <div>
-          <p className="mb-6 font-mono text-xs uppercase tracking-[0.3em] text-ice lg:hidden">Everyone we have worked with</p>
-          <ol>
-            {clients.map((c, i) => {
-              const on = i === active;
-              return (
-                <li key={c.name} data-cs-row className="relative flex min-h-[22vh] items-center gap-5 border-t border-ink/10 py-8 last:border-b md:min-h-[30vh]">
-                  <span data-cs-line aria-hidden className="absolute inset-x-0 top-0 h-[2px] origin-left bg-gradient-to-r from-[#14532d] via-[#22a559] to-[#eab308]" />
-                  <span className="w-8 shrink-0 font-mono text-xs text-muted">{String(i + 1).padStart(2, "0")}</span>
-                  <span data-cs-chip className="grid h-16 w-24 shrink-0 place-items-center rounded-xl bg-white px-2 shadow-[0_14px_28px_-16px_rgba(20,83,45,0.5)] md:h-20 md:w-32 lg:hidden xl:grid">
+        <div data-rl-track className="flex w-max items-center gap-8 px-[max(1.5rem,calc((100vw-72rem)/2+1.5rem))] pb-10">
+          {clients.map((c, i) => {
+            const t = REEL_TONES[i % REEL_TONES.length];
+            return (
+              <article key={c.name} data-rl-card className="relative flex h-[min(30rem,58vh)] w-[min(44rem,66vw)] shrink-0 flex-col justify-between overflow-hidden rounded-[2rem] border border-white/70 p-8 shadow-[0_40px_80px_-40px_rgba(20,83,45,0.55)] will-change-transform" style={{ background: `linear-gradient(145deg, #ffffff 0%, ${t[0]} 40%, ${t[1]} 100%)`, color: t[2] }}>
+                <span aria-hidden className="pointer-events-none absolute -bottom-16 -right-6 font-display text-[18rem] font-bold leading-none opacity-[0.1]">{String(i + 1).padStart(2, "0")}</span>
+                <span aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full border-2 border-current opacity-10" />
+                <span aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-44 w-44 rounded-full border border-current opacity-10" />
+                <div className="relative flex items-start justify-between">
+                  <div data-rl-plate className="relative h-[9.5rem] w-[15rem] rounded-2xl bg-white shadow-[0_26px_50px_-26px_rgba(0,0,0,0.5)]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={c.logo} alt="" className="max-h-[70%] w-full object-contain" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 data-cs-name className={`font-display text-[clamp(1.9rem,4.4vw,4.2rem)] leading-[1.02] transition-colors duration-500 ${on ? "text-[#14532d]" : "text-ink"}`}>
-                      {c.name}
-                    </h3>
-                    <p className={`mt-2 max-w-md text-sm transition-all duration-500 ${on ? "translate-y-0 opacity-80" : "translate-y-1 opacity-0"} lg:hidden`}>{notes[c.name] ?? "Delivered by Netkathir."}</p>
+                    <img src={c.logo} alt={c.name} className="absolute inset-4 h-[calc(100%-2rem)] w-[calc(100%-2rem)] object-contain" />
                   </div>
-                  <span className={`text-3xl transition-all duration-500 ${on ? "rotate-0 text-[#eab308]" : "-rotate-45 text-ink/25"}`} style={{ color: on ? tone[2] : undefined }}>↗</span>
-                </li>
-              );
-            })}
-          </ol>
+                  <span className="font-mono text-xs font-bold uppercase tracking-[0.25em] opacity-70">{String(i + 1).padStart(2, "0")} / {String(clients.length).padStart(2, "0")}</span>
+                </div>
+                <div className="relative">
+                  {SECTORS[c.name] && <span className="mb-3 inline-block rounded-full bg-white/70 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.18em]">{SECTORS[c.name]}</span>}
+                  <h3 className="font-display text-[clamp(2rem,3.6vw,3.3rem)] leading-[1.02]">{c.name}</h3>
+                  <p className="mt-2 max-w-md text-[0.95rem] opacity-80">{notes[c.name] ?? "Delivered by Netkathir."}</p>
+                </div>
+              </article>
+            );
+          })}
         </div>
+      </div>
+
+      {/* mobile / reduced motion: a simple stack */}
+      <div className="space-y-4 px-4 py-14 md:hidden">
+        <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#15803d]">Everyone we have worked with</p>
+        <h2 data-split className="font-display text-[clamp(2rem,8vw,3rem)] leading-none text-[#0a2417]">Clients who trust us.</h2>
+        {clients.map((c, i) => {
+          const t = REEL_TONES[i % REEL_TONES.length];
+          return (
+            <div key={c.name} data-reveal className="rounded-3xl p-5 shadow-sm" style={{ background: `linear-gradient(145deg,#fff,${t[0]} 45%,${t[1]})`, color: t[2] }}>
+              <div className="grid h-24 w-44 place-items-center rounded-xl bg-white p-3 shadow">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={c.logo} alt={c.name} className="max-h-full max-w-full object-contain" />
+              </div>
+              <h3 className="mt-4 font-display text-2xl">{c.name}</h3>
+              <p className="mt-1 text-sm opacity-80">{notes[c.name] ?? "Delivered by Netkathir."}</p>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
