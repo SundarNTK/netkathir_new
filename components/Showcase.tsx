@@ -194,7 +194,9 @@ export function Collage({ tag, lines, text, cta, href, main, floats, sticker }: 
       if (m) gsap.fromTo(m, { y: 90, scale: 0.94 }, { y: -50, scale: 1, ease: "none", scrollTrigger: st(root) });
       if (a) gsap.fromTo(a, { y: 220, rotate: 4 }, { y: -170, rotate: -3, ease: "none", scrollTrigger: st(root) });
       if (b) gsap.fromTo(b, { y: 260, rotate: -5 }, { y: -90, rotate: 2, ease: "none", scrollTrigger: st(root) });
-      if (s) gsap.fromTo(s, { rotate: -40, y: 120 }, { rotate: 220, y: -120, ease: "none", scrollTrigger: st(root) });
+      if (s) gsap.fromTo(s, { y: 120 }, { y: -120, ease: "none", scrollTrigger: st(root) });
+      const ring = root.querySelector("[data-c-ring]");
+      if (ring) gsap.fromTo(ring, { rotate: 0 }, { rotate: 300, ease: "none", scrollTrigger: st(root) });
       gsap.fromTo(t, { yPercent: 60, opacity: 0 }, { yPercent: 0, opacity: 1, stagger: 0.12, ease: "none", scrollTrigger: { trigger: root, start: "top 70%", end: "top 15%", scrub: 0.6 } });
       gsap.fromTo(root.querySelector("[data-c-topo]"), { yPercent: 8 }, { yPercent: -8, ease: "none", scrollTrigger: st(root) });
     });
@@ -238,7 +240,8 @@ export function Collage({ tag, lines, text, cta, href, main, floats, sticker }: 
             <img src={floats[1]} alt="" className="h-full w-full object-cover" />
           </div>
           <div data-c-s className="absolute bottom-[4%] right-[4%] grid h-28 w-28 place-items-center rounded-full bg-gradient-to-br from-[#14532d] to-[#22a559] text-center font-display text-sm font-bold uppercase leading-tight text-[#fde68a] shadow-xl">
-            {sticker}
+            <span data-c-ring aria-hidden className="pointer-events-none absolute -inset-2 rounded-full border-2 border-dashed border-[#eab308]/80" />
+            <span className="relative px-2">{sticker}</span>
           </div>
         </div>
       </div>
