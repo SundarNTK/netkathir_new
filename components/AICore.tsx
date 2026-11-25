@@ -2,7 +2,6 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { traceImageToShapes } from "@/lib/traceShape";
@@ -713,6 +712,68 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
     []
   );
 
+  // ---- glass finish for the panels: curved glowing rim + a moving mirror reflection (all share one set of textures)
+  const glass = useMemo(() => {
+    const mk = (w: number, h: number, draw: (c: CanvasRenderingContext2D) => void) => {
+      const cv = document.createElement("canvas");
+      cv.width = w;
+      cv.height = h;
+      draw(cv.getContext("2d")!);
+      const t = new THREE.CanvasTexture(cv);
+      t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    };
+    const rim = mk(560, 374, (c) => {
+      c.shadowColor = "#5eb0ff";
+      c.shadowBlur = 26;
+      c.strokeStyle = "rgba(150,205,255,0.95)";
+      c.lineWidth = 4;
+      c.beginPath();
+      c.roundRect(24, 17, 512, 340, 26);
+      c.stroke();
+      c.shadowBlur = 0;
+      const g = c.createLinearGradient(24, 17, 300, 200);
+      g.addColorStop(0, "rgba(255,255,255,0.95)");
+      g.addColorStop(0.5, "rgba(255,255,255,0.1)");
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      c.strokeStyle = g;
+      c.lineWidth = 2.5;
+      c.beginPath();
+      c.roundRect(27, 20, 506, 334, 24);
+      c.stroke();
+    });
+    const mask = mk(512, 340, (c) => {
+      c.fillStyle = "#000";
+      c.fillRect(0, 0, 512, 340);
+      c.fillStyle = "#fff";
+      c.beginPath();
+      c.roundRect(0, 0, 512, 340, 26);
+      c.fill();
+    });
+    const streak = mk(1024, 340, (c) => {
+      const g = c.createLinearGradient(380, 0, 640, 0);
+      g.addColorStop(0, "rgba(255,255,255,0)");
+      g.addColorStop(0.5, "rgba(255,255,255,0.55)");
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      c.fillStyle = g;
+      c.beginPath();
+      c.moveTo(430, 0);
+      c.lineTo(690, 0);
+      c.lineTo(590, 340);
+      c.lineTo(330, 340);
+      c.closePath();
+      c.fill();
+    });
+    streak.repeat.set(0.5, 1);
+    const shine = PANELS.map(() => {
+      const t = streak.clone();
+      t.needsUpdate = true;
+      t.repeat.set(0.5, 1);
+      return t;
+    });
+    return { rim, mask, shine };
+  }, []);
+
   // ---- live interface canvases (redrawn ~10x/s while visible)
   const live = useMemo(
     () =>
@@ -760,6 +821,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
   useFrame((s, dt) => {
     const d = Math.min(dt, 0.25);
     const t = palette.uTime.value;
+    const tNow = t;
     scroll.current = THREE.MathUtils.damp(scroll.current, clamp01(window.scrollY / (window.innerHeight * 1.05)), 5, d);
     const sc = scroll.current;
     const e = ease(sc);
@@ -826,6 +888,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
 
     // ---- interfaces: float, fan out with scroll, and run their own live content + page transitions
     turn.current += 1;
+    glass.shine.forEach((t, i) => (t.offset.x = ((tNow * 0.13 + i * 0.21) % 2.4) - 0.9));
     PANELS.slice(0, count).forEach((p, i) => {
       const g = panels.current[i];
       if (!g) return;
@@ -1021,15 +1084,21 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
                 if (m) shots.current[i] = m;
               }}
               map={live[i].tex}
+              alphaMap={glass.mask}
               transparent
               side={THREE.DoubleSide}
               toneMapped={false}
               depthWrite={false}
             />
           </mesh>
-          <RoundedBox args={[p.w + 0.05, p.w * 0.664 + 0.05, 0.012]} radius={0.03} position={[0, 0, -0.012]}>
-            <meshBasicMaterial color="#6aa8f0" transparent opacity={0.75} toneMapped={false} />
-          </RoundedBox>
+          <mesh position={[0, 0, -0.012]} renderOrder={-1}>
+            <planeGeometry args={[p.w * 1.094, p.w * 0.664 * 1.1]} />
+            <meshBasicMaterial map={glass.rim} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} side={THREE.DoubleSide} />
+          </mesh>
+          <mesh position={[0, 0, 0.006]}>
+            <planeGeometry args={[p.w, p.w * 0.664]} />
+            <meshBasicMaterial map={glass.shine[i]} alphaMap={glass.mask} transparent opacity={0.5} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} side={THREE.DoubleSide} />
+          </mesh>
         </group>
       ))}
 
