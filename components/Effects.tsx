@@ -198,9 +198,12 @@ export default function Effects() {
 
         gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((el) => {
           gsap.from(el.children, {
-            y: 60,
+            y: 70,
             opacity: 0,
             scale: 0.96,
+            rotateX: 16,
+            transformPerspective: 1100,
+            transformOrigin: "50% 100%",
             duration: 1,
             ease: "power3.out",
             stagger: 0.09,

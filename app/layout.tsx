@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import Effects from "@/components/Effects";
 import Background from "@/components/Background";
 import Intro from "@/components/Intro";
+import PageProgress from "@/components/PageProgress";
 
 const sans = Geist({ variable: "--font-body", subsets: ["latin"] });
 const mono = Geist_Mono({ variable: "--font-mono", subsets: ["latin"] });
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Intro />
         <Background />
         <Effects />
+        <PageProgress />
         <Nav />
         <main id="main" className="relative z-10">
           {children}

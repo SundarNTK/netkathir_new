@@ -1,6 +1,5 @@
 import PageHero from "@/components/PageHero";
 import Ticker from "@/components/Ticker";
-import ScrollLine from "@/components/ScrollLine";
 import { CLIENTS } from "@/lib/data";
 
 export const metadata = { title: "Projects — Netkathir Technologies" };
@@ -21,7 +20,6 @@ export default function Projects() {
   const featured = CLIENTS.filter((c) => CASES[c.name]);
   return (
     <div className="relative isolate">
-      <ScrollLine />
       <PageHero
         kicker="Projects"
         title="Transforming Ideas into Intelligent Solutions."
@@ -33,7 +31,7 @@ export default function Projects() {
           <h2 data-split className="mb-12 font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-[1.02]">Selected work.</h2>
           <div data-stagger className="grid gap-5 md:grid-cols-3">
             {featured.map((c, i) => (
-              <article key={c.name} className={`relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-[2rem] bg-gradient-to-br p-8 shadow-[0_34px_70px_-36px_rgba(20,83,45,0.6)] ${TONES[i % TONES.length]}`}>
+              <article key={c.name} data-tilt className={`glare relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-[2rem] bg-gradient-to-br p-8 shadow-[0_34px_70px_-36px_rgba(20,83,45,0.6)] ${TONES[i % TONES.length]}`}>
                 <span className="font-display text-[8rem] leading-none opacity-[0.12]">0{i + 1}</span>
                 <div>
                   <span className="mb-6 flex h-16 w-32 items-center justify-center rounded-2xl bg-white px-3 shadow-lg">

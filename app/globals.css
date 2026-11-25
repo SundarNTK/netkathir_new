@@ -494,3 +494,21 @@ main {
     filter: drop-shadow(0 14px 22px rgba(34, 150, 80, 0.28));
   }
 }
+
+/* soft light glare that follows the pointer on tilting cards */
+.glare {
+  position: relative;
+  overflow: hidden;
+}
+.glare::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s;
+  background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.38), transparent 60%);
+}
+.glare:hover::after {
+  opacity: 1;
+}

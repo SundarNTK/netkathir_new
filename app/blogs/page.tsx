@@ -1,6 +1,5 @@
 import PageHero from "@/components/PageHero";
 import Ticker from "@/components/Ticker";
-import ScrollLine from "@/components/ScrollLine";
 import { BLOGS } from "@/lib/data";
 
 export const metadata = { title: "Blogs — Netkathir Technologies" };
@@ -9,7 +8,6 @@ export default function Blogs() {
   const [first, ...rest] = BLOGS;
   return (
     <div className="relative isolate">
-      <ScrollLine />
       <PageHero
         kicker="Insights"
         title="Insights / Blogs."
@@ -35,15 +33,15 @@ export default function Blogs() {
 
       <section className="pb-20 pt-10">
         <div className="mx-auto grid max-w-7xl gap-6 px-6 sm:grid-cols-2 lg:grid-cols-3">
-          {rest.map((b, i) => (
+          {rest.map((b) => (
             <a
               key={b.n}
               href={b.url}
               target="_blank"
               rel="noreferrer"
               data-reveal
-              {...(i % 3 === 1 ? { "data-parallax": "0.05" } : {})}
-              className="group block overflow-hidden rounded-[1.75rem] border border-[#14532d]/10 bg-white shadow-[0_24px_60px_-36px_rgba(20,83,45,0.5)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_34px_70px_-30px_rgba(20,83,45,0.6)]"
+              data-tilt
+              className="glare group block overflow-hidden rounded-[1.75rem] border border-[#14532d]/10 bg-white shadow-[0_24px_60px_-36px_rgba(20,83,45,0.5)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_34px_70px_-30px_rgba(20,83,45,0.6)]"
             >
               <div className="relative h-52 overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

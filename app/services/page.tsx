@@ -1,7 +1,6 @@
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import Ticker from "@/components/Ticker";
-import ScrollLine from "@/components/ScrollLine";
 import { SERVICE_GROUPS } from "@/lib/data";
 
 export const metadata = { title: "Services — Netkathir Technologies" };
@@ -23,7 +22,6 @@ const STEPS = [
 export default function Services() {
   return (
     <div className="relative isolate">
-      <ScrollLine />
       <PageHero
         kicker="Services"
         title="Our Services."
@@ -73,7 +71,7 @@ export default function Services() {
           <h2 data-split className="max-w-3xl font-display text-[clamp(2.2rem,5vw,4.4rem)] leading-[1.02]">From first conversation to production.</h2>
           <div data-stagger className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {STEPS.map(([t, d], i) => (
-              <div key={t} className="rounded-3xl border border-white/10 bg-white/[0.06] p-7">
+              <div key={t} data-tilt className="glare rounded-3xl border border-white/10 bg-white/[0.06] p-7">
                 <span className="font-display text-5xl text-[#fde68a]">0{i + 1}</span>
                 <h3 className="mt-6 font-display text-2xl">{t}</h3>
                 <p className="mt-2 text-sm text-white/70">{d}</p>

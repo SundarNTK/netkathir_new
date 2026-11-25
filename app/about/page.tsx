@@ -1,6 +1,5 @@
 import PageHero from "@/components/PageHero";
 import Ticker from "@/components/Ticker";
-import ScrollLine from "@/components/ScrollLine";
 import Founder from "@/components/Founder";
 import WorldMap from "@/components/WorldMap";
 import { COUNTRIES, IMAGES, VALUES } from "@/lib/data";
@@ -10,7 +9,6 @@ export const metadata = { title: "About Us — Netkathir Technologies" };
 export default function About() {
   return (
     <div className="relative isolate">
-      <ScrollLine />
       <PageHero
         kicker="About Us"
         title="The People and Purpose Behind Netkathir."
@@ -104,7 +102,7 @@ export default function About() {
               const tones = ["bg-white", "bg-[#ecfccb]", "bg-[#fef3c7]", "bg-[#14532d] text-white"];
               const dark = i % 4 === 3;
               return (
-                <div key={t} className={`flex min-h-[15rem] flex-col justify-between rounded-[1.75rem] border border-[#14532d]/10 p-7 shadow-[0_24px_60px_-36px_rgba(20,83,45,0.5)] ${tones[i % 4]}`}>
+                <div key={t} data-tilt className={`glare flex min-h-[15rem] flex-col justify-between rounded-[1.75rem] border border-[#14532d]/10 p-7 shadow-[0_24px_60px_-36px_rgba(20,83,45,0.5)] ${tones[i % 4]}`}>
                   <span className={`font-display text-5xl ${dark ? "text-[#fde68a]" : "text-[#15803d]/40"}`}>0{i + 1}</span>
                   <div>
                     <h3 className="mb-2 font-display text-2xl">{t}</h3>

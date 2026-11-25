@@ -1,7 +1,6 @@
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import Ticker from "@/components/Ticker";
-import ScrollLine from "@/components/ScrollLine";
 import { PRODUCTS } from "@/lib/data";
 
 export const metadata = { title: "Products — Netkathir Technologies" };
@@ -9,7 +8,6 @@ export const metadata = { title: "Products — Netkathir Technologies" };
 export default function Products() {
   return (
     <div className="relative isolate">
-      <ScrollLine />
       <PageHero
         kicker="Products"
         title="Products Built by Netkathir."
