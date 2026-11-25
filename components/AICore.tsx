@@ -303,48 +303,145 @@ const DOWN = new THREE.Vector3(0, -1, 0);
 /* ================================ glowing 3D "AI" held in the hand ================================ */
 
 /** Extruded 3D "AI" lettering in glowing blue, turning slowly above the palm with pulsing glow rings. */
-function AIText({ palette, mobile }: { palette: RobotPalette; mobile: boolean }) {
-  const spin = useRef<THREE.Group>(null!);
+function AIText({ palette }: { palette: RobotPalette; mobile: boolean }) {
+  const sway = useRef<THREE.Group>(null!);
   const halo = useRef<THREE.Mesh>(null!);
+  const chip = useRef<THREE.Mesh>(null!);
   const rings = useRef<THREE.Mesh[]>([]);
-  const [geo, setGeo] = useState<THREE.BufferGeometry | null>(null);
-  const mat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#0a2a9c", emissive: new THREE.Color("#1d4ed8"), emissiveIntensity: 0.6, metalness: 0.2, roughness: 0.35 }), []);
+
+  // glowing AI chip with circuit traces running out from it (drawn once on a canvas)
+  const chipTex = useMemo(() => {
+    const S = 1024;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = S;
+    const c = cv.getContext("2d")!;
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const mid = S / 2;
+    const half = 170;
+    c.lineCap = "round";
+    c.shadowColor = "#22e6ff";
+    c.shadowBlur = 12;
+    // circuit traces: leave the chip at right angles, bend once or twice, end in a node
+    for (let k = 0; k < 44; k++) {
+      const side = k % 4; // 0 up, 1 right, 2 down, 3 left
+      const off = (rnd() - 0.5) * (half * 1.7);
+      let x = side === 1 ? mid + half : side === 3 ? mid - half : mid + off;
+      let y = side === 0 ? mid - half : side === 2 ? mid + half : mid + off;
+      let dx = side === 1 ? 1 : side === 3 ? -1 : 0;
+      let dy = side === 0 ? -1 : side === 2 ? 1 : 0;
+      c.strokeStyle = `rgba(90,235,255,${0.35 + rnd() * 0.4})`;
+      c.lineWidth = 2 + rnd() * 2.5;
+      c.beginPath();
+      c.moveTo(x, y);
+      const bends = 1 + Math.floor(rnd() * 2);
+      for (let b = 0; b <= bends; b++) {
+        const len = 60 + rnd() * 150;
+        x += dx * len;
+        y += dy * len;
+        c.lineTo(x, y);
+        if (b < bends) {
+          const turn = rnd() > 0.5 ? 1 : -1;
+          const ndx = dy * turn, ndy = -dx * turn;
+          dx = ndx;
+          dy = ndy;
+        }
+      }
+      c.stroke();
+      c.fillStyle = "rgba(170,250,255,0.9)";
+      c.beginPath();
+      c.arc(x, y, 5 + rnd() * 4, 0, 7);
+      c.fill();
+    }
+    // the chip
+    c.shadowBlur = 34;
+    c.fillStyle = "rgba(4,38,56,0.92)";
+    c.strokeStyle = "#5ff3ff";
+    c.lineWidth = 9;
+    c.beginPath();
+    c.roundRect(mid - half, mid - half, half * 2, half * 2, 34);
+    c.fill();
+    c.stroke();
+    c.shadowBlur = 10;
+    c.lineWidth = 3;
+    c.strokeStyle = "rgba(120,245,255,0.7)";
+    c.beginPath();
+    c.roundRect(mid - half + 26, mid - half + 26, (half - 26) * 2, (half - 26) * 2, 22);
+    c.stroke();
+    for (let i = 0; i < 8; i++) {
+      const p = mid - half + 40 + i * ((half * 2 - 80) / 7);
+      c.lineWidth = 6;
+      c.strokeStyle = "#5ff3ff";
+      [[p, mid - half - 18, p, mid - half], [p, mid + half, p, mid + half + 18], [mid - half - 18, p, mid - half, p], [mid + half, p, mid + half + 18, p]].forEach(([a, b, d, e]) => {
+        c.beginPath();
+        c.moveTo(a, b);
+        c.lineTo(d, e);
+        c.stroke();
+      });
+    }
+    // the AI letters
+    c.font = "800 210px Arial, Helvetica, sans-serif";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.shadowColor = "#22e6ff";
+    c.shadowBlur = 46;
+    c.fillStyle = "#5ff3ff";
+    c.fillText("AI", mid, mid + 12);
+    c.shadowBlur = 16;
+    c.fillStyle = "#eaffff";
+    c.fillText("AI", mid, mid + 12);
+    const t = new THREE.CanvasTexture(cv);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    return t;
+  }, []);
+
   const haloTex = useMemo(() => {
     const cv = document.createElement("canvas");
     cv.width = cv.height = 128;
     const c = cv.getContext("2d")!;
     const g = c.createRadialGradient(64, 64, 4, 64, 64, 64);
-    g.addColorStop(0, "rgba(255,255,255,0.85)");
-    g.addColorStop(0.3, "rgba(120,170,255,0.45)");
-    g.addColorStop(0.6, "rgba(40,90,255,0.18)");
-    g.addColorStop(1, "rgba(40,120,255,0)");
+    g.addColorStop(0, "rgba(220,255,255,0.8)");
+    g.addColorStop(0.3, "rgba(80,220,255,0.4)");
+    g.addColorStop(0.6, "rgba(30,160,255,0.16)");
+    g.addColorStop(1, "rgba(30,160,255,0)");
     c.fillStyle = g;
     c.fillRect(0, 0, 128, 128);
     return new THREE.CanvasTexture(cv);
   }, []);
-  useEffect(() => {
+
+  const glass = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#e8fbff", roughness: 0.02, metalness: 0, transparent: true, opacity: 0.16, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2.4, depthWrite: false }), []);
+  const rim = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        uniforms: { uC: { value: new THREE.Color("#46e8ff") } },
+        vertexShader: "varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }",
+        fragmentShader: "uniform vec3 uC; varying vec3 vN; varying vec3 vV; void main(){ float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.6); gl_FragColor = vec4(uC, f * 0.9); }",
+      }),
+    []
+  );
+  const glintTex = useMemo(() => {
     const cv = document.createElement("canvas");
-    cv.width = cv.height = 200;
+    cv.width = cv.height = 64;
     const c = cv.getContext("2d")!;
-    c.fillStyle = "#fff";
-    c.font = "400 150px Arial, Helvetica, sans-serif";
-    c.textAlign = "center";
-    c.textBaseline = "middle";
-    c.fillText("AI", 100, 108);
-    const { shapes } = traceImageToShapes(cv, 200, 1);
-    if (!shapes.length) return;
-    const g = new THREE.ExtrudeGeometry(shapes, { depth: 0.16, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.012, bevelSegments: 2, curveSegments: 2 });
-    g.center();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- geometry is built from a canvas, client only
-    setGeo(g);
+    const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, "rgba(255,255,255,0.95)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    c.fillStyle = g;
+    c.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(cv);
   }, []);
-  useFrame((_, dt) => {
+
+  useFrame(() => {
     const t = palette.uTime.value;
-    spin.current.rotation.y += Math.min(dt, 0.1) * 1.1;
-    spin.current.position.y = Math.sin(t * 1.6) * 0.04;
-    mat.emissiveIntensity = 0.45 + 0.35 * (0.5 + 0.5 * Math.sin(t * 3));
-    (halo.current.material as THREE.MeshBasicMaterial).opacity = 0.5 + 0.3 * Math.sin(t * 3);
-    halo.current.scale.setScalar(2.1 + 0.25 * Math.sin(t * 3));
+    sway.current.rotation.y = Math.sin(t * 0.8) * 0.22;
+    sway.current.position.y = Math.sin(t * 1.6) * 0.04;
+    chip.current.scale.setScalar(1 + 0.025 * Math.sin(t * 3));
+    (halo.current.material as THREE.MeshBasicMaterial).opacity = 0.55 + 0.25 * Math.sin(t * 3);
+    halo.current.scale.setScalar(2.3 + 0.2 * Math.sin(t * 3));
     rings.current.forEach((r, i) => {
       if (!r) return;
       const k = (t * 0.7 + i * 0.5) % 1;
@@ -352,30 +449,41 @@ function AIText({ palette, mobile }: { palette: RobotPalette; mobile: boolean })
       (r.material as THREE.MeshBasicMaterial).opacity = (1 - k) * 0.7;
     });
   });
+
   return (
     <group>
-      <mesh ref={halo}>
+      <mesh ref={halo} position={[0, 0, -0.2]}>
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial map={haloTex} transparent depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending} />
       </mesh>
+      {/* light on the palm */}
       <group position={[0, -0.7, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         {[0, 1].map((i) => (
           <mesh key={i} ref={(m) => { if (m) rings.current[i] = m; }}>
             <torusGeometry args={[0.6, 0.015, 8, 56]} />
-            <meshBasicMaterial color="#38bdf8" transparent toneMapped={false} depthWrite={false} />
+            <meshBasicMaterial color="#38e1ff" transparent toneMapped={false} depthWrite={false} />
           </mesh>
         ))}
       </group>
-      <group ref={spin}>{geo && (
-          <group scale={1.3}>
-            <mesh geometry={geo} material={mat} />
-            <lineSegments>
-              <edgesGeometry args={[geo, 25]} />
-              <lineBasicMaterial color="#ffffff" toneMapped={false} />
-            </lineSegments>
-          </group>
-        )}</group>
-      <pointLight color="#3aa0ff" intensity={6} distance={4} />
+      <group ref={sway}>
+        {/* chip + circuits, seen through the glass */}
+        <mesh ref={chip} position={[0, 0, -0.05]} renderOrder={1}>
+          <planeGeometry args={[2.5, 2.5]} />
+          <meshBasicMaterial map={chipTex} transparent toneMapped={false} depthWrite={false} blending={THREE.AdditiveBlending} />
+        </mesh>
+        {/* the glass sphere */}
+        <mesh material={glass} renderOrder={2}>
+          <sphereGeometry args={[0.62, 48, 32]} />
+        </mesh>
+        <mesh material={rim} renderOrder={3} scale={1.02}>
+          <sphereGeometry args={[0.62, 48, 32]} />
+        </mesh>
+        <mesh position={[-0.26, 0.3, 0.5]} renderOrder={4}>
+          <planeGeometry args={[0.42, 0.26]} />
+          <meshBasicMaterial map={glintTex} transparent toneMapped={false} depthWrite={false} opacity={0.75} />
+        </mesh>
+      </group>
+      <pointLight color="#36d8ff" intensity={6} distance={4} />
     </group>
   );
 }

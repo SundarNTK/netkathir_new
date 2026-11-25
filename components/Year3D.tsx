@@ -42,13 +42,13 @@ function glowTexture() {
 }
 
 function Year({ state }: { state: IntroState }) {
-  const { invalidate } = useThree();
+  const { invalidate, scene } = useThree();
   const grp = useRef<THREE.Group>(null!);
   const mesh = useRef<THREE.Mesh>(null!);
   const glow = useRef<THREE.MeshBasicMaterial>(null!);
 
   const built = useMemo(() => {
-    const geo = new THREE.ExtrudeGeometry(traceWord(), { depth: 0.62, bevelEnabled: true, bevelThickness: 0.035, bevelSize: 0.03, bevelSegments: 5, curveSegments: 14 });
+    const geo = new THREE.ExtrudeGeometry(traceWord(), { depth: 0.62, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.012, bevelSegments: 4, curveSegments: 14 });
     geo.computeBoundingBox();
     const bb = geo.boundingBox!;
     const cx = (bb.min.x + bb.max.x) / 2;
@@ -56,7 +56,7 @@ function Year({ state }: { state: IntroState }) {
     geo.translate(-cx, -cy, -0.31);
     const w = bb.max.x - bb.min.x;
     // polished gold
-    const mat = new THREE.MeshPhysicalMaterial({ color: "#ffc233", metalness: 1, roughness: 0.07, clearcoat: 0.7, clearcoatRoughness: 0.08, envMapIntensity: 2.1, transparent: true, opacity: 0, emissive: new THREE.Color("#e0a419"), emissiveIntensity: 0.05 });
+    const mat = new THREE.MeshPhysicalMaterial({ color: "#ffbf2e", metalness: 1, roughness: 0.1, clearcoat: 0.7, clearcoatRoughness: 0.08, envMapIntensity: 2.1, transparent: true, opacity: 0, emissive: new THREE.Color("#e0a419"), emissiveIntensity: 0.05 });
     return { geo, mat, w, glowTex: glowTexture() };
   }, []);
 
@@ -78,6 +78,7 @@ function Year({ state }: { state: IntroState }) {
     grp.current.rotation.y = 0; // straight on, no turning
     grp.current.rotation.x = 0;
     mesh.current.scale.z = Math.max(0.001, state.bump); // the flat year bumps out into depth
+    scene.environmentRotation.y = -0.5 + state.bump * 0.4 + state.glow * 1.8 + Math.sin(t * 1.3) * 0.12; // reflections glide over the gold: a living shimmer
     built.mat.opacity = state.year * (1 - Math.min(1, state.dive * 1.4));
     built.mat.emissiveIntensity = 0.05 + 0.16 * state.glow * (0.75 + 0.25 * Math.sin(t * 3));
     if (glow.current) glow.current.opacity = state.glow * 0.8 * (1 - Math.min(1, state.dive * 1.3));
@@ -111,14 +112,14 @@ export default function Year3D({ state, run }: { state: IntroState; run: boolean
       <directionalLight position={[-6, -1, 4]} intensity={0.9} color="#c9f3d2" />
       {/* a gold-photography studio: deep amber base, big soft boxes and thin bright streaks, so the metal shows real gradients */}
       <Environment resolution={512} frames={1}>
-        <color attach="background" args={["#4a2a02"]} />
+        <color attach="background" args={["#a8730c"]} />
         <Lightformer form="rect" intensity={6} position={[0, 6, 4]} scale={[18, 3, 1]} color="#fff4cf" />
         <Lightformer form="rect" intensity={4.5} position={[-9, 1, 2]} rotation-y={Math.PI / 2} scale={[4, 9, 1]} color="#ffffff" />
         <Lightformer form="rect" intensity={4} position={[9, 0, 2]} rotation-y={-Math.PI / 2} scale={[4, 9, 1]} color="#ffe28a" />
         <Lightformer form="rect" intensity={3} position={[0, -4, 4]} scale={[16, 2, 1]} color="#ffb21f" />
         <Lightformer form="rect" intensity={2.2} position={[0, 0, -8]} scale={[20, 9, 1]} color="#e08a10" />
-        <Lightformer form="rect" intensity={3.2} position={[0, 0.5, 10]} scale={[16, 9, 1]} color="#ffcf55" />
-        <Lightformer form="rect" intensity={4.5} position={[0, 3, 9]} scale={[10, 2.5, 1]} color="#fff3c2" />
+        <Lightformer form="rect" intensity={2.2} position={[0, 0.5, 10]} scale={[16, 9, 1]} color="#ffb81f" />
+        <Lightformer form="rect" intensity={3} position={[0, 3, 9]} scale={[10, 2.5, 1]} color="#ffe58a" />
         <Lightformer form="rect" intensity={7} position={[-2.2, 0, 8]} scale={[0.5, 9, 1]} color="#ffffff" />
         <Lightformer form="rect" intensity={6} position={[2.6, 0, 8]} scale={[0.7, 9, 1]} color="#fff0b0" />
         <Lightformer form="rect" intensity={3} position={[5, 3, 6]} scale={[1.2, 5, 1]} color="#ffcc55" />
