@@ -36,7 +36,6 @@ export default function Founder() {
           <div className="relative flex items-center justify-between gap-3">
             <div>
               <p className="font-display text-lg font-bold leading-tight text-[#3a2a05]">Maraimani Chakkaravarthy</p>
-              <p className="mt-0.5 text-sm font-medium text-[#5b4410]">Netkathir Technologies</p>
             </div>
             <span className="shrink-0 rounded-full bg-[#14532d] px-3.5 py-1.5 font-display text-xs font-bold uppercase tracking-[0.2em] text-[#fde68a] shadow-[inset_0_0_0_1px_rgba(253,230,138,0.5)]">Founder &amp; CEO</span>
           </div>
