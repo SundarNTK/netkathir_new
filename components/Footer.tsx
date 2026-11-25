@@ -1,18 +1,16 @@
 import Link from "next/link";
 import { NAV, SITE } from "@/lib/data";
+import FooterCta from "./FooterCta";
 
 export default function Footer() {
   return (
     <footer className="relative z-10 mt-10 bg-[#0B0E1A] text-white [--muted:#9aa3c4] [--ice:#bbf7d0] [--gold:#fbbf24]">
       <div className="mx-auto max-w-7xl px-6 pt-14 pb-8">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={SITE.logo} alt="Netkathir Technologies" className="h-14 w-auto mb-8" />
-        <p className="font-display text-[clamp(2.2rem,7vw,6rem)] leading-[0.95] text-grad-night max-w-5xl">
-          Let&apos;s build your next intelligent solution.
-        </p>
-        <Link href="/contact#contact-form" className="btn btn-solid mt-10">
-          Get Started Now →
-        </Link>
+        <span className="mb-8 inline-flex rounded-2xl bg-white px-4 py-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={SITE.logo} alt="Netkathir Technologies" className="h-11 w-auto" />
+        </span>
+        <FooterCta />
 
         <div className="mt-12 grid gap-10 md:grid-cols-4 text-sm">
           <div>
