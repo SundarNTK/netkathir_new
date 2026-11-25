@@ -60,7 +60,7 @@ function Year({ state }: { state: IntroState }) {
     geo.translate(-cx, -cy, -0.17);
     const w = bb.max.x - bb.min.x;
     // polished gold
-    const mat = new THREE.MeshPhysicalMaterial({ color: "#f2b420", metalness: 1, roughness: 0.18, clearcoat: 0.7, clearcoatRoughness: 0.08, envMapIntensity: 1.9, transparent: true, opacity: 0, emissive: new THREE.Color("#a86d00"), emissiveIntensity: 0.1 });
+    const mat = new THREE.MeshPhysicalMaterial({ color: "#f6b81c", metalness: 1, roughness: 0.1, clearcoat: 0.7, clearcoatRoughness: 0.08, envMapIntensity: 1.7, transparent: true, opacity: 0, emissive: new THREE.Color("#e0a419"), emissiveIntensity: 0.14 });
     return { geo, mat, w, glowTex: glowTexture() };
   }, []);
 
@@ -83,7 +83,7 @@ function Year({ state }: { state: IntroState }) {
     grp.current.rotation.x = -0.1 * state.pop - s.pointer.y * 0.05;
     mesh.current.scale.z = Math.max(0.001, state.bump); // the flat year bumps out into depth
     built.mat.opacity = state.year * (1 - Math.min(1, state.dive * 1.4));
-    built.mat.emissiveIntensity = 0.1 + 0.18 * state.glow * (0.75 + 0.25 * Math.sin(t * 3));
+    built.mat.emissiveIntensity = 0.14 + 0.2 * state.glow * (0.75 + 0.25 * Math.sin(t * 3));
     if (glow.current) glow.current.opacity = state.glow * 0.8 * (1 - Math.min(1, state.dive * 1.3));
   });
 
@@ -113,12 +113,17 @@ export default function Year3D({ state, run }: { state: IntroState; run: boolean
       <ambientLight intensity={1.0} />
       <directionalLight position={[4, 6, 7]} intensity={2.4} color="#fffaf0" />
       <directionalLight position={[-6, -1, 4]} intensity={0.9} color="#c9f3d2" />
+      {/* a warm gold studio: no black anywhere, so every wall of the lettering mirrors gold and white light */}
       <Environment resolution={256} frames={1}>
-        <Lightformer form="rect" intensity={4} position={[0, 5, 5]} scale={[12, 3, 1]} color="#ffffff" />
-        <Lightformer form="rect" intensity={2.4} position={[0, -3, 5]} scale={[12, 2, 1]} color="#fff3c4" />
-        <Lightformer form="ring" intensity={2} position={[0, 1, 7]} scale={4} color="#ffffff" />
-        <Lightformer form="rect" intensity={3} position={[-7, 1, 3]} rotation-y={Math.PI / 2} scale={[7, 5, 1]} color="#fff1c1" />
-        <Lightformer form="rect" intensity={1.8} position={[7, 0, 3]} rotation-y={-Math.PI / 2} scale={[7, 4, 1]} color="#fde68a" />
+        <color attach="background" args={["#b88418"]} />
+        <Lightformer form="rect" intensity={4.5} position={[0, 5, 5]} scale={[14, 3, 1]} color="#ffffff" />
+        <Lightformer form="rect" intensity={3} position={[0, -3, 5]} scale={[14, 2.5, 1]} color="#fff0b8" />
+        <Lightformer form="rect" intensity={2.6} position={[-7, 1, 3]} rotation-y={Math.PI / 2} scale={[6, 3, 1]} color="#fff6d6" />
+        <Lightformer form="rect" intensity={2.6} position={[7, 0, 3]} rotation-y={-Math.PI / 2} scale={[6, 3, 1]} color="#ffe9a3" />
+        <Lightformer form="rect" intensity={1.4} position={[0, 0, -6]} scale={[16, 8, 1]} color="#ffd25a" />
+        <Lightformer form="rect" intensity={1} position={[-3, 2, 6]} scale={[2, 6, 1]} color="#8a5a08" />
+        <Lightformer form="rect" intensity={1} position={[3, -1, 6]} scale={[2, 6, 1]} color="#8a5a08" />
+        <Lightformer form="ring" intensity={2.6} position={[0, 1, 7]} scale={4} color="#ffffff" />
       </Environment>
       <Year state={state} />
       <Sparkles count={mobile ? 10 : 22} scale={[12, 6, 3]} size={3} speed={0.3} opacity={0.55} color="#f2c230" noise={0.5} />
