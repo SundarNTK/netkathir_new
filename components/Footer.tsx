@@ -6,10 +6,8 @@ export default function Footer() {
   return (
     <footer className="relative z-10 mt-10 bg-[#0B0E1A] text-white [--muted:#9aa3c4] [--ice:#bbf7d0] [--gold:#fbbf24]">
       <div className="mx-auto max-w-7xl px-6 pt-14 pb-8">
-        <span className="mb-8 inline-flex rounded-2xl bg-white px-4 py-2.5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={SITE.logo} alt="Netkathir Technologies" className="h-11 w-auto" />
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/images/brand/netkathir-logo-light.png" alt="Netkathir Technologies" className="mb-8 h-14 w-auto" />
         <FooterCta />
 
         <div className="mt-12 grid gap-10 md:grid-cols-4 text-sm">

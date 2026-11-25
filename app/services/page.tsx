@@ -6,9 +6,9 @@ import { SERVICE_GROUPS } from "@/lib/data";
 export const metadata = { title: "Services — Netkathir Technologies" };
 
 const TONES = [
-  { bg: "#ffffff", dark: false, accent: "#15803d" },
-  { bg: "#ecfccb", dark: false, accent: "#4d7c0f" },
-  { bg: "#fef3c7", dark: false, accent: "#a16207" },
+  { bg: "#dcfce7", dark: false, accent: "#15803d" },
+  { bg: "#f0fdd4", dark: false, accent: "#4d7c0f" },
+  { bg: "#fff3c4", dark: false, accent: "#a16207" },
   { bg: "#14532d", dark: true, accent: "#fde68a" },
 ];
 
@@ -37,7 +37,7 @@ export default function Services() {
               <div
                 key={g.name}
                 data-stack
-                className="sticky grid gap-6 overflow-hidden rounded-[1.8rem] border border-[#14532d]/10 p-6 shadow-[0_30px_70px_-40px_rgba(20,83,45,0.55)] md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:gap-10 md:p-9"
+                className="sticky isolate grid gap-6 overflow-hidden rounded-[1.8rem] border border-[#14532d]/10 p-6 shadow-[0_-18px_40px_-28px_rgba(20,83,45,0.5)] md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:gap-10 md:p-9"
                 style={{ top: `${5.25 + i * 0.7}rem`, background: t.bg }}
               >
                 <div className="relative">

@@ -23,7 +23,7 @@ export default function FooterCta() {
   const external = c.href.startsWith("mailto:");
   return (
     <>
-      <p className="font-display text-[clamp(2.2rem,7vw,6rem)] leading-[0.95] text-grad-night max-w-5xl">{c.line}</p>
+      <p className="font-display text-[clamp(1.8rem,4.4vw,3.8rem)] leading-[1] text-grad-night max-w-5xl">{c.line}</p>
       {external ? (
         <a href={c.href} className="btn btn-solid mt-10">
           {c.label} →

@@ -277,8 +277,17 @@ export default function Effects() {
         stack.forEach((el, i) => {
           const next = stack[i + 1];
           if (!next) return;
-          gsap.to(el, { scale: 0.94, opacity: 0.5, transformOrigin: "50% 0%", ease: "none", scrollTrigger: { trigger: next, start: "top 88%", end: "top 24%", scrub: 0.5 } });
+          gsap.to(el, { scale: 0.97, transformOrigin: "50% 0%", ease: "none", scrollTrigger: { trigger: next, start: "top 88%", end: "top 24%", scrub: 0.5 } });
         });
+
+        // every content section lifts and fades in as it scrolls into view (scrubbed, so it also plays back in reverse)
+        if (pathRef.current !== "/") {
+          const secs = gsap.utils.toArray<HTMLElement>("main section").filter((s) => !s.parentElement?.closest("section"));
+          secs.forEach((sec, i) => {
+            if (i === 0 || sec.hasAttribute("data-panel") || sec.querySelector("[data-stack], [data-panel], .sticky")) return;
+            gsap.fromTo(sec, { y: 80, opacity: 0 }, { y: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: sec, start: "top 96%", end: "top 62%", scrub: 0.6 } });
+          });
+        }
 
         // clip-path window that unfolds to the full image while scrolling; the picture settles from a zoom
         gsap.utils.toArray<HTMLElement>("[data-clip]").forEach((el) => {
