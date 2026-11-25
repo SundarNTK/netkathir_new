@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
+import Ticker from "@/components/Ticker";
 import { SERVICE_GROUPS } from "@/lib/data";
 
 export const metadata = { title: "Services — Netkathir Technologies" };
@@ -26,10 +27,7 @@ export default function Services() {
         title="Our Services."
         sub="Twenty capabilities across four disciplines — one team to take you from idea to scale."
       />
-
-      <div className="overflow-hidden py-6" aria-hidden>
-        <p data-scrub-x="1" className="whitespace-nowrap font-display text-[clamp(3.6rem,13vw,11rem)] leading-[1.05] text-outline">AI · Software · Cloud · Strategy ·</p>
-      </div>
+      <Ticker items={["AI & GenAI", "Enterprise Software", "Cloud & DevOps", "Digital Transformation"]} />
 
       <section className="pb-6">
         <div className="mx-auto max-w-7xl px-6 space-y-5">

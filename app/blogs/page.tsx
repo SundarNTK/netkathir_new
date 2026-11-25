@@ -1,4 +1,5 @@
 import PageHero from "@/components/PageHero";
+import Ticker from "@/components/Ticker";
 import { BLOGS } from "@/lib/data";
 
 export const metadata = { title: "Blogs — Netkathir Technologies" };
@@ -12,10 +13,7 @@ export default function Blogs() {
         title="Insights / Blogs."
         sub="Notes on AI, cloud, DevOps and building software that lasts."
       />
-
-      <div className="overflow-hidden py-6" aria-hidden>
-        <p data-scrub-x="-1" className="whitespace-nowrap font-display text-[clamp(3.6rem,13vw,11rem)] leading-[1.05] text-outline">Ideas · Engineering · AI · Cloud ·</p>
-      </div>
+      <Ticker items={["AI", "Cloud", "DevOps", "ERP", "Software engineering"]} />
 
       <section className="py-10">
         <div className="mx-auto max-w-7xl px-6">

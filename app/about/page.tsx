@@ -1,4 +1,5 @@
 import PageHero from "@/components/PageHero";
+import Ticker from "@/components/Ticker";
 import Founder from "@/components/Founder";
 import WorldMap from "@/components/WorldMap";
 import { COUNTRIES, IMAGES, VALUES } from "@/lib/data";
@@ -92,10 +93,7 @@ export default function About() {
           </div>
         </div>
       </section>
-
-      <div className="overflow-hidden py-6" aria-hidden>
-        <p data-scrub-x="-1" className="whitespace-nowrap font-display text-[clamp(3.6rem,13vw,11rem)] leading-[1.05] text-outline">Innovation · Trust · Technology ·</p>
-      </div>
+      <Ticker items={VALUES.map((v) => v[0])} />
       <section className="py-14">
         <div className="mx-auto max-w-7xl px-6">
           <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-8">What we stand for.</h2>

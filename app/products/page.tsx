@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
+import Ticker from "@/components/Ticker";
 import { PRODUCTS } from "@/lib/data";
 
 export const metadata = { title: "Products — Netkathir Technologies" };
@@ -12,17 +13,11 @@ export default function Products() {
         title="Products Built by Netkathir."
         sub="Software we design, run and stand behind ourselves."
       />
-
-      <div className="overflow-hidden py-6" aria-hidden>
-        <p data-scrub-x="-1" className="whitespace-nowrap font-display text-[clamp(3.6rem,13vw,11rem)] leading-[1.05] text-outline">Built · Run · Owned · Supported ·</p>
-      </div>
+      <Ticker items={["Garage Bill", "HRMS", "Designed in-house", "Run and supported by Netkathir"]} />
 
       <div className="space-y-6 pb-16 md:space-y-10">
         {PRODUCTS.map((p, i) => (
           <section key={p.name} className="relative overflow-hidden py-10 md:py-16">
-            <p data-scrub-x={i % 2 ? "-1" : "1"} className="pointer-events-none absolute left-0 top-2 whitespace-nowrap font-display text-[clamp(6rem,22vw,18rem)] leading-none text-outline opacity-35" aria-hidden>
-              {p.name} · {p.name}
-            </p>
             <div className={`relative mx-auto grid max-w-7xl items-center gap-10 px-6 lg:grid-cols-2 lg:gap-16 ${i % 2 ? "lg:[&>*:first-child]:order-2" : ""}`}>
               <div data-clip className="relative aspect-[4/3] overflow-hidden bg-[#0f3d22] shadow-[0_40px_90px_-40px_rgba(20,83,45,0.7)]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

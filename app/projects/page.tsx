@@ -1,4 +1,5 @@
 import PageHero from "@/components/PageHero";
+import Ticker from "@/components/Ticker";
 import { CLIENTS } from "@/lib/data";
 
 export const metadata = { title: "Projects — Netkathir Technologies" };
@@ -23,10 +24,7 @@ export default function Projects() {
         kicker="Projects"
         title="Transforming Ideas into Intelligent Solutions."
       />
-
-      <div className="overflow-hidden py-6" aria-hidden>
-        <p data-scrub-x="1" className="whitespace-nowrap font-display text-[clamp(3.6rem,13vw,11rem)] leading-[1.05] text-outline">Delivered · Trusted · Shipped ·</p>
-      </div>
+      <Ticker items={["Healthcare", "Education", "eCommerce", "Manufacturing", "HR"]} />
 
       <section className="py-10">
         <div className="mx-auto max-w-7xl px-6">
