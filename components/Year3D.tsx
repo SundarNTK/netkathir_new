@@ -75,8 +75,8 @@ function Year({ state }: { state: IntroState }) {
     grp.current.visible = state.year > 0.002;
     grp.current.scale.setScalar(fit * (1 + 0.32 * state.pop) * (1 + dive * 9));
     grp.current.position.set(state.tx * (1 - state.pop * 0.35), state.ty * (1 - state.pop * 0.35) + Math.sin(t * 1.2) * 0.03 * state.pop, dive * 6 + state.pop * 0.6);
-    grp.current.rotation.y = -0.42 * state.bump + 0.16 * Math.sin(Math.PI * state.turn) + s.pointer.x * 0.05; // angled so its depth shows, swaying a little
-    grp.current.rotation.x = -0.06 * state.bump - s.pointer.y * 0.04;
+    grp.current.rotation.y = 0; // straight on, no turning
+    grp.current.rotation.x = 0;
     mesh.current.scale.z = Math.max(0.001, state.bump); // the flat year bumps out into depth
     built.mat.opacity = state.year * (1 - Math.min(1, state.dive * 1.4));
     built.mat.emissiveIntensity = 0.05 + 0.16 * state.glow * (0.75 + 0.25 * Math.sin(t * 3));
