@@ -541,13 +541,13 @@ export default function Intro() {
         {[0, 1, 2].map((n) => (
           <span key={n} className="i-shock absolute h-[min(30rem,80vw)] w-[min(30rem,80vw)] rounded-full border-2 border-[#fde68a] opacity-0 shadow-[0_0_30px_rgba(250,204,21,0.6)]" />
         ))}
-        <h2 className="relative -translate-y-[3vh] font-display text-[clamp(2rem,min(6.6vw,14vh),7rem)] font-bold leading-[1.04] tracking-tight [text-shadow:0_0_36px_rgba(134,239,172,0.55),0_6px_24px_rgba(0,0,0,0.35)]">
+        <h2 className="relative -translate-y-[3vh] font-display text-[clamp(2rem,min(6.6vw,14vh),7rem)] font-bold leading-[1.04] tracking-tight [filter:drop-shadow(0_0_22px_rgba(134,239,172,0.5))_drop-shadow(0_6px_18px_rgba(0,0,0,0.3))]">
           {FINALE.map((w, i) => {
             const ai = w === "AI";
             return (
-              <span key={i} className={`mr-[0.24em] inline-block overflow-hidden px-[0.04em] pb-[0.2em] align-top last:mr-0 ${ai ? "i-ai" : ""}`}>
+              <span key={i} className={`mr-[0.24em] inline-block px-[0.04em] pb-[0.2em] align-top last:mr-0 [clip-path:inset(-120%_-60%_-0.35em_-60%)] ${ai ? "i-ai [filter:drop-shadow(0_0_14px_rgba(250,204,21,0.9))_drop-shadow(0_0_34px_rgba(250,204,21,0.5))]" : ""}`}>
                 {w.split("").map((ch, k) => (
-                  <span key={k} className={`i-ch inline-block ${ai ? "text-[#fde68a] [text-shadow:0_0_30px_rgba(250,204,21,0.95),0_0_70px_rgba(250,204,21,0.5)]" : "text-white"}`}>{ch}</span>
+                  <span key={k} className={`i-ch inline-block ${ai ? "text-[#fde68a]" : "text-white"}`}>{ch}</span>
                 ))}
               </span>
             );
