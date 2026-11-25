@@ -32,12 +32,14 @@ export default function Projects() {
           <div data-stagger className="grid gap-5 md:grid-cols-3">
             {featured.map((c, i) => (
               <article key={c.name} data-tilt className={`glare relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-[2rem] bg-gradient-to-br p-8 shadow-[0_34px_70px_-36px_rgba(20,83,45,0.6)] ${TONES[i % TONES.length]}`}>
-                <span className="font-display text-[8rem] leading-none opacity-[0.12]">0{i + 1}</span>
-                <div>
-                  <span className="mb-6 flex h-16 w-32 items-center justify-center rounded-2xl bg-white px-3 shadow-lg">
+                <div className="flex items-start justify-between">
+                  <span className="flex h-28 w-full max-w-[17rem] items-center justify-center rounded-3xl bg-white px-6 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.45)]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={c.logo} alt={c.name} className="max-h-11 w-full object-contain" />
+                    <img src={c.logo} alt={c.name} className="max-h-[4.5rem] w-full object-contain" />
                   </span>
+                  <span className="font-mono text-sm opacity-60">0{i + 1}</span>
+                </div>
+                <div>
                   <h3 className="font-display text-3xl">{c.name}</h3>
                   <p className="mt-3 text-[0.95rem] opacity-85">{CASES[c.name]}</p>
                 </div>
