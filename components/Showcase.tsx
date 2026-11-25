@@ -436,13 +436,14 @@ export function ClientReel({ clients, notes }: { clients: { name: string; logo: 
           {clients.map((c, i) => {
             const t = REEL_TONES[i % REEL_TONES.length];
             return (
-              <article key={c.name} data-rl-card className="relative flex h-[min(30rem,58vh)] w-[min(44rem,66vw)] shrink-0 flex-col justify-between overflow-hidden rounded-[2rem] border border-white/70 p-8 shadow-[0_40px_80px_-40px_rgba(20,83,45,0.55)] will-change-transform" style={{ background: `linear-gradient(145deg, #ffffff 0%, ${t[0]} 40%, ${t[1]} 100%)`, color: t[2] }}>
+              <article key={c.name} data-rl-card className="relative flex h-[min(32rem,64vh)] w-[min(44rem,66vw)] shrink-0 flex-col justify-between overflow-hidden rounded-[2rem] border border-white/70 p-8 shadow-[0_40px_80px_-40px_rgba(20,83,45,0.55)] will-change-transform" style={{ background: `linear-gradient(145deg, #ffffff 0%, ${t[0]} 40%, ${t[1]} 100%)`, color: t[2] }}>
                 <span aria-hidden className="pointer-events-none absolute -bottom-16 -right-6 font-display text-[18rem] font-bold leading-none opacity-[0.1]">{String(i + 1).padStart(2, "0")}</span>
                 <span aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full border-2 border-current opacity-10" />
                 <span aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-44 w-44 rounded-full border border-current opacity-10" />
                 <span className="absolute right-7 top-6 z-10 font-mono text-xs font-bold uppercase tracking-[0.25em] opacity-70">{String(i + 1).padStart(2, "0")} / {String(clients.length).padStart(2, "0")}</span>
                 {/* the client logo hangs on the wall like a framed picture */}
-                <div data-rl-plate className="relative mx-auto mt-7 w-[min(21rem,58%)]">
+                <div className="relative flex flex-1 items-center justify-center pb-4 pt-12">
+                <div data-rl-plate className="relative w-[min(18rem,54%)]">
                   <svg aria-hidden viewBox="0 0 160 40" className="absolute -top-9 left-1/2 h-10 w-40 -translate-x-1/2" fill="none">
                     <path d="M22 40 L80 8 L138 40" stroke="#a8761a" strokeWidth="2" strokeLinecap="round" />
                     <circle cx="80" cy="7" r="5" fill="#8a6414" />
@@ -457,10 +458,11 @@ export function ClientReel({ clients, notes }: { clients: { name: string; logo: 
                     </div>
                   </div>
                 </div>
+                </div>
                 <div className="relative">
                   {SECTORS[c.name] && <span className="mb-3 inline-block rounded-full bg-white/70 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.18em]">{SECTORS[c.name]}</span>}
                   <h3 className="font-display text-[clamp(2rem,3.6vw,3.3rem)] leading-[1.02]">{c.name}</h3>
-                  <p className="mt-2 max-w-md text-[0.95rem] opacity-80">{notes[c.name] ?? "Delivered by Netkathir."}</p>
+                  <p className="mt-2 line-clamp-2 max-w-md text-[0.95rem] leading-snug opacity-80">{notes[c.name] ?? "Delivered by Netkathir."}</p>
                 </div>
               </article>
             );
