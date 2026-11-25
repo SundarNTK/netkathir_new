@@ -677,7 +677,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
         console.warn("[AICore] 3D logo trace failed", err);
       }
     };
-    img.src = "/images/brand/netkathir-icon.png";
+    img.src = "/images/brand/netkathir-emblem.png";
   }, []);
 
   const M = useMemo(() => {
