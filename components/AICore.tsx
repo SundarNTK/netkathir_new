@@ -466,7 +466,7 @@ function AIText({ palette }: { palette: RobotPalette; mobile: boolean }) {
           </mesh>
         ))}
       </group>
-      <group ref={sway} position={[0.12, 0.22, 0.38]} scale={1.22}>
+      <group ref={sway} position={[0, 0.02, 0.12]} scale={0.9}>
         {/* chip + circuits, seen through the glass */}
         <mesh ref={chip} position={[0, 0, -0.05]} renderOrder={11}>
           <planeGeometry args={[2.5, 2.5]} />

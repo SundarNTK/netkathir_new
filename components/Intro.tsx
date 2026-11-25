@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import type { IntroState } from "./IntroScene";
+import { createFx, type FxFlags } from "@/lib/introFx";
 
 const IntroScene = dynamic(() => import("./IntroScene"), { ssr: false });
 
@@ -20,6 +21,7 @@ const MESSAGES = [
   "With gratitude to every client, partner and team member on this journey.",
 ];
 const FINALE = "Now entering the AI era.".split(" ");
+const fxFlags = (): FxFlags => ({ fire: false, confetti: false, warpOn: false, warp: 0 });
 const YEARS = Array.from({ length: 13 }, (_, i) => 2015 + i); // the last page torn is 2026, which reveals 2027
 
 // a laurel wreath: each side is a curved stem with pairs of pointed leaves, bigger at the bottom, smaller at the tips
@@ -81,6 +83,8 @@ export default function Intro() {
   const gate = useRef({ ready: false, waiting: false, timer: 0 });
   const closed = useRef(false);
   const ldBar = useRef<HTMLSpanElement>(null);
+  const fxEl = useRef<HTMLCanvasElement>(null);
+  const warpEl = useRef<HTMLCanvasElement>(null);
 
   const resume = useCallback(() => {
     const g = gate.current;
@@ -130,6 +134,17 @@ export default function Intro() {
     document.documentElement.style.overflow = "hidden";
     const compact = window.matchMedia("(max-width: 640px)").matches;
 
+    const fl = fxFlags();
+    let engine: ReturnType<typeof createFx> | null = null;
+    let fxTick: ((time: number, dt: number) => void) | null = null;
+    if (fxEl.current && warpEl.current) {
+      engine = createFx(fxEl.current, warpEl.current, fl);
+      const e = engine;
+      fxTick = (_t: number, dt: number) => e.tick(dt / 1000);
+      gsap.ticker.add(fxTick);
+      window.addEventListener("resize", e.resize);
+    }
+
     const ctx = gsap.context(() => {
       const t = gsap.timeline({ paused: true, onComplete: dismiss }); // starts only after the loader has finished
       tl.current = t;
@@ -137,7 +152,9 @@ export default function Intro() {
       const sheets = sheetEls.current.filter(Boolean) as HTMLDivElement[];
       cur.textContent = "2015";
       gsap.set(sheets, { opacity: 0 });
-      gsap.set(".i-fw-word", { yPercent: 125, opacity: 0 });
+      gsap.set(".i-ch", { yPercent: 120, rotateX: -80, opacity: 0, transformPerspective: 700 });
+      gsap.set(".i-plate", { opacity: 0 });
+      gsap.set(".i-fbg, .i-warp, .i-flash, .i-shock", { opacity: 0 });
       gsap.set(".i-glow", { opacity: 0 });
       gsap.set(".i-flag-strip", { opacity: 0, x: -36 });
 
@@ -205,9 +222,11 @@ export default function Intro() {
         .to(".i-cal", { scale: 1.05, duration: 0.9, ease: "back.out(2.2)" }, E3)
         .to(".i-cal-glow", { opacity: 1, scale: 1.6, duration: 0.9, ease: "power2.out" }, E3 + 0.1)
         .fromTo(".i-shine", { xPercent: -130 }, { xPercent: 130, duration: 0.9, ease: "power2.inOut" }, E3 + 0.5)
-        .to(".i-cal-ring", { opacity: 0.55, duration: 0.45, yoyo: true, repeat: 3, ease: "sine.inOut" }, E3 + 0.8)
+        .to(".i-cal-ring", { opacity: 0.55, duration: 0.45, yoyo: true, repeat: 5, ease: "sine.inOut" }, E3 + 0.8)
         .to(cur, { filter: "drop-shadow(0 0 18px rgba(250,204,21,0.95)) drop-shadow(0 0 46px rgba(34,197,94,0.8))", duration: 0.6, ease: "power2.out" }, E3 + 0.3);
-      const calEnd = E3 + 2.8;
+      t.call(() => { fl.fire = true; fl.confetti = true; }, undefined, E3 + 0.1)
+        .call(() => { fl.fire = false; fl.confetti = false; }, undefined, E3 + 3.3);
+      const calEnd = E3 + 3.9;
       // the whole lit-up calendar moves on to the logo, like every earlier year
       t.to(".i-cal, .i-track, .i-cal-glow, .i-rays", { opacity: 0, y: -18, scale: 0.97, duration: 0.5, ease: "power2.in" }, calEnd + 0.02)
         // wait here only if the 3D logo is not built yet (never longer than 3.5 s)
@@ -248,12 +267,26 @@ export default function Intro() {
         .to(state, { burst: 1, duration: 0.7, ease: "power2.in" }, X)
         .to(".i-scene", { opacity: 0, duration: 0.5, ease: "power2.in" }, X + 0.15)
         .call(() => setSceneOn(false), undefined, X + 0.75) // free the GPU before the finale
-        .to(".i-glow", { opacity: 1, scale: 1, duration: 1.2, ease: "power3.out" }, X + 0.5)
-        .to(".i-fw-word", { yPercent: 0, opacity: 1, duration: 1.0, ease: "expo.out", stagger: 0.12 }, X + 0.7)
-        .to(".i-flag-strip", { opacity: 1, x: 0, duration: 0.8, ease: "power3.out", stagger: { each: 0.02, from: "start" } }, X + 1.5)
-        .to(".i-finale", { scale: 5, opacity: 0, filter: "blur(14px)", duration: 1.2, ease: "power3.in" }, X + 3.1)
-        .add(() => window.dispatchEvent(new Event("nk:intro-reveal")), X + 3.5)
-        .to(root.current, { opacity: 0, duration: 0.9, ease: "power2.inOut" }, X + 3.5);
+        // warp tunnel opens on a deep emerald sky
+        .call(() => { fl.warpOn = true; }, undefined, X + 0.2)
+        .to(".i-fbg", { opacity: 1, duration: 1.0, ease: "power2.out" }, X + 0.2)
+        .to(".i-warp", { opacity: 1, duration: 0.8, ease: "power2.out" }, X + 0.3)
+        .to(fl, { warp: 1.2, duration: 1.6, ease: "power2.in" }, X + 0.3)
+        .to(".i-glow", { opacity: 1, scale: 1.5, duration: 1.2, ease: "power3.out" }, X + 0.9)
+        // the headline: letters rise and tilt into place
+        .to(".i-ch", { yPercent: 0, rotateX: 0, opacity: 1, duration: 0.9, ease: "back.out(1.6)", stagger: 0.035 }, X + 1.1)
+        .fromTo(".i-shock", { scale: 0.2, opacity: 0.9 }, { scale: 3, opacity: 0, duration: 1.5, ease: "power2.out", stagger: 0.18 }, X + 1.3)
+        .to(".i-ai", { scale: 1.14, duration: 0.35, yoyo: true, repeat: 1, ease: "sine.inOut" }, X + 2.3)
+        // the logo flies in on a white plate and waves
+        .fromTo(".i-plate", { scale: 0.6, opacity: 0, y: 36 }, { scale: 1, opacity: 1, y: 0, duration: 0.9, ease: "back.out(1.7)" }, X + 2.0)
+        .to(".i-flag-strip", { opacity: 1, x: 0, duration: 0.8, ease: "power3.out", stagger: { each: 0.02, from: "start" } }, X + 2.3)
+        // hyper-jump: stars stretch, the headline rushes at the camera, light floods the screen, the site appears
+        .to(fl, { warp: 4.5, duration: 1.1, ease: "power3.in" }, X + 3.7)
+        .to(".i-finale", { scale: 3.4, opacity: 0, filter: "blur(10px)", duration: 0.95, ease: "power3.in" }, X + 4.05)
+        .to(".i-flash", { opacity: 1, duration: 0.5, ease: "power2.in" }, X + 4.4)
+        .add(() => window.dispatchEvent(new Event("nk:intro-reveal")), X + 4.8)
+        .to(root.current, { opacity: 0, duration: 0.9, ease: "power2.inOut" }, X + 4.85)
+        .call(() => { fl.warpOn = false; }, undefined, X + 5.8);
     }, root);
 
     // dev aid: /?introAt=6.5 freezes the intro at that moment (used to check the layout)
@@ -330,6 +363,11 @@ export default function Intro() {
 
     return () => {
       cancelled = true;
+      if (fxTick) gsap.ticker.remove(fxTick);
+      if (engine) {
+        window.removeEventListener("resize", engine.resize);
+        engine.clear();
+      }
       window.clearTimeout(gate.current.timer);
       ctx.revert();
       document.documentElement.style.overflow = "";
@@ -495,35 +533,51 @@ export default function Intro() {
         </div>
       </div>
 
-      {/* 3 — finale */}
-      <div className="i-finale pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center">
-        <div className="i-glow absolute h-[min(34rem,80vw)] w-[min(34rem,80vw)] scale-75 rounded-full bg-[radial-gradient(circle,rgba(34,150,80,0.3),rgba(217,185,106,0.18)_45%,transparent_70%)] opacity-0" />
-        <h2 className="relative font-display text-[clamp(2rem,min(6.4vw,14vh),7rem)] font-bold leading-[1.02] tracking-tight">
-          {FINALE.map((w, i) => (
-            <span key={i} className="mr-[0.22em] inline-block overflow-hidden px-[0.04em] pb-[0.18em] align-top last:mr-0">
-              <span className="i-fw-word inline-block bg-[linear-gradient(100deg,#052e16,#14532d_28%,#15803d_55%,#65a30d_78%,#ca8a04)] bg-clip-text text-transparent">{w}</span>
-            </span>
-          ))}
+      {/* 3 — finale: deep emerald sky, warp tunnel, rising letters, logo on a plate, light flood */}
+      <div className="i-fbg pointer-events-none absolute inset-0 z-[5] opacity-0" style={{ background: "radial-gradient(ellipse 70% 60% at 50% 46%, #0f6b3a 0%, #064e2b 40%, #03231a 100%)" }} />
+      <canvas ref={warpEl} aria-hidden className="i-warp pointer-events-none absolute inset-0 z-[6] h-full w-full opacity-0" />
+      <div className="i-finale pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center" style={{ perspective: "900px" }}>
+        <div className="i-glow absolute h-[min(42rem,90vw)] w-[min(42rem,90vw)] scale-75 rounded-full bg-[radial-gradient(circle,rgba(250,204,21,0.38),rgba(34,197,94,0.22)_45%,transparent_70%)] opacity-0" />
+        {[0, 1, 2].map((n) => (
+          <span key={n} className="i-shock absolute h-[min(30rem,80vw)] w-[min(30rem,80vw)] rounded-full border-2 border-[#fde68a] opacity-0 shadow-[0_0_30px_rgba(250,204,21,0.6)]" />
+        ))}
+        <h2 className="relative font-display text-[clamp(2rem,min(6.6vw,14vh),7rem)] font-bold leading-[1.04] tracking-tight [text-shadow:0_0_36px_rgba(134,239,172,0.55),0_6px_24px_rgba(0,0,0,0.35)]">
+          {FINALE.map((w, i) => {
+            const ai = w === "AI";
+            return (
+              <span key={i} className={`mr-[0.24em] inline-block overflow-hidden px-[0.04em] pb-[0.2em] align-top last:mr-0 ${ai ? "i-ai" : ""}`}>
+                {w.split("").map((ch, k) => (
+                  <span key={k} className={`i-ch inline-block ${ai ? "text-[#fde68a] [text-shadow:0_0_30px_rgba(250,204,21,0.95),0_0_70px_rgba(250,204,21,0.5)]" : "text-white"}`}>{ch}</span>
+                ))}
+              </span>
+            );
+          })}
         </h2>
-        {/* the logo unfurls like a flag and keeps waving */}
-        <div className="i-flag relative mt-8 aspect-[1800/738] w-[min(17rem,58vw)] [filter:drop-shadow(0_10px_14px_rgba(20,83,45,0.22))]" role="img" aria-label="Netkathir Technologies">
-          {Array.from({ length: FLAG_N }, (_, k) => (
-            <span
-              key={k}
-              className="i-flag-strip nk-wave absolute inset-y-0"
-              style={{
-                left: `${(k / FLAG_N) * 100}%`,
-                width: `${100 / FLAG_N + 0.25}%`,
-                backgroundImage: "url(/images/brand/netkathir-logo-hd.png)",
-                backgroundSize: `${FLAG_N * 100}% 100%`,
-                backgroundPosition: `${(k / (FLAG_N - 1)) * 100}% 0`,
-                ["--amp" as string]: `${(0.4 + (k / FLAG_N) * 5.6).toFixed(2)}px`,
-                animationDelay: `${(-k * 0.075).toFixed(3)}s`,
-              }}
-            />
-          ))}
+        {/* the logo on a white plate; it unfurls like a flag and keeps waving */}
+        <div className="i-plate relative mt-9 rounded-[1.6rem] bg-white px-8 py-5 shadow-[0_30px_70px_-20px_rgba(0,0,0,0.6),0_0_60px_rgba(250,204,21,0.35)]">
+          <div className="i-flag relative aspect-[1800/738] w-[min(16rem,54vw)]" role="img" aria-label="Netkathir Technologies">
+            {Array.from({ length: FLAG_N }, (_, k) => (
+              <span
+                key={k}
+                className="i-flag-strip nk-wave absolute inset-y-0"
+                style={{
+                  left: `${(k / FLAG_N) * 100}%`,
+                  width: `${100 / FLAG_N + 0.25}%`,
+                  backgroundImage: "url(/images/brand/netkathir-logo-hd.png)",
+                  backgroundSize: `${FLAG_N * 100}% 100%`,
+                  backgroundPosition: `${(k / (FLAG_N - 1)) * 100}% 0`,
+                  ["--amp" as string]: `${(0.4 + (k / FLAG_N) * 5.6).toFixed(2)}px`,
+                  animationDelay: `${(-k * 0.075).toFixed(3)}s`,
+                }}
+              />
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* celebration canvas (fireworks + confetti) and the light flood used by the transition */}
+      <canvas ref={fxEl} aria-hidden className="i-fx pointer-events-none absolute inset-0 z-[50] h-full w-full" />
+      <div className="i-flash pointer-events-none absolute inset-0 z-[55] opacity-0" style={{ background: "radial-gradient(circle at 50% 46%, #ffffff 0%, #fff7d6 35%, #f6faf6 100%)" }} />
 
       <button
         onClick={dismiss}
