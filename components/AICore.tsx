@@ -330,7 +330,7 @@ function AIText({ palette }: { palette: RobotPalette; mobile: boolean }) {
       let y = side === 0 ? mid - half : side === 2 ? mid + half : mid + off;
       let dx = side === 1 ? 1 : side === 3 ? -1 : 0;
       let dy = side === 0 ? -1 : side === 2 ? 1 : 0;
-      c.strokeStyle = `rgba(90,235,255,${0.35 + rnd() * 0.4})`;
+      c.strokeStyle = `rgba(20,150,235,${0.7 + rnd() * 0.3})`;
       c.lineWidth = 2 + rnd() * 2.5;
       c.beginPath();
       c.moveTo(x, y);
@@ -348,15 +348,15 @@ function AIText({ palette }: { palette: RobotPalette; mobile: boolean }) {
         }
       }
       c.stroke();
-      c.fillStyle = "rgba(170,250,255,0.9)";
+      c.fillStyle = "rgba(30,170,255,1)";
       c.beginPath();
-      c.arc(x, y, 5 + rnd() * 4, 0, 7);
+      c.arc(x, y, 6 + rnd() * 4, 0, 7);
       c.fill();
     }
     // the chip
     c.shadowBlur = 34;
-    c.fillStyle = "rgba(4,38,56,0.92)";
-    c.strokeStyle = "#5ff3ff";
+    c.fillStyle = "rgba(3,22,64,0.97)";
+    c.strokeStyle = "#7df6ff";
     c.lineWidth = 9;
     c.beginPath();
     c.roundRect(mid - half, mid - half, half * 2, half * 2, 34);
@@ -380,16 +380,16 @@ function AIText({ palette }: { palette: RobotPalette; mobile: boolean }) {
       });
     }
     // the AI letters
-    c.font = "800 210px Arial, Helvetica, sans-serif";
+    c.font = "900 250px Arial, Helvetica, sans-serif";
     c.textAlign = "center";
     c.textBaseline = "middle";
     c.shadowColor = "#22e6ff";
-    c.shadowBlur = 46;
-    c.fillStyle = "#5ff3ff";
-    c.fillText("AI", mid, mid + 12);
-    c.shadowBlur = 16;
-    c.fillStyle = "#eaffff";
-    c.fillText("AI", mid, mid + 12);
+    c.shadowBlur = 30;
+    c.fillStyle = "#38e1ff";
+    c.fillText("AI", mid, mid + 14);
+    c.shadowBlur = 10;
+    c.fillStyle = "#ffffff";
+    c.fillText("AI", mid, mid + 14);
     const t = new THREE.CanvasTexture(cv);
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = 4;
@@ -410,7 +410,7 @@ function AIText({ palette }: { palette: RobotPalette; mobile: boolean }) {
     return new THREE.CanvasTexture(cv);
   }, []);
 
-  const glass = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#e8fbff", roughness: 0.02, metalness: 0, transparent: true, opacity: 0.2, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2.4, depthWrite: false, depthTest: false }), []);
+  const glass = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#7fd8ff", roughness: 0.02, metalness: 0, transparent: true, opacity: 0.32, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2.4, depthWrite: false, depthTest: false }), []);
   const rim = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -470,7 +470,7 @@ function AIText({ palette }: { palette: RobotPalette; mobile: boolean }) {
         {/* chip + circuits, seen through the glass */}
         <mesh ref={chip} position={[0, 0, -0.05]} renderOrder={11}>
           <planeGeometry args={[2.5, 2.5]} />
-          <meshBasicMaterial map={chipTex} transparent toneMapped={false} depthWrite={false} depthTest={false} blending={THREE.AdditiveBlending} />
+          <meshBasicMaterial map={chipTex} transparent toneMapped={false} depthWrite={false} depthTest={false} />
         </mesh>
         {/* the glass sphere */}
         <mesh material={glass} renderOrder={12}>
