@@ -10,7 +10,7 @@ import type { RobotPalette } from "./Hero3D";
 
 /* ============================ living holographic interfaces ============================ */
 
-const TITLES = ["GARAGE BILL", "NETKATHIR AI ASSISTANT", "HRMS", "CI/CD · CLOUD", "OUR CLIENTS", "WORKFLOW AUTOMATION"];
+const TITLES = ["GARAGE BILL", "NETKATHIR · SERVICES", "HRMS", "NETKATHIR · 2015 — 2026", "OUR CLIENTS", "GLOBAL PRESENCE"];
 const PW = 512;
 const PH = 340;
 const ease = (x: number) => x * x * (3 - 2 * x);
@@ -100,44 +100,36 @@ function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t:
     c.font = "600 15px Arial";
     c.fillText("Job cards open: 12", 300, 322);
   } else if (kind === 1) {
-    // AI assistant chat that types itself out
-    const q = variant ? "Which invoices are pending?" : "Summarise today's sales";
-    const a = variant ? "4 pending · ₹21,100 due this week." : "42 bills · ₹42,300 · up 12% on last week.";
-    const s2 = (t * 0.55 + variant * 0.5) % 3;
-    const bubble = (txt: string, x: number, y: number, w: number, mine: boolean) => {
-      c.fillStyle = mine ? "#facc15" : "rgba(74,222,128,0.2)";
+    // Our services: four disciplines
+    const areas = [["AI & GenAI", 7, "#4ade80"], ["Enterprise Software", 6, "#facc15"], ["Cloud & DevOps", 2, "#86efac"], ["Digital Transformation", 4, "#fde047"]] as const;
+    areas.forEach(([name, cnt, col], i) => {
+      const y = 70 + i * 62;
+      const on = Math.floor(t * 0.6 + variant) % 4 === i;
+      c.fillStyle = on ? "rgba(250,204,21,0.16)" : "rgba(255,255,255,0.07)";
       c.beginPath();
-      c.roundRect(x, y, w, 46, 16);
+      c.roundRect(20, y, 472, 54, 12);
       c.fill();
-      c.fillStyle = mine ? "#2d2400" : "#e7f8e8";
-      c.font = "600 18px Arial";
-      c.fillText(txt, x + 14, y + 29);
-    };
-    if (s2 > 0.15) bubble(q, 230, 76, 262, true);
-    if (s2 > 1.0) {
-      const n = Math.min(a.length, Math.floor((s2 - 1.0) * 26));
-      if (s2 < 1.3) {
-        c.fillStyle = "#4ade80";
-        for (let i = 0; i < 3; i++) {
-          c.beginPath();
-          c.arc(40 + i * 18, 160 + Math.sin(t * 8 + i) * 3, 5, 0, 7);
-          c.fill();
-        }
-      } else {
-        bubble(a.slice(0, n), 20, 134, 400, false);
-      }
-    }
-    if (s2 > 2.0) {
-      pill(20, 200, 130, "Send reminders", "#4ade80");
-      pill(160, 200, 110, "Export PDF", "rgba(255,255,255,0.8)");
-    }
-    c.fillStyle = "rgba(255,255,255,0.12)";
-    c.beginPath();
-    c.roundRect(20, 280, 472, 40, 20);
-    c.fill();
-    c.fillStyle = "rgba(231,248,232,0.55)";
-    c.font = "17px Arial";
-    c.fillText("Ask Netkathir AI anything…", 40, 306);
+      c.fillStyle = col;
+      c.beginPath();
+      c.roundRect(32, y + 12, 30, 30, 8);
+      c.fill();
+      c.fillStyle = "#06240f";
+      c.font = "800 16px Arial";
+      c.textAlign = "center";
+      c.fillText("0" + (i + 1), 47, y + 33);
+      c.textAlign = "left";
+      c.fillStyle = "#e7f8e8";
+      c.font = "700 21px Arial";
+      c.fillText(name, 78, y + 34);
+      c.fillStyle = on ? "#fde047" : "rgba(231,248,232,0.65)";
+      c.font = "600 16px Arial";
+      c.textAlign = "right";
+      c.fillText(cnt + " services", 474, y + 33);
+      c.textAlign = "left";
+    });
+    c.fillStyle = "rgba(190,242,100,0.85)";
+    c.font = "600 15px Arial";
+    c.fillText("20 capabilities · one team", 24, 328);
   } else if (kind === 2) {
     // HRMS: attendance + leave requests
     const present = 46 + Math.round(Math.sin(t * 0.8 + variant) * 2);
@@ -186,34 +178,30 @@ function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t:
     c.font = "15px Arial";
     c.fillText("Payroll · Leave · Attendance · Hiring", 24, 322);
   } else if (kind === 3) {
-    // CI/CD pipeline
-    const steps = ["Build", "Test", "Review", "Deploy to AWS"];
-    const cur = (t * 0.55 + variant) % (steps.length + 1);
-    steps.forEach((label, i) => {
-      const done = cur > i + 0.6;
-      const active = !done && cur > i;
-      const y = 78 + i * 54;
-      c.fillStyle = done ? "#4ade80" : active ? "#facc15" : "rgba(255,255,255,0.18)";
+    // company facts
+    const stats = [["11+", "Years of excellence"], ["50+", "Team members"], ["6", "Countries"], ["ISO", "27001 certified"]];
+    stats.forEach(([big, label], i) => {
+      const x = 24 + (i % 2) * 238;
+      const y = 76 + Math.floor(i / 2) * 118;
+      const pulse = 0.5 + 0.5 * Math.sin(t * 1.4 + i * 1.1 + variant);
+      c.fillStyle = "rgba(255,255,255,0.07)";
       c.beginPath();
-      c.arc(46, y + 16, 16, 0, 7);
+      c.roundRect(x, y, 226, 106, 14);
       c.fill();
-      c.fillStyle = "#06240f";
-      c.font = "700 18px Arial";
-      c.textAlign = "center";
-      c.fillText(done ? "✓" : String(i + 1), 46, y + 22);
-      c.textAlign = "left";
-      c.fillStyle = "#e7f8e8";
-      c.font = "600 24px Arial";
-      c.fillText(label, 80, y + 24);
-      c.fillStyle = done ? "#86efac" : active ? "#fde047" : "rgba(231,248,232,0.4)";
-      c.font = "16px monospace";
-      c.fillText(done ? "passed" : active ? "running" + ".".repeat(1 + (Math.floor(t * 3) % 3)) : "queued", 340, y + 23);
+      c.fillStyle = i % 2 ? "#fde047" : "#4ade80";
+      c.font = "800 46px Arial";
+      c.fillText(big, x + 18, y + 56);
+      c.fillStyle = "rgba(231,248,232,0.8)";
+      c.font = "600 16px Arial";
+      c.fillText(label, x + 18, y + 84);
+      c.fillStyle = `rgba(74,222,128,${0.25 + 0.5 * pulse})`;
+      c.beginPath();
+      c.arc(x + 200, y + 22, 6, 0, 7);
+      c.fill();
     });
-    const p = Math.min(1, cur / steps.length);
-    c.fillStyle = "rgba(255,255,255,0.15)";
-    c.fillRect(24, 306, 464, 12);
-    c.fillStyle = "#4ade80";
-    c.fillRect(24, 306, 464 * p, 12);
+    c.fillStyle = "rgba(190,242,100,0.8)";
+    c.font = "600 15px Arial";
+    c.fillText("Since 2015 · Puducherry, India", 24, 326);
   } else if (kind === 4) {
     // real client projects
     const cl = [["HEB", "Retail platform"], ["MedConnect AI", "Healthcare AI"], ["WhyScience", "Education"], ["APPGM", "Web portal"]];
@@ -249,40 +237,35 @@ function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t:
       c.fill();
     });
   } else {
-    // workflow automation: Lead, CRM, AI, Email
-    const nodes = [["Lead in", 60], ["CRM", 190], ["AI score", 320], ["Email", 450]] as const;
-    const f = (t * 0.7 + variant) % 4;
-    nodes.forEach(([label, x], i) => {
-      if (i < 3) {
-        c.strokeStyle = "rgba(190,242,100,0.5)";
-        c.lineWidth = 2.5;
-        c.beginPath();
-        c.moveTo(x + 26, 170);
-        c.lineTo(nodes[i + 1][1] - 26, 170);
-        c.stroke();
-      }
-      const on = f > i && f < i + 2;
+    // global presence
+    const cs = [["India (HQ)", 0], ["Dubai", 1], ["USA", 2], ["Singapore", 3], ["Malaysia", 4], ["Australia", 5]] as const;
+    const act = Math.floor(t * 0.7 + variant) % 6;
+    cs.forEach(([name, i]) => {
+      const x = 24 + (i % 2) * 238;
+      const y = 76 + Math.floor(i / 2) * 76;
+      const on = act === i;
+      c.fillStyle = on ? "rgba(250,204,21,0.18)" : "rgba(255,255,255,0.07)";
+      c.beginPath();
+      c.roundRect(x, y, 226, 64, 14);
+      c.fill();
       c.fillStyle = on ? "#facc15" : "#4ade80";
       c.beginPath();
-      c.arc(x, 170, on ? 28 : 24, 0, 7);
+      c.arc(x + 30, y + 32, on ? 11 : 8, 0, 7);
       c.fill();
-      c.fillStyle = "#06240f";
-      c.font = "800 16px Arial";
-      c.textAlign = "center";
-      c.fillText(String(i + 1), x, 176);
+      if (on) {
+        c.strokeStyle = "rgba(250,204,21,0.6)";
+        c.lineWidth = 2;
+        c.beginPath();
+        c.arc(x + 30, y + 32, 11 + ((t * 14) % 12), 0, 7);
+        c.stroke();
+      }
       c.fillStyle = "#e7f8e8";
-      c.font = "600 16px Arial";
-      c.fillText(label, x, 222);
-      c.textAlign = "left";
+      c.font = "700 21px Arial";
+      c.fillText(name, x + 56, y + 40);
     });
-    const px = 60 + (f / 3) * 390;
-    c.fillStyle = "#fff";
-    c.beginPath();
-    c.arc(Math.min(450, px), 170, 7, 0, 7);
-    c.fill();
     c.fillStyle = "rgba(190,242,100,0.85)";
-    c.font = "600 16px Arial";
-    c.fillText("Hours saved this week: " + (28 + (Math.floor(t) % 9)), 24, 306);
+    c.font = "600 15px Arial";
+    c.fillText("Six countries. One team.", 24, 326);
   }
 }
 
@@ -307,12 +290,12 @@ function renderInterface(c: CanvasRenderingContext2D, kind: number, i: number, t
 
 // stage coordinates (robot stands at x = -0.6): a symmetric arc of interfaces
 const PANELS: { pos: [number, number, number]; w: number; kind: number; ry: number }[] = [
-  { pos: [2.35, 2.95, 0.1], w: 1.7, kind: 0, ry: -0.5 },
-  { pos: [-2.75, 2.45, 0.6], w: 1.8, kind: 1, ry: 0.45 },
-  { pos: [1.25, 3.95, 0.1], w: 1.55, kind: 2, ry: -0.35 },
-  { pos: [-2.45, 3.95, 0.2], w: 1.55, kind: 5, ry: 0.35 },
-  { pos: [2.5, 1.2, 0.1], w: 1.5, kind: 4, ry: -0.5 },
-  { pos: [-2.95, 1.1, 0.4], w: 1.5, kind: 3, ry: 0.5 },
+  { pos: [2.25, 2.75, 0.1], w: 1.25, kind: 0, ry: -0.45 },
+  { pos: [-3.05, 2.85, 0.5], w: 1.5, kind: 1, ry: 0.45 },
+  { pos: [2.2, 4.2, 0.1], w: 1.25, kind: 2, ry: -0.4 },
+  { pos: [-3.0, 4.3, 0.3], w: 1.5, kind: 3, ry: 0.4 },
+  { pos: [2.2, 1.3, 0.1], w: 1.25, kind: 4, ry: -0.45 },
+  { pos: [-2.95, 1.4, 0.5], w: 1.5, kind: 5, ry: 0.45 },
 ];
 const SEG = 14;
 const DOWN = new THREE.Vector3(0, -1, 0);
@@ -650,21 +633,20 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
     const sc = scroll.current;
     const e = ease(sc);
     void s;
-    const visible = mobile ? 3 : 3 + Math.min(3, Math.floor(sc * 3.2));
+    const visible = count; // every panel is shown, no scroll gating
     // entrance: robot rises and turns in, raises its hand, the AI pops up, the wave opens, screens appear one by one
     en.current += Math.min(d, 0.05);
     const E = en.current;
     const sg = (a: number, b: number) => ease(clamp01((E - a) / (b - a)));
     const back = (x: number) => 1 + 2.7 * Math.pow(x - 1, 3) + 1.7 * Math.pow(x - 1, 2);
-    const rIn = sg(0, 1.6);
-    const armIn = sg(1.3, 2.5);
-    const aiIn = clamp01((E - 2.2) / 0.9);
+    const rIn = sg(0.2, 1.7);
+    const armIn = sg(1.7, 2.6);
+    const aiIn = clamp01((E - 2.6) / 0.9);
 
     // ---- body: hover, breathing, turns with the cursor (and a little with scroll)
-    robot.current.rotation.y = THREE.MathUtils.damp(robot.current.rotation.y, -0.05 + e * 0.3 + mouse.current.x * 0.75 + (1 - rIn) * 2.4, 3.2, d);
+    robot.current.rotation.y = THREE.MathUtils.damp(robot.current.rotation.y, -0.05 + e * 0.3 + mouse.current.x * 0.75 + (1 - rIn) * 3.0, 3.2, d);
     robot.current.rotation.x = THREE.MathUtils.damp(robot.current.rotation.x, -mouse.current.y * 0.07, 3.2, d);
-    robot.current.position.y = Math.sin(t * 1.6) * 0.04 - (1 - rIn) * 3.2;
-    robot.current.scale.setScalar(0.72 + 0.28 * rIn);
+    robot.current.position.y = Math.sin(t * 1.6) * 0.04;
     torso.current.scale.set(1, 1 + Math.sin(t * 1.7) * 0.01, 1 + Math.sin(t * 1.7) * 0.012);
     antenna.current.rotation.z = 0.28 + Math.sin(t * 2.1) * 0.06;
     robot.current.updateWorldMatrix(true, true);
@@ -708,7 +690,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
     PANELS.slice(0, count).forEach((p, i) => {
       const g = panels.current[i];
       if (!g) return;
-      const appear = (i < 3 || mobile ? 1 : ease(clamp01((sc - (i - 3) * 0.2) / 0.3 + 0.05))) * sg(3.0 + i * 0.45, 4.0 + i * 0.45);
+      const appear = 1 * sg(4.3 + i * 0.35, 5.2 + i * 0.35);
       const spread = mobile ? 0.72 : 1 + e * 0.1;
       const ox = mobile ? 0.6 : 0;
       g.position.set(p.pos[0] * spread + ox, p.pos[1] + Math.sin(t * 1.2 + i * 1.3) * 0.07, p.pos[2]);
@@ -727,7 +709,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
 
     rings.current.forEach((g, i) => {
       if (!g) return;
-      const k = sg(1.8 + i * 0.4, 3.2 + i * 0.4);
+      const k = sg(3.4 + i * 0.35, 4.7 + i * 0.35);
       g.scale.set(Math.max(0.001, k), 1, Math.max(0.001, k));
     });
 
