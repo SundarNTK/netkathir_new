@@ -517,9 +517,17 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
   const mouse = useRef({ x: 0, y: 0 });
   const scroll = useRef(0);
   const en = useRef(0); // seconds since the robot started entering
+  const frames = useRef(0); // frames drawn since the scene woke (the entrance waits for the first ones to settle)
+  const turn = useRef(0);
   const rings = useRef<THREE.Group[]>([]);
   const K = useMemo(() => ({ S: new THREE.Vector3(), E: new THREE.Vector3(), W: new THREE.Vector3(), a: new THREE.Vector3(), b: new THREE.Vector3(), pole: new THREE.Vector3(), t: new THREE.Vector3(), r: new THREE.Vector3(), u: new THREE.Vector3(), bp: new THREE.Vector3() }), []);
   const count = mobile ? 3 : PANELS.length;
+
+  useEffect(() => {
+    const wake = () => (frames.current = 0);
+    window.addEventListener("nk:intro-done", wake);
+    return () => window.removeEventListener("nk:intro-done", wake);
+  }, []);
 
   useEffect(() => {
     const f = (e: MouseEvent) => {
@@ -635,7 +643,9 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
     void s;
     const visible = count; // every panel is shown, no scroll gating
     // entrance: robot rises and turns in, raises its hand, the AI pops up, the wave opens, screens appear one by one
-    en.current += Math.min(d, 0.05);
+    frames.current += 1;
+    // the very first frames after waking pay for uploads and shader work: hold the entrance until they settle
+    if (frames.current > 14 && (window as unknown as { __nkIntro?: string }).__nkIntro !== "playing") en.current += Math.min(d, 0.04);
     const E = en.current;
     const sg = (a: number, b: number) => ease(clamp01((E - a) / (b - a)));
     const back = (x: number) => 1 + 2.7 * Math.pow(x - 1, 3) + 1.7 * Math.pow(x - 1, 2);
@@ -687,6 +697,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
     eyes.current.scale.y = THREE.MathUtils.clamp(1 - Math.min(b, 1) * 0.9, 0.1, 1);
 
     // ---- interfaces: float, fan out with scroll, and run their own live content + page transitions
+    turn.current += 1;
     PANELS.slice(0, count).forEach((p, i) => {
       const g = panels.current[i];
       if (!g) return;
@@ -695,12 +706,12 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
       const ox = mobile ? 0.6 : 0;
       g.position.set(p.pos[0] * spread + ox, p.pos[1] + Math.sin(t * 1.2 + i * 1.3) * 0.07, p.pos[2]);
       g.rotation.y = p.ry + Math.sin(t * 0.5 + i) * 0.03;
-      g.scale.setScalar(0.2 + 0.8 * appear);
-      g.visible = appear > 0.01 && i < visible;
+      g.scale.setScalar(Math.max(0.001, 0.2 * (appear > 0.01 ? 1 : 0) + 0.8 * appear));
+      g.visible = i < visible;
       const m = shots.current[i];
       if (m) m.opacity = appear;
       const L = live[i];
-      if (g.visible && t - L.last > 0.1) {
+      if (g.visible && appear > 0.01 && turn.current % count === i && t - L.last > 0.09) {
         L.last = t;
         renderInterface(L.ctx, p.kind, i, t);
         L.tex.needsUpdate = true;

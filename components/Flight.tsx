@@ -27,8 +27,8 @@ export function PlaneIcon({ className = "", style }: { className?: string; style
   );
 }
 
-const PATH = "M0 440 C170 440 190 190 340 190 S 520 450 660 450 S 860 170 990 190 S 1130 330 1200 250";
-const FRACS = [0.07, 0.29, 0.5, 0.72, 0.93];
+const PATH = "M0 358 C170 358 190 154 340 154 S 520 366 660 366 S 860 138 990 154 S 1130 268 1200 203";
+const STOP_X = [0.1, 0.3, 0.5, 0.7, 0.9]; // stages sit at even spacing across the width, so cards never collide
 
 export type Stop = { k: string; t: string; d: string; tags: string[]; image?: string };
 
@@ -49,19 +49,29 @@ export function FlightJourney({ kicker, title, stops }: { kicker: string; title:
     const count = root.querySelector<HTMLElement>("[data-count-now]");
     const bar = root.querySelector<HTMLElement>("[data-bar]");
     const len = p.getTotalLength();
+    // length fraction at which the path reaches each stage's x position
+    const FRACS = STOP_X.map((tx) => {
+      let lo = 0, hi = len;
+      for (let k = 0; k < 24; k++) {
+        const mid = (lo + hi) / 2;
+        if (p.getPointAtLength(mid).x < tx * 1200) lo = mid;
+        else hi = mid;
+      }
+      return lo / len;
+    });
     const pts = FRACS.map((f) => p.getPointAtLength(f * len));
     const place = () => {
       cards.forEach((c, i) => {
-        const above = pts[i].y > 320;
+        const above = pts[i].y > 280;
         c.style.left = `${(pts[i].x / 1200) * 100}%`;
-        c.style.top = `${(pts[i].y / 640) * 100}%`;
+        c.style.top = `${(pts[i].y / 520) * 100}%`;
         c.dataset.side = above ? "up" : "down";
         c.style.marginTop = above ? "-22px" : "22px";
         gsap.set(c, { xPercent: -50, yPercent: above ? -100 : 0 });
       });
       dots.forEach((d, i) => {
         d.style.left = `${(pts[i].x / 1200) * 100}%`;
-        d.style.top = `${(pts[i].y / 640) * 100}%`;
+        d.style.top = `${(pts[i].y / 520) * 100}%`;
       });
     };
     place();
@@ -79,14 +89,14 @@ export function FlightJourney({ kicker, title, stops }: { kicker: string; title:
         const a = p.getPointAtLength(Math.max(0, v * len - 3));
         const b = p.getPointAtLength(Math.min(len, v * len + 3));
         const q = p.getPointAtLength(v * len);
-        gsap.set(plane, { left: `${(q.x / 1200) * 100}%`, top: `${(q.y / 640) * 100}%`, rotation: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI });
+        gsap.set(plane, { left: `${(q.x / 1200) * 100}%`, top: `${(q.y / 520) * 100}%`, rotation: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI });
         tr.style.strokeDashoffset = String(len * (1 - v));
         const reached = FRACS.filter((f) => v >= f - 0.02).length;
         FRACS.forEach((f, i) => {
-          const now = i >= reached ? 0 : i < reached - 2 ? 1 : 2; // 0 hidden, 1 faded (older), 2 current
+          const now = i < reached ? 1 : 0; // a stage stays fully visible once the plane has reached it
           if (now === on[i]) return;
           on[i] = now;
-          gsap.to(cards[i], { autoAlpha: now === 0 ? 0 : now === 1 ? 0.18 : 1, scale: now === 0 ? 0.92 : now === 1 ? 0.94 : 1, y: now === 0 ? 26 : 0, duration: 0.6, ease: "power3.out", overwrite: "auto" });
+          gsap.to(cards[i], { autoAlpha: now, scale: now ? 1 : 0.92, y: now ? 0 : 26, duration: 0.6, ease: "power3.out", overwrite: "auto" });
           gsap.to(dots[i], { scale: now ? 1 : 0.4, opacity: now ? 1 : 0.4, duration: 0.4, overwrite: "auto" });
         });
         const n = Math.max(1, reached);
@@ -94,12 +104,11 @@ export function FlightJourney({ kicker, title, stops }: { kicker: string; title:
         if (bar) bar.style.transform = `scaleX(${v.toFixed(3)})`;
       };
       setP(0);
-      const tl = gsap.timeline({ scrollTrigger: { trigger: root, start: "top top", end: "+=3400", pin: true, scrub: 0.7, anticipatePin: 1 } });
-      tl.to(st, { p: 1, ease: "none", duration: 1, onUpdate: () => setP(st.p) }, 0);
-      // day → dusk → night
-      tl.fromTo(root, { backgroundColor: "#ffffff" }, { backgroundColor: "#dff4e6", ease: "none", duration: 0.45 }, 0);
-      tl.to(root, { backgroundColor: "#07210f", ease: "none", duration: 0.5 }, 0.5);
-      tl.to(root, { "--fj-fg": "#ffffff", ease: "none", duration: 0.2 }, 0.52);
+      const tl = gsap.timeline({ scrollTrigger: { trigger: root, start: "top top", end: "+=3900", pin: true, scrub: 0.7, anticipatePin: 1 } });
+      tl.to(st, { p: 1, ease: "none", duration: 0.82, onUpdate: () => setP(st.p) }, 0);
+      tl.to({}, { duration: 0.18 }, 0.82); // hold at the end so every stage can be read
+      // stays light: white to a soft mint
+      tl.fromTo(root, { backgroundColor: "#ffffff" }, { backgroundColor: "#eefaf1", ease: "none", duration: 0.82 }, 0);
       floats.forEach((f, i) => tl.fromTo(f, { x: 80 + i * 40 }, { x: -(260 + i * 140), ease: "none", duration: 1 }, 0));
     });
     mm.add("(max-width: 767px), (prefers-reduced-motion: reduce)", () => {
@@ -141,8 +150,8 @@ export function FlightJourney({ kicker, title, stops }: { kicker: string; title:
         </div>
 
         {/* desktop: plane flies along the path */}
-        <div className="relative mx-auto hidden w-[min(100%,112vh)] md:block" style={{ aspectRatio: "1200 / 640" }}>
-          <svg viewBox="0 0 1200 640" className="absolute inset-0 h-full w-full overflow-visible" fill="none">
+        <div className="relative mx-auto hidden w-[min(100%,160vh)] md:block" style={{ aspectRatio: "1200 / 520" }}>
+          <svg viewBox="0 0 1200 520" className="absolute inset-0 h-full w-full overflow-visible" fill="none">
             <defs>
               <linearGradient id="fj-grad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1200" y2="0">
                 <stop offset="0" stopColor="#22c55e" />
@@ -157,7 +166,7 @@ export function FlightJourney({ kicker, title, stops }: { kicker: string; title:
             <span key={`d${i}`} data-dot aria-hidden className="absolute z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white bg-[#16a34a] shadow-[0_0_0_6px_rgba(34,197,94,0.25)]" />
           ))}
           {stops.map((s, i) => (
-            <article key={s.k} data-stop className="absolute z-20 w-[14.5rem] rounded-2xl border border-[#14532d]/10 bg-white p-4 text-[#0a2417] shadow-[0_26px_60px_-30px_rgba(0,0,0,0.5)]">
+            <article key={s.k} data-stop className="absolute z-20 w-[13.75rem] rounded-2xl border border-[#14532d]/10 bg-white p-4 text-[#0a2417] shadow-[0_26px_60px_-30px_rgba(0,0,0,0.5)]">
               {s.image && (
                 <div className="relative -mx-1 -mt-1 mb-3 h-24 overflow-hidden rounded-xl">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -178,7 +187,7 @@ export function FlightJourney({ kicker, title, stops }: { kicker: string; title:
               </div>
             </article>
           ))}
-          <div data-plane className="absolute z-30 h-12 w-12 drop-shadow-[0_10px_14px_rgba(0,0,0,0.3)]" style={{ left: 0, top: "68%", marginLeft: "-1.5rem", marginTop: "-1.5rem" }}>
+          <div data-plane className="absolute z-30 h-12 w-12 drop-shadow-[0_10px_14px_rgba(0,0,0,0.3)]" style={{ left: 0, top: "69%", marginLeft: "-1.5rem", marginTop: "-1.5rem" }}>
             <PlaneIcon className="h-full w-full" />
           </div>
         </div>
