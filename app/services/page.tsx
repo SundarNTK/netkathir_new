@@ -1,6 +1,7 @@
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import Ticker from "@/components/Ticker";
+import ScrollLine from "@/components/ScrollLine";
 import { SERVICE_GROUPS } from "@/lib/data";
 
 export const metadata = { title: "Services — Netkathir Technologies" };
@@ -21,7 +22,8 @@ const STEPS = [
 
 export default function Services() {
   return (
-    <>
+    <div className="relative isolate">
+      <ScrollLine />
       <PageHero
         kicker="Services"
         title="Our Services."
@@ -36,6 +38,7 @@ export default function Services() {
             return (
               <div
                 key={g.name}
+                data-stack
                 className="sticky grid gap-6 overflow-hidden rounded-[1.8rem] border border-[#14532d]/10 p-6 shadow-[0_30px_70px_-40px_rgba(20,83,45,0.55)] md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:gap-10 md:p-9"
                 style={{ top: `${5.25 + i * 0.7}rem`, background: t.bg }}
               >
@@ -84,6 +87,6 @@ export default function Services() {
         <h2 data-split className="font-display text-[clamp(1.8rem,4vw,3rem)] leading-none">Not sure which service you need?</h2>
         <Link href="/contact" className="btn btn-solid mt-6">Talk to us →</Link>
       </section>
-    </>
+    </div>
   );
 }

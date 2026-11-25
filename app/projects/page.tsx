@@ -1,5 +1,6 @@
 import PageHero from "@/components/PageHero";
 import Ticker from "@/components/Ticker";
+import ScrollLine from "@/components/ScrollLine";
 import { CLIENTS } from "@/lib/data";
 
 export const metadata = { title: "Projects — Netkathir Technologies" };
@@ -19,7 +20,8 @@ const TONES = [
 export default function Projects() {
   const featured = CLIENTS.filter((c) => CASES[c.name]);
   return (
-    <>
+    <div className="relative isolate">
+      <ScrollLine />
       <PageHero
         kicker="Projects"
         title="Transforming Ideas into Intelligent Solutions."
@@ -82,6 +84,6 @@ export default function Projects() {
           </ul>
         </div>
       </section>
-    </>
+    </div>
   );
 }

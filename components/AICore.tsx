@@ -10,7 +10,7 @@ import type { RobotPalette } from "./Hero3D";
 
 /* ============================ living holographic interfaces ============================ */
 
-const TITLES = ["AI INSIGHTS", "NEURAL GRAPH", "MODEL.BIN", "SIGNAL RADAR", "ACCURACY", "AUTOMATION"];
+const TITLES = ["GARAGE BILL · INVOICES", "WORKFLOW AUTOMATION", "CLOUD & DEVOPS", "HRMS · TEAM TODAY", "AI SUPPORT BOT", "AI SERVICES"];
 const PW = 512;
 const PH = 340;
 const ease = (x: number) => x * x * (3 - 2 * x);
@@ -57,6 +57,9 @@ function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t:
   const rnd = seeded(11 + kind * 7 + variant * 31);
 
   if (kind === 0) {
+    c.fillStyle = "rgba(190,242,100,0.75)";
+    c.font = "15px Arial";
+    c.fillText("Invoices this week", 24, 80);
     for (let i = 0; i < 16; i++) {
       const h = 30 + (Math.sin(t * 1.4 + i * 0.7 + variant * 2) * 0.5 + 0.5) * 165;
       const bg = c.createLinearGradient(0, 320 - h, 0, 320);
@@ -105,52 +108,53 @@ function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t:
       c.fill();
     }
   } else if (kind === 2) {
-    c.font = "18px monospace";
-    const off = Math.floor(t * 4);
-    for (let r = 0; r < 9; r++) {
-      const rr = seeded(1000 + r + off + variant * 77);
-      let line = "";
-      for (let k = 0; k < 26; k++) line += rr() > 0.5 ? "1" : "0";
-      c.fillStyle = r % 4 === (variant ? 2 : 1) ? "#facc15" : "#86efac";
-      c.fillText(line, 24, 84 + r * 22);
-    }
-    const p = (t * 0.09 + variant * 0.4) % 1;
-    c.fillStyle = "rgba(255,255,255,0.15)";
-    c.fillRect(24, 296, 464, 16);
-    c.fillStyle = "#4ade80";
-    c.fillRect(24, 296, 464 * p, 16);
-    c.fillStyle = "#e7f8e8";
-    c.font = "600 16px Arial";
-    c.fillText(`TRAINING ${(p * 100).toFixed(0)}%`, 24, 288);
-  } else if (kind === 3) {
-    c.save();
-    c.translate(256, 205);
-    for (let r = 1; r <= 4; r++) {
-      c.strokeStyle = `rgba(74,222,128,${0.2 + r * 0.12})`;
-      c.lineWidth = 2;
+    const steps = ["Build", "Test", "Review", "Deploy"];
+    const cur = (t * 0.55 + variant) % (steps.length + 1);
+    steps.forEach((label, i) => {
+      const done = cur > i + 0.6;
+      const active = !done && cur > i;
+      const y = 92 + i * 52;
+      c.fillStyle = done ? "#4ade80" : active ? "#facc15" : "rgba(255,255,255,0.18)";
       c.beginPath();
-      c.arc(0, 0, r * 36, 0, 7);
-      c.stroke();
-    }
-    const ang = (t * 2.2 + variant) % (Math.PI * 2);
-    const sw = c.createLinearGradient(0, 0, Math.cos(ang) * 150, Math.sin(ang) * 150);
-    sw.addColorStop(0, "rgba(250,204,21,0.9)");
-    sw.addColorStop(1, "rgba(250,204,21,0)");
-    c.strokeStyle = sw;
-    c.lineWidth = 4;
-    c.beginPath();
-    c.moveTo(0, 0);
-    c.lineTo(Math.cos(ang) * 150, Math.sin(ang) * 150);
-    c.stroke();
-    for (let i = 0; i < 9; i++) {
-      const bx = (rnd() - 0.5) * 250, by = (rnd() - 0.5) * 150;
-      const da = (((Math.atan2(by, bx) - ang) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-      c.fillStyle = `rgba(217,249,157,${Math.max(0.15, 1 - da / 3)})`;
-      c.beginPath();
-      c.arc(bx, by, 5, 0, 7);
+      c.arc(46, y + 14, 15, 0, 7);
       c.fill();
-    }
-    c.restore();
+      c.fillStyle = "#06240f";
+      c.font = "700 18px Arial";
+      c.textAlign = "center";
+      c.fillText(done ? "✓" : String(i + 1), 46, y + 20);
+      c.textAlign = "left";
+      c.fillStyle = "#e7f8e8";
+      c.font = "600 24px Arial";
+      c.fillText(label, 80, y + 22);
+      c.fillStyle = done ? "#86efac" : active ? "#fde047" : "rgba(231,248,232,0.4)";
+      c.font = "16px monospace";
+      c.fillText(done ? "passed" : active ? "running" + ".".repeat(1 + (Math.floor(t * 3) % 3)) : "queued", 300, y + 21);
+    });
+    const p = Math.min(1, cur / steps.length);
+    c.fillStyle = "rgba(255,255,255,0.15)";
+    c.fillRect(24, 306, 464, 12);
+    c.fillStyle = "#4ade80";
+    c.fillRect(24, 306, 464 * p, 12);
+  } else if (kind === 3) {
+    const rows = [["Present", 0.86, "#4ade80"], ["On leave", 0.12, "#facc15"], ["Remote", 0.34, "#86efac"], ["Interviews", 0.2, "#d9f99d"]] as const;
+    rows.forEach(([label, base, col], i) => {
+      const v = Math.min(1, Math.max(0.05, base + Math.sin(t * 0.9 + i * 1.7 + variant) * 0.05));
+      const y = 94 + i * 56;
+      c.fillStyle = "#e7f8e8";
+      c.font = "22px Arial";
+      c.fillText(label, 28, y + 14);
+      c.fillStyle = "rgba(255,255,255,0.14)";
+      c.beginPath();
+      c.roundRect(190, y, 290, 18, 9);
+      c.fill();
+      c.fillStyle = col;
+      c.beginPath();
+      c.roundRect(190, y, 290 * v, 18, 9);
+      c.fill();
+    });
+    c.fillStyle = "rgba(190,242,100,0.75)";
+    c.font = "15px Arial";
+    c.fillText("Payroll · Leave · Attendance · Recruitment", 28, 322);
   } else if (kind === 4) {
     const pct = 0.9 + 0.09 * (Math.sin(t * 0.9 + variant * 2) * 0.5 + 0.5);
     c.lineWidth = 26;
@@ -168,6 +172,9 @@ function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t:
     c.font = "700 50px Arial";
     c.textAlign = "center";
     c.fillText((pct * 100).toFixed(1) + "%", 256, 212);
+    c.font = "16px Arial";
+    c.fillStyle = "rgba(231,248,232,0.75)";
+    c.fillText("Queries resolved", 256, 242);
     c.textAlign = "left";
     c.strokeStyle = "#bef264";
     c.lineWidth = 2.5;

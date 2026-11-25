@@ -1,5 +1,6 @@
 import PageHero from "@/components/PageHero";
 import Ticker from "@/components/Ticker";
+import ScrollLine from "@/components/ScrollLine";
 import Founder from "@/components/Founder";
 import WorldMap from "@/components/WorldMap";
 import { COUNTRIES, IMAGES, VALUES } from "@/lib/data";
@@ -8,7 +9,8 @@ export const metadata = { title: "About Us — Netkathir Technologies" };
 
 export default function About() {
   return (
-    <>
+    <div className="relative isolate">
+      <ScrollLine />
       <PageHero
         kicker="About Us"
         title="The People and Purpose Behind Netkathir."
@@ -126,6 +128,6 @@ export default function About() {
           <p className="font-display text-3xl text-grad">ISO 27001 Certified</p>
         </div>
       </section>
-    </>
+    </div>
   );
 }

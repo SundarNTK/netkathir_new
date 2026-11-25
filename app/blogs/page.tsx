@@ -1,5 +1,6 @@
 import PageHero from "@/components/PageHero";
 import Ticker from "@/components/Ticker";
+import ScrollLine from "@/components/ScrollLine";
 import { BLOGS } from "@/lib/data";
 
 export const metadata = { title: "Blogs — Netkathir Technologies" };
@@ -7,7 +8,8 @@ export const metadata = { title: "Blogs — Netkathir Technologies" };
 export default function Blogs() {
   const [first, ...rest] = BLOGS;
   return (
-    <>
+    <div className="relative isolate">
+      <ScrollLine />
       <PageHero
         kicker="Insights"
         title="Insights / Blogs."
@@ -56,6 +58,6 @@ export default function Blogs() {
           ))}
         </div>
       </section>
-    </>
+    </div>
   );
 }
