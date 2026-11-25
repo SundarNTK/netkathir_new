@@ -23,7 +23,7 @@ export default function PageHero({
         </p>
         <h1
           data-split
-          className={`font-display text-[clamp(2.4rem,5vw,5rem)] leading-[1] pb-[0.1em] text-grad shimmer ${
+          className={`font-display text-[clamp(2.4rem,5vw,5rem)] leading-[1] pb-[0.1em] text-grad ${
             room ? "max-w-3xl lg:max-w-[min(44rem,54%)]" : "max-w-4xl"
           }`}
         >

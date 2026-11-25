@@ -15,6 +15,7 @@ export type Area = { name: string; blurb: string; items: string[]; tags: string[
 
 export function ServiceReveal({ areas }: { areas: Area[] }) {
   const sec = useRef<HTMLElement>(null);
+  const goTo = useRef<(i: number) => void>(() => {});
 
   useEffect(() => {
     const root = sec.current;
@@ -76,6 +77,13 @@ export function ServiceReveal({ areas }: { areas: Area[] }) {
           tl.to(g, { autoAlpha: 0, duration: 0.005 }, s + seg - 0.006);
         }
       });
+      // clicking a tab scrolls to that step (the timeline is scroll-driven, so we aim at its progress)
+      goTo.current = (i: number) => {
+        const st = tl.scrollTrigger;
+        if (!st) return;
+        const prog = E + i * seg + seg * 0.4;
+        window.scrollTo({ top: st.start + (st.end - st.start) * prog, behavior: "smooth" });
+      };
       tl.eventCallback("onUpdate", () => {
         const p = tl.progress();
         const k = p < E ? -1 : Math.min(n - 1, Math.floor((p - E) / seg));
@@ -113,11 +121,13 @@ export function ServiceReveal({ areas }: { areas: Area[] }) {
           {/* step tabs with progress lines */}
           <ol className="absolute left-0 top-0 z-10 flex w-[60%] gap-3 px-8 pt-7 lg:px-12">
             {areas.map((a, i) => (
-              <li key={a.name} data-sr-i data-on="0" className="group min-w-0 flex-1 opacity-45 transition-opacity duration-500 data-[on='1']:opacity-100">
-                <span className="block truncate font-mono text-[0.62rem] font-bold uppercase tracking-widest">0{i + 1} · {a.name.split(" ")[0]}</span>
-                <span className="relative mt-2 block h-[3px] overflow-hidden rounded bg-current/20">
-                  <span data-sr-fill className="absolute inset-0 origin-left rounded bg-current" />
-                </span>
+              <li key={a.name} data-sr-i data-on="0" className="group min-w-0 flex-1 opacity-45 transition-opacity duration-500 hover:opacity-90 data-[on='1']:opacity-100">
+                <button type="button" onClick={() => goTo.current(i)} aria-label={`Go to ${a.name}`} className="block w-full cursor-pointer pointer-events-auto text-left">
+                  <span className="block truncate font-mono text-[0.62rem] font-bold uppercase tracking-widest">0{i + 1} · {a.name.split(" ")[0]}</span>
+                  <span className="relative mt-2 block h-[3px] overflow-hidden rounded bg-current/20 transition-all group-hover:h-[5px]">
+                    <span data-sr-fill className="absolute inset-0 origin-left rounded bg-current" />
+                  </span>
+                </button>
               </li>
             ))}
           </ol>
@@ -430,12 +440,22 @@ export function ClientReel({ clients, notes }: { clients: { name: string; logo: 
                 <span aria-hidden className="pointer-events-none absolute -bottom-16 -right-6 font-display text-[18rem] font-bold leading-none opacity-[0.1]">{String(i + 1).padStart(2, "0")}</span>
                 <span aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full border-2 border-current opacity-10" />
                 <span aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-44 w-44 rounded-full border border-current opacity-10" />
-                <div className="relative flex items-start justify-between">
-                  <div data-rl-plate className="relative h-[9.5rem] w-[15rem] rounded-2xl bg-white shadow-[0_26px_50px_-26px_rgba(0,0,0,0.5)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={c.logo} alt={c.name} className="absolute inset-4 h-[calc(100%-2rem)] w-[calc(100%-2rem)] object-contain" />
+                <span className="absolute right-7 top-6 z-10 font-mono text-xs font-bold uppercase tracking-[0.25em] opacity-70">{String(i + 1).padStart(2, "0")} / {String(clients.length).padStart(2, "0")}</span>
+                {/* the client logo hangs on the wall like a framed picture */}
+                <div data-rl-plate className="relative mx-auto mt-7 w-[min(21rem,58%)]">
+                  <svg aria-hidden viewBox="0 0 160 40" className="absolute -top-9 left-1/2 h-10 w-40 -translate-x-1/2" fill="none">
+                    <path d="M22 40 L80 8 L138 40" stroke="#a8761a" strokeWidth="2" strokeLinecap="round" />
+                    <circle cx="80" cy="7" r="5" fill="#8a6414" />
+                    <circle cx="78.5" cy="5.5" r="1.8" fill="#f6dc8a" />
+                  </svg>
+                  <div className="rounded-[6px] bg-[linear-gradient(145deg,#fbe9a8_0%,#d9ad3f_38%,#a97a1c_62%,#f1d27c_100%)] p-[10px] shadow-[0_34px_46px_-22px_rgba(0,0,0,0.55),0_2px_0_rgba(255,255,255,0.6)_inset]">
+                    <div className="rounded-[3px] bg-[#fffaf0] p-[10px] shadow-[inset_0_0_0_1px_rgba(138,100,20,0.35),inset_0_6px_14px_rgba(0,0,0,0.12)]">
+                      <div className="relative aspect-[16/10] bg-white shadow-[inset_0_0_14px_rgba(0,0,0,0.08)]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={c.logo} alt={c.name} className="absolute inset-3 h-[calc(100%-1.5rem)] w-[calc(100%-1.5rem)] object-contain" />
+                      </div>
+                    </div>
                   </div>
-                  <span className="font-mono text-xs font-bold uppercase tracking-[0.25em] opacity-70">{String(i + 1).padStart(2, "0")} / {String(clients.length).padStart(2, "0")}</span>
                 </div>
                 <div className="relative">
                   {SECTORS[c.name] && <span className="mb-3 inline-block rounded-full bg-white/70 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.18em]">{SECTORS[c.name]}</span>}

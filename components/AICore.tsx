@@ -23,40 +23,53 @@ function seeded(seed: number) {
 
 /** One full "page" of an interface, animated by time `t` (charts breathe, radar sweeps, toggles flip, binary scrolls...). */
 function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t: number) {
+  // frosted-glass window: pale blue glass, soft border, traffic-light dots, title bar
   const g = c.createLinearGradient(0, 0, PW, PH);
-  g.addColorStop(0, "rgba(5,40,24,0.93)");
-  g.addColorStop(1, "rgba(9,58,33,0.88)");
+  g.addColorStop(0, "rgba(246,250,255,0.76)");
+  g.addColorStop(1, "rgba(205,226,248,0.68)");
   c.fillStyle = g;
-  c.fillRect(0, 0, PW, PH);
-  const accent = variant ? "250,204,21" : "74,222,128";
-  c.strokeStyle = `rgba(${accent},0.95)`;
-  c.lineWidth = 3;
-  c.strokeRect(6, 6, 500, 328);
-  c.lineWidth = 5;
-  [[6, 6, 1, 1], [506, 6, -1, 1], [6, 334, 1, -1], [506, 334, -1, -1]].forEach(([x, y, sx, sy]) => {
-    c.beginPath();
-    c.moveTo(x, y + sy * 26);
-    c.lineTo(x, y);
-    c.lineTo(x + sx * 26, y);
-    c.stroke();
-  });
-  c.fillStyle = "#bef264";
-  c.font = "600 22px Arial";
-  c.textAlign = "left";
-  c.fillText(TITLES[kind], 24, 40);
-  c.fillStyle = `rgba(${accent},${0.5 + 0.5 * Math.sin(t * 4)})`;
   c.beginPath();
-  c.arc(480, 32, 7, 0, 7);
+  c.roundRect(0, 0, PW, PH, 26);
   c.fill();
-  c.strokeStyle = "rgba(74,222,128,0.45)";
+  const sheen = c.createLinearGradient(0, 0, PW * 0.7, PH * 0.6);
+  sheen.addColorStop(0, "rgba(255,255,255,0.55)");
+  sheen.addColorStop(0.5, "rgba(255,255,255,0)");
+  c.fillStyle = sheen;
+  c.fill();
+  const accent = variant ? "6,182,212" : "37,99,235";
+  c.strokeStyle = "rgba(255,255,255,0.95)";
+  c.lineWidth = 3;
+  c.beginPath();
+  c.roundRect(2, 2, PW - 4, PH - 4, 24);
+  c.stroke();
+  c.strokeStyle = `rgba(${accent},0.35)`;
   c.lineWidth = 1.5;
   c.beginPath();
-  c.moveTo(24, 56);
-  c.lineTo(488, 56);
+  c.roundRect(5, 5, PW - 10, PH - 10, 22);
+  c.stroke();
+  ["#ff6b6b", "#fbbf24", "#34d399"].forEach((col, i) => {
+    c.fillStyle = col;
+    c.beginPath();
+    c.arc(30 + i * 18, 30, 5.5, 0, 7);
+    c.fill();
+  });
+  c.fillStyle = "#12306b";
+  c.font = "700 20px Arial";
+  c.textAlign = "left";
+  c.fillText(TITLES[kind], 100, 37);
+  c.fillStyle = `rgba(${accent},${0.55 + 0.45 * Math.sin(t * 4)})`;
+  c.beginPath();
+  c.arc(482, 30, 6, 0, 7);
+  c.fill();
+  c.strokeStyle = "rgba(37,99,235,0.2)";
+  c.lineWidth = 1.5;
+  c.beginPath();
+  c.moveTo(22, 56);
+  c.lineTo(490, 56);
   c.stroke();
 
   c.textBaseline = "alphabetic";
-  const pill = (x: number, y: number, w: number, label: string, col: string, ink = "#06240f") => {
+  const pill = (x: number, y: number, w: number, label: string, col: string, ink = "#ffffff") => {
     c.fillStyle = col;
     c.beginPath();
     c.roundRect(x, y, w, 24, 12);
@@ -73,14 +86,14 @@ function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t:
     const paid = Math.floor(t * 0.7 + variant) % 5;
     rows.forEach(([id, car, amt], i) => {
       const y = 70 + i * 48;
-      c.fillStyle = "rgba(255,255,255,0.07)";
+      c.fillStyle = "rgba(255,255,255,0.72)";
       c.beginPath();
       c.roundRect(20, y, 472, 40, 10);
       c.fill();
-      c.fillStyle = "#bef264";
+      c.fillStyle = "#1d4ed8";
       c.font = "600 15px monospace";
       c.fillText(id, 32, y + 25);
-      c.fillStyle = "#e7f8e8";
+      c.fillStyle = "#1e3a5f";
       c.font = "600 18px Arial";
       c.fillText(car, 130, y + 26);
       c.font = "700 18px Arial";
@@ -88,24 +101,24 @@ function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t:
       c.fillText(amt, 388, y + 26);
       c.textAlign = "left";
       const ok = i < paid;
-      pill(400, y + 8, 80, ok ? "Paid" : "Pending", ok ? "#4ade80" : "#facc15");
+      pill(400, y + 8, 80, ok ? "Paid" : "Pending", ok ? "#3b82f6" : "#f59e0b");
     });
-    c.fillStyle = "rgba(190,242,100,0.8)";
+    c.fillStyle = "rgba(29,78,216,0.8)";
     c.font = "600 15px Arial";
     c.fillText("Today", 24, 292);
-    c.fillStyle = "#ffffff";
+    c.fillStyle = "#12306b";
     c.font = "700 30px Arial";
     c.fillText("₹" + (42300 + Math.floor(Math.sin(t) * 40 + 40) * 10).toLocaleString("en-IN"), 24, 322);
-    c.fillStyle = "rgba(190,242,100,0.8)";
+    c.fillStyle = "rgba(29,78,216,0.8)";
     c.font = "600 15px Arial";
     c.fillText("Job cards open: 12", 300, 322);
   } else if (kind === 1) {
     // Our services: four disciplines
-    const areas = [["AI & GenAI", 7, "#4ade80"], ["Enterprise Software", 6, "#facc15"], ["Cloud & DevOps", 2, "#86efac"], ["Digital Transformation", 4, "#fde047"]] as const;
+    const areas = [["AI & GenAI", 7, "#3b82f6"], ["Enterprise Software", 6, "#f59e0b"], ["Cloud & DevOps", 2, "#38bdf8"], ["Digital Transformation", 4, "#22d3ee"]] as const;
     areas.forEach(([name, cnt, col], i) => {
       const y = 70 + i * 62;
       const on = Math.floor(t * 0.6 + variant) % 4 === i;
-      c.fillStyle = on ? "rgba(250,204,21,0.16)" : "rgba(255,255,255,0.07)";
+      c.fillStyle = on ? "rgba(245,158,11,0.16)" : "rgba(255,255,255,0.72)";
       c.beginPath();
       c.roundRect(20, y, 472, 54, 12);
       c.fill();
@@ -113,68 +126,68 @@ function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t:
       c.beginPath();
       c.roundRect(32, y + 12, 30, 30, 8);
       c.fill();
-      c.fillStyle = "#06240f";
+      c.fillStyle = "#ffffff";
       c.font = "800 16px Arial";
       c.textAlign = "center";
       c.fillText("0" + (i + 1), 47, y + 33);
       c.textAlign = "left";
-      c.fillStyle = "#e7f8e8";
+      c.fillStyle = "#1e3a5f";
       c.font = "700 21px Arial";
       c.fillText(name, 78, y + 34);
-      c.fillStyle = on ? "#fde047" : "rgba(231,248,232,0.65)";
+      c.fillStyle = on ? "#22d3ee" : "rgba(30,58,95,0.65)";
       c.font = "600 16px Arial";
       c.textAlign = "right";
       c.fillText(cnt + " services", 474, y + 33);
       c.textAlign = "left";
     });
-    c.fillStyle = "rgba(190,242,100,0.85)";
+    c.fillStyle = "rgba(29,78,216,0.85)";
     c.font = "600 15px Arial";
     c.fillText("20 capabilities · one team", 24, 328);
   } else if (kind === 2) {
     // HRMS: attendance + leave requests
     const present = 46 + Math.round(Math.sin(t * 0.8 + variant) * 2);
     c.lineWidth = 16;
-    c.strokeStyle = "rgba(74,222,128,0.2)";
+    c.strokeStyle = "rgba(59,130,246,0.2)";
     c.beginPath();
     c.arc(100, 170, 56, 0, 7);
     c.stroke();
-    c.strokeStyle = "#4ade80";
+    c.strokeStyle = "#3b82f6";
     c.lineCap = "round";
     c.beginPath();
     c.arc(100, 170, 56, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (present / 50));
     c.stroke();
     c.lineCap = "butt";
-    c.fillStyle = "#fff";
+    c.fillStyle = "#12306b";
     c.font = "700 34px Arial";
     c.textAlign = "center";
     c.fillText(String(present), 100, 182);
     c.font = "14px Arial";
-    c.fillStyle = "rgba(231,248,232,0.75)";
+    c.fillStyle = "rgba(30,58,95,0.75)";
     c.fillText("of 50 present", 100, 252);
     c.textAlign = "left";
-    c.fillStyle = "rgba(190,242,100,0.85)";
+    c.fillStyle = "rgba(29,78,216,0.85)";
     c.font = "600 15px Arial";
     c.fillText("Leave requests", 200, 82);
     [["Anitha", "2 days"], ["Karthik", "1 day"], ["Meena", "3 days"]].forEach(([n, d], i) => {
       const y = 96 + i * 50;
-      c.fillStyle = "rgba(255,255,255,0.07)";
+      c.fillStyle = "rgba(255,255,255,0.72)";
       c.beginPath();
       c.roundRect(200, y, 292, 42, 10);
       c.fill();
-      c.fillStyle = "#facc15";
+      c.fillStyle = "#f59e0b";
       c.beginPath();
       c.arc(222, y + 21, 12, 0, 7);
       c.fill();
-      c.fillStyle = "#e7f8e8";
+      c.fillStyle = "#1e3a5f";
       c.font = "600 17px Arial";
       c.fillText(n, 244, y + 20);
       c.font = "13px Arial";
-      c.fillStyle = "rgba(231,248,232,0.6)";
+      c.fillStyle = "rgba(30,58,95,0.6)";
       c.fillText(d, 244, y + 36);
       const ok = Math.floor(t * 0.6 + i + variant) % 3 !== 0;
-      pill(406, y + 9, 76, ok ? "Approved" : "Review", ok ? "#4ade80" : "#fde047");
+      pill(406, y + 9, 76, ok ? "Approved" : "Review", ok ? "#3b82f6" : "#22d3ee");
     });
-    c.fillStyle = "rgba(190,242,100,0.75)";
+    c.fillStyle = "rgba(29,78,216,0.75)";
     c.font = "15px Arial";
     c.fillText("Payroll · Leave · Attendance · Hiring", 24, 322);
   } else if (kind === 3) {
@@ -184,22 +197,22 @@ function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t:
       const x = 24 + (i % 2) * 238;
       const y = 76 + Math.floor(i / 2) * 118;
       const pulse = 0.5 + 0.5 * Math.sin(t * 1.4 + i * 1.1 + variant);
-      c.fillStyle = "rgba(255,255,255,0.07)";
+      c.fillStyle = "rgba(255,255,255,0.72)";
       c.beginPath();
       c.roundRect(x, y, 226, 106, 14);
       c.fill();
-      c.fillStyle = i % 2 ? "#fde047" : "#4ade80";
+      c.fillStyle = i % 2 ? "#22d3ee" : "#3b82f6";
       c.font = "800 46px Arial";
       c.fillText(big, x + 18, y + 56);
-      c.fillStyle = "rgba(231,248,232,0.8)";
+      c.fillStyle = "rgba(30,58,95,0.8)";
       c.font = "600 16px Arial";
       c.fillText(label, x + 18, y + 84);
-      c.fillStyle = `rgba(74,222,128,${0.25 + 0.5 * pulse})`;
+      c.fillStyle = `rgba(59,130,246,${0.25 + 0.5 * pulse})`;
       c.beginPath();
       c.arc(x + 200, y + 22, 6, 0, 7);
       c.fill();
     });
-    c.fillStyle = "rgba(190,242,100,0.8)";
+    c.fillStyle = "rgba(29,78,216,0.8)";
     c.font = "600 15px Arial";
     c.fillText("Since 2015 · Puducherry, India", 24, 326);
   } else if (kind === 4) {
@@ -208,30 +221,30 @@ function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t:
     cl.forEach(([n, d], i) => {
       const y = 72 + i * 56;
       const v = clamp01(0.62 + Math.sin(t * 0.8 + i * 1.4 + variant) * 0.12 + i * 0.07);
-      c.fillStyle = "rgba(255,255,255,0.07)";
+      c.fillStyle = "rgba(255,255,255,0.72)";
       c.beginPath();
       c.roundRect(20, y, 472, 48, 10);
       c.fill();
-      c.fillStyle = ["#4ade80", "#facc15", "#86efac", "#fde047"][i];
+      c.fillStyle = ["#3b82f6", "#f59e0b", "#38bdf8", "#22d3ee"][i];
       c.beginPath();
       c.arc(46, y + 24, 14, 0, 7);
       c.fill();
-      c.fillStyle = "#06240f";
+      c.fillStyle = "#ffffff";
       c.font = "800 15px Arial";
       c.textAlign = "center";
       c.fillText(n[0], 46, y + 30);
       c.textAlign = "left";
-      c.fillStyle = "#e7f8e8";
+      c.fillStyle = "#1e3a5f";
       c.font = "700 19px Arial";
       c.fillText(n, 72, y + 22);
       c.font = "13px Arial";
-      c.fillStyle = "rgba(231,248,232,0.6)";
+      c.fillStyle = "rgba(30,58,95,0.6)";
       c.fillText(d, 72, y + 40);
-      c.fillStyle = "rgba(255,255,255,0.14)";
+      c.fillStyle = "rgba(37,99,235,0.13)";
       c.beginPath();
       c.roundRect(280, y + 18, 190, 12, 6);
       c.fill();
-      c.fillStyle = "#4ade80";
+      c.fillStyle = "#3b82f6";
       c.beginPath();
       c.roundRect(280, y + 18, 190 * v, 12, 6);
       c.fill();
@@ -244,26 +257,26 @@ function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t:
       const x = 24 + (i % 2) * 238;
       const y = 76 + Math.floor(i / 2) * 76;
       const on = act === i;
-      c.fillStyle = on ? "rgba(250,204,21,0.18)" : "rgba(255,255,255,0.07)";
+      c.fillStyle = on ? "rgba(245,158,11,0.18)" : "rgba(255,255,255,0.72)";
       c.beginPath();
       c.roundRect(x, y, 226, 64, 14);
       c.fill();
-      c.fillStyle = on ? "#facc15" : "#4ade80";
+      c.fillStyle = on ? "#f59e0b" : "#3b82f6";
       c.beginPath();
       c.arc(x + 30, y + 32, on ? 11 : 8, 0, 7);
       c.fill();
       if (on) {
-        c.strokeStyle = "rgba(250,204,21,0.6)";
+        c.strokeStyle = "rgba(245,158,11,0.6)";
         c.lineWidth = 2;
         c.beginPath();
         c.arc(x + 30, y + 32, 11 + ((t * 14) % 12), 0, 7);
         c.stroke();
       }
-      c.fillStyle = "#e7f8e8";
+      c.fillStyle = "#1e3a5f";
       c.font = "700 21px Arial";
       c.fillText(name, x + 56, y + 40);
     });
-    c.fillStyle = "rgba(190,242,100,0.85)";
+    c.fillStyle = "rgba(29,78,216,0.85)";
     c.font = "600 15px Arial";
     c.fillText("Six countries. One team.", 24, 326);
   }
@@ -290,12 +303,12 @@ function renderInterface(c: CanvasRenderingContext2D, kind: number, i: number, t
 
 // stage coordinates (robot stands at x = -0.6): a symmetric arc of interfaces
 const PANELS: { pos: [number, number, number]; w: number; kind: number; ry: number }[] = [
-  { pos: [2.25, 2.75, 0.1], w: 1.25, kind: 0, ry: -0.45 },
-  { pos: [-3.05, 2.85, 0.5], w: 1.5, kind: 1, ry: 0.45 },
-  { pos: [2.2, 4.2, 0.1], w: 1.25, kind: 2, ry: -0.4 },
-  { pos: [-3.0, 4.3, 0.3], w: 1.5, kind: 3, ry: 0.4 },
-  { pos: [2.2, 1.3, 0.1], w: 1.25, kind: 4, ry: -0.45 },
-  { pos: [-2.95, 1.4, 0.5], w: 1.5, kind: 5, ry: 0.45 },
+  { pos: [2.4, 2.75, 0.1], w: 1.45, kind: 0, ry: -0.45 },
+  { pos: [-3.2, 2.85, 0.5], w: 1.72, kind: 1, ry: 0.45 },
+  { pos: [2.35, 4.25, 0.1], w: 1.45, kind: 2, ry: -0.4 },
+  { pos: [-3.15, 4.35, 0.3], w: 1.72, kind: 3, ry: 0.4 },
+  { pos: [2.35, 1.25, 0.1], w: 1.45, kind: 4, ry: -0.45 },
+  { pos: [-3.1, 1.35, 0.5], w: 1.72, kind: 5, ry: 0.45 },
 ];
 const SEG = 14;
 const DOWN = new THREE.Vector3(0, -1, 0);
@@ -1015,7 +1028,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
             />
           </mesh>
           <RoundedBox args={[p.w + 0.05, p.w * 0.664 + 0.05, 0.012]} radius={0.03} position={[0, 0, -0.012]}>
-            <meshBasicMaterial color="#4ade80" transparent opacity={0.35} toneMapped={false} />
+            <meshBasicMaterial color="#6aa8f0" transparent opacity={0.75} toneMapped={false} />
           </RoundedBox>
         </group>
       ))}

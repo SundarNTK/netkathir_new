@@ -50,7 +50,7 @@ export default function Home() {
               </span>
             </span>
           </div>
-          <h1 data-split data-delay="0.2" className="font-display text-[clamp(2.3rem,min(6.2vw,11vh),6.6rem)] leading-[0.92] text-grad shimmer">
+          <h1 data-split data-delay="0.2" className="font-display text-[clamp(2.3rem,min(6.2vw,11vh),6.6rem)] leading-[0.92] text-grad">
             AI-First Software Company
           </h1>
           {/* mobile: the robot stands in this gap, under the title and above the subtitle */}
