@@ -18,7 +18,7 @@ const STAGES: Record<string, Stage> = {
   "/products": { x: 3.4, y: 0.0, s: 0.85, pal: ["#15803d", "#84cc16", "#ca8a04"] },
   "/projects": { x: 3.4, y: 0.1, s: 0.85, pal: ["#a16207", "#16a34a", "#84cc16"] },
   "/blogs": { x: 3.4, y: 0.1, s: 0.8, pal: ["#166534", "#4ade80", "#eab308"] },
-  "/about": { x: 3.4, y: 0.0, s: 0.8, pal: ["#14532d", "#22c55e", "#facc15"] },
+  "/about": { x: 3.3, y: 0.35, s: 0.62, pal: ["#14532d", "#22c55e", "#facc15"] },
   "/contact": { x: 2.9, y: 0.55, s: 0.7, pal: ["#15803d", "#16a34a", "#eab308"] },
 };
 
@@ -403,7 +403,7 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
           <ContactScene palette={shared} />
         </Presence>
         <Presence active={variant !== "none" && variant !== "core" && variant !== "services"}>
-          <group ref={spin} scale={variant === "core" ? 0.8 : 1}>
+          <group ref={spin} scale={variant === "core" ? 0.8 : variant === "globe" ? 0.5 : 1}>
             <Network shared={shared} count={mobile ? 30 : 46} />
             <Rings shared={shared} />
           </group>
