@@ -11,6 +11,7 @@ export default function Contact() {
         kicker="Contact"
         title="Let's Build Your Next Intelligent Solution."
         image={IMAGES.heroes.contact}
+        room
       />
       <section className="pb-16">
         <div className="mx-auto max-w-7xl px-6 grid lg:grid-cols-[1.3fr_1fr] gap-12">

@@ -269,6 +269,32 @@ export default function Effects() {
           });
         });
 
+        // clip-path window that unfolds to the full image while scrolling; the picture settles from a zoom
+        gsap.utils.toArray<HTMLElement>("[data-clip]").forEach((el) => {
+          const img = el.querySelector<HTMLElement>("[data-clip-img]");
+          gsap.fromTo(
+            el,
+            { clipPath: "inset(14% 12% 14% 12% round 3rem)" },
+            { clipPath: "inset(0% 0% 0% 0% round 1.75rem)", ease: "none", scrollTrigger: { trigger: el, start: "top 95%", end: "top 30%", scrub: 0.6 } }
+          );
+          if (img) gsap.fromTo(img, { scale: 1.35 }, { scale: 1, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 0.6 } });
+        });
+
+        // a section that grows into a full-width panel as it arrives
+        gsap.utils.toArray<HTMLElement>("[data-panel]").forEach((el) => {
+          gsap.fromTo(
+            el,
+            { scale: 0.9, borderRadius: "4rem" },
+            { scale: 1, borderRadius: "2rem", ease: "none", scrollTrigger: { trigger: el, start: "top 100%", end: "top 35%", scrub: 0.6 } }
+          );
+        });
+
+        // oversized type that slides sideways with the scroll (data-scrub-x="1" or "-1")
+        gsap.utils.toArray<HTMLElement>("[data-scrub-x]").forEach((el) => {
+          const dir = Number(el.dataset.scrubX) || 1;
+          gsap.fromTo(el, { xPercent: dir * -14 }, { xPercent: dir * 14, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true } });
+        });
+
         // magnetic buttons
         gsap.utils.toArray<HTMLElement>("[data-magnetic]").forEach((el) => {
           const mx = gsap.quickTo(el, "x", { duration: 0.6, ease: "elastic.out(1, 0.5)" });

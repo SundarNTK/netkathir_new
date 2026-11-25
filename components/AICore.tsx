@@ -2,7 +2,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { RoundedBox, Sparkles } from "@react-three/drei";
+import { RoundedBox } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { traceImageToShapes } from "@/lib/traceShape";
@@ -308,7 +308,6 @@ function AIText({ palette, mobile }: { palette: RobotPalette; mobile: boolean })
           </group>
         )}</group>
       <pointLight color="#3aa0ff" intensity={6} distance={4} />
-      <Sparkles count={mobile ? 12 : 28} scale={[2.2, 2.2, 2.2]} size={mobile ? 4 : 5} speed={0.6} opacity={0.95} color="#38bdf8" noise={0.8} />
     </group>
   );
 }
@@ -813,7 +812,6 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
       <AiWaveRing palette={palette} R={mobile ? 2.7 : 3.6} H={0.95} y={1.7} tilt={0.22} x={mobile ? 0 : -0.6} Nu={mobile ? 60 : 96} Nv={6} />
       {!mobile && <AiWaveRing palette={palette} R={2.9} H={0.6} y={3.7} tilt={-0.2} Nu={80} Nv={5} speed={1.3} />}
 
-      <Sparkles count={mobile ? 18 : 40} scale={mobile ? [4.2, 4.2, 2] : [7, 6, 3]} position={[mobile ? 0 : 1.2, 2.2, 0]} size={mobile ? 3 : 4} speed={0.3} opacity={0.75} color="#16a34a" noise={0.6} />
     </group>
   );
 }

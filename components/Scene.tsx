@@ -4,7 +4,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, Lightformer } from "@react-three/drei";
 import AICore from "./AICore";
-import { Articles, Chip, Devices, Globe, Mail, Presence, Workbench } from "./Hero3D";
+import { Articles, Chip, Devices, Globe, ContactScene, Presence, Workbench } from "./Hero3D";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -19,7 +19,7 @@ const STAGES: Record<string, Stage> = {
   "/projects": { x: 3.4, y: 0.1, s: 0.85, pal: ["#a16207", "#16a34a", "#84cc16"] },
   "/blogs": { x: 3.4, y: 0.1, s: 0.8, pal: ["#166534", "#4ade80", "#eab308"] },
   "/about": { x: 3.4, y: 0.0, s: 0.8, pal: ["#14532d", "#22c55e", "#facc15"] },
-  "/contact": { x: 3.4, y: 0.0, s: 0.8, pal: ["#15803d", "#16a34a", "#eab308"] },
+  "/contact": { x: 2.9, y: 0.55, s: 0.7, pal: ["#15803d", "#16a34a", "#eab308"] },
 };
 
 const VARIANT: Record<string, "core" | "services" | "none" | "chip" | "globe" | "devices" | "work" | "articles" | "mail"> = {
@@ -29,7 +29,7 @@ const VARIANT: Record<string, "core" | "services" | "none" | "chip" | "globe" | 
   "/products": "none",
   "/blogs": "none",
   "/about": "globe",
-  "/contact": "none",
+  "/contact": "mail",
 };
 
 type Shared = {
@@ -325,7 +325,12 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
     snap.current = true;
   }, [path]);
 
+  const frames = useRef(0);
   useFrame((state, d) => {
+    if (frames.current < 4 && ++frames.current === 4) {
+      (window as unknown as { __nkSceneReady?: boolean }).__nkSceneReady = true;
+      window.dispatchEvent(new Event("nk:scene-ready")); // the loader waits for this, so the site never stutters while it first renders
+    }
     const dt = Math.min(d, 0.25);
     shared.uTime.value += dt;
     shared.uPx.value = state.gl.getPixelRatio();
@@ -374,7 +379,7 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
 
   return (
     <>
-      <Dust shared={shared} count={mobile ? 250 : 650} />
+      {variant !== "core" && <Dust shared={shared} count={mobile ? 250 : 650} />}
       <group ref={group}>
         <Presence active={variant === "core"}>
           <AICore palette={shared} mobile={mobile} />
@@ -395,7 +400,7 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
           <Articles palette={shared} />
         </Presence>
         <Presence active={variant === "mail"}>
-          <Mail palette={shared} />
+          <ContactScene palette={shared} />
         </Presence>
         <Presence active={variant !== "none" && variant !== "core" && variant !== "services"}>
           <group ref={spin} scale={variant === "core" ? 0.8 : 1}>

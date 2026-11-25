@@ -54,6 +54,7 @@ export default function Intro() {
   const tl = useRef<gsap.core.Timeline | null>(null);
   const gate = useRef({ ready: false, waiting: false, timer: 0 });
   const closed = useRef(false);
+  const ldBar = useRef<HTMLSpanElement>(null);
 
   const resume = useCallback(() => {
     const g = gate.current;
@@ -101,7 +102,7 @@ export default function Intro() {
     const compact = window.matchMedia("(max-width: 640px)").matches;
 
     const ctx = gsap.context(() => {
-      const t = gsap.timeline({ onComplete: dismiss });
+      const t = gsap.timeline({ paused: true, onComplete: dismiss }); // starts only after the loader has finished
       tl.current = t;
       const cur = curEl.current!;
       const sheets = sheetEls.current.filter(Boolean) as HTMLDivElement[];
@@ -212,13 +213,76 @@ export default function Intro() {
 
     // dev aid: /?introAt=6.5 freezes the intro at that moment (used to check the layout)
     const at = new URLSearchParams(window.location.search).get("introAt");
+    let cancelled = false;
     if (at) {
       gate.current.ready = true;
+      gsap.set(".ld", { autoAlpha: 0 });
       setSceneOn(true);
       tl.current?.pause().time(Number(at));
+    } else {
+      // ---- loader: wait until the page is genuinely ready, then play the intro on a warm, idle main thread
+      const prog = { v: 0 };
+      let done = 0;
+      const tasks: Promise<unknown>[] = [];
+      const track = (p: Promise<unknown>) => {
+        tasks.push(p.catch(() => undefined).then(() => (done += 1)));
+      };
+      track(document.fonts?.ready ?? Promise.resolve());
+      track(
+        document.readyState === "complete"
+          ? Promise.resolve()
+          : new Promise((res) => window.addEventListener("load", res, { once: true }))
+      );
+      ["/images/brand/netkathir-logo-hd.png", "/images/brand/netkathir-logo-3d.png", "/images/brand/netkathir-icon.png"].forEach((src) =>
+        track(
+          new Promise((res) => {
+            const im = new Image();
+            im.onload = im.onerror = () => res(null);
+            im.src = src;
+          })
+        )
+      );
+      if (use3D) {
+        track(import("./IntroScene"));
+        track(import("./Scene"));
+        track(
+          (window as unknown as { __nkSceneReady?: boolean }).__nkSceneReady
+            ? Promise.resolve()
+            : new Promise((res) => window.addEventListener("nk:scene-ready", res, { once: true }))
+        );
+      }
+      const total = tasks.length;
+      const started = performance.now();
+      const paint = () => {
+        const target = Math.min(done / total, 0.97);
+        prog.v += (target - prog.v) * 0.12;
+        if (ldBar.current) ldBar.current.style.transform = `scaleX(${prog.v.toFixed(3)})`;
+      };
+      gsap.ticker.add(paint);
+      const finish = () => {
+        if (cancelled) return;
+        cancelled = true;
+        gsap.ticker.remove(paint);
+        gsap.to(prog, {
+          v: 1,
+          duration: 0.35,
+          ease: "power2.out",
+          onUpdate: () => {
+            if (ldBar.current) ldBar.current.style.transform = `scaleX(${prog.v.toFixed(3)})`;
+          },
+          onComplete: () => {
+            if (closed.current) return;
+            gsap.to(".ld", { opacity: 0, duration: 0.6, ease: "power2.inOut", onComplete: () => gsap.set(".ld", { display: "none" }) });
+            gsap.delayedCall(0.25, () => tl.current?.play());
+          },
+        });
+      };
+      Promise.all(tasks).then(() => window.setTimeout(finish, Math.max(0, 1100 - (performance.now() - started))));
+      window.setTimeout(finish, 8000); // never hold the visitor longer than this
     }
 
     return () => {
+      cancelled = true;
       window.clearTimeout(gate.current.timer);
       ctx.revert();
       document.documentElement.style.overflow = "";
@@ -229,6 +293,21 @@ export default function Intro() {
 
   return (
     <div ref={root} className="fixed inset-0 z-[120] overflow-hidden bg-[#f6faf6] text-ink" role="dialog" aria-label="Netkathir Technologies — 2015 to 2026, 11 years of excellence">
+      {/* loader: shown until the page, fonts, images and 3D are ready */}
+      <div className="ld absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#f6faf6] px-6">
+        <div className="pointer-events-none absolute inset-0 [background:radial-gradient(ellipse_55%_45%_at_50%_42%,rgba(34,150,80,0.18),transparent_70%),radial-gradient(ellipse_60%_40%_at_50%_100%,rgba(217,185,106,0.22),transparent_70%)]" />
+        <div className="ld-logo relative w-[min(19rem,68vw)]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/brand/netkathir-logo-hd.png" alt="Netkathir Technologies" className="w-full animate-[ld-breathe_2.4s_ease-in-out_infinite]" />
+        </div>
+        <div className="relative mt-9 w-[min(14rem,56vw)]">
+          <span className="block h-[3px] overflow-hidden rounded-full bg-[#14532d]/12">
+            <span ref={ldBar} className="block h-full origin-left scale-x-0 rounded-full bg-gradient-to-r from-[#14532d] via-[#22a559] to-[#eab308]" />
+          </span>
+          <p className="mt-3 text-center font-mono text-[0.68rem] uppercase tracking-[0.34em] text-[#14532d]/65">Loading</p>
+        </div>
+      </div>
+
       {/* atmosphere: soft green light, champagne warmth — plain gradients, no dots, no circles */}
       <div
         className="absolute inset-0"
@@ -241,7 +320,7 @@ export default function Intro() {
       {/* 1 — calendar page */}
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6">
         <div className="i-cal-glow pointer-events-none absolute h-[min(30rem,86vw)] w-[min(30rem,86vw)] rounded-full bg-[radial-gradient(circle,rgba(250,204,21,0.45),rgba(34,197,94,0.25)_45%,transparent_70%)] opacity-0" />
-        <div ref={cardEl} className="i-cal relative w-[min(22rem,82vw)] rounded-[1.4rem] border border-white bg-white shadow-[0_40px_80px_-30px_rgba(20,83,45,0.45),0_2px_0_rgba(255,255,255,0.9)_inset] opacity-0">
+        <div ref={cardEl} className="i-cal relative z-40 w-[min(22rem,82vw)] rounded-[1.4rem] border border-white bg-white shadow-[0_40px_80px_-30px_rgba(20,83,45,0.45),0_2px_0_rgba(255,255,255,0.9)_inset] opacity-0">
           <div className="relative flex h-11 items-center justify-center rounded-t-[1.3rem] bg-gradient-to-r from-[#14532d] via-[#1f7a43] to-[#2f8f4e]">
             <span className="absolute left-6 top-2 h-3 w-3 rounded-full bg-[#f6faf6] shadow-inner" />
             <span className="absolute right-6 top-2 h-3 w-3 rounded-full bg-[#f6faf6] shadow-inner" />
@@ -269,7 +348,7 @@ export default function Intro() {
             ))}
           </div>
         </div>
-        <div className="i-track relative z-30 mt-6 flex w-[min(18rem,70vw)] items-center gap-3 opacity-0">
+        <div className="i-track relative z-0 mt-6 flex w-[min(18rem,70vw)] items-center gap-3 opacity-0">
           <span className="font-mono text-[0.62rem] tracking-[0.16em] text-[#14532d]/55">2015</span>
           <span className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-[#14532d]/12">
             <span ref={barEl} className="absolute inset-y-0 left-0 w-0 rounded-full bg-gradient-to-r from-[#1f7a43] to-[#c9a24d]" />
@@ -339,7 +418,7 @@ export default function Intro() {
 
       <button
         onClick={dismiss}
-        className="group absolute bottom-6 right-6 z-20 flex items-center gap-2 rounded-full bg-[#14532d] px-5 py-2.5 text-[0.75rem] font-bold uppercase tracking-[0.24em] text-white shadow-[0_10px_28px_-8px_rgba(20,83,45,0.7)] transition-all duration-300 hover:bg-[#166534] hover:shadow-[0_14px_34px_-8px_rgba(20,83,45,0.85)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16a34a] sm:bottom-8 sm:right-8"
+        className="group absolute bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-[#14532d] px-5 py-2.5 text-[0.75rem] font-bold uppercase tracking-[0.24em] text-white shadow-[0_10px_28px_-8px_rgba(20,83,45,0.7)] transition-all duration-300 hover:bg-[#166534] hover:shadow-[0_14px_34px_-8px_rgba(20,83,45,0.85)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16a34a] sm:bottom-8 sm:right-8"
         aria-label="Skip the introduction"
       >
         Skip

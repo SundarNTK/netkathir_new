@@ -831,3 +831,140 @@ export function Mail({ palette }: { palette: RobotPalette }) {
   );
 }
 
+
+/* ------------------------- contact: a phone with live channels ------------------------- */
+
+function channelTexture(glyph: string, text: string, accent: string) {
+  return canvasTex(560, 150, (c) => {
+    c.fillStyle = "rgba(255,255,255,0.97)";
+    c.beginPath();
+    c.roundRect(6, 6, 548, 138, 69);
+    c.fill();
+    c.strokeStyle = "rgba(20,83,45,0.18)";
+    c.lineWidth = 3;
+    c.stroke();
+    c.fillStyle = accent;
+    c.beginPath();
+    c.arc(75, 75, 46, 0, 7);
+    c.fill();
+    c.fillStyle = "#fff";
+    c.font = "700 44px Arial";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText(glyph, 75, 78);
+    c.fillStyle = "#0f3d22";
+    c.font = "700 46px Arial";
+    c.textAlign = "left";
+    c.fillText(text, 142, 78);
+  });
+}
+
+const CHANNELS = [
+  { glyph: "@", text: "Email us", accent: "#16a34a", x: -2.05, y: 0.75, z: 0.5 },
+  { glyph: "+91", text: "Call us", accent: "#ca8a04", x: 1.75, y: 0.1, z: 0.7 },
+  { glyph: "W", text: "WhatsApp", accent: "#15803d", x: -1.9, y: -0.85, z: 0.9 },
+];
+
+/** A phone showing a live conversation, three contact channels floating around it, a pin on top, on a glass pedestal. */
+export function ContactScene({ palette }: { palette: RobotPalette }) {
+  const root = useRef<THREE.Group>(null!);
+  const phone = useRef<THREE.Group>(null!);
+  const chips = useRef<THREE.Group[]>([]);
+  const pin = useRef<THREE.Group>(null!);
+  const ring = useRef<THREE.Mesh>(null!);
+  const typing = useRef<THREE.Mesh[]>([]);
+  const mouse = useMouse();
+  const chat = useMemo(() => chatTexture(), []);
+  const tex = useMemo(() => CHANNELS.map((c) => channelTexture(c.glyph, c.text, c.accent)), []);
+
+  useFrame((_, dt) => {
+    const t = palette.uTime.value;
+    const d = Math.min(dt, 0.25);
+    root.current.rotation.y = THREE.MathUtils.damp(root.current.rotation.y, -0.35 + mouse.current.x * 0.4, 4, d);
+    root.current.rotation.x = THREE.MathUtils.damp(root.current.rotation.x, 0.05 - mouse.current.y * 0.1, 4, d);
+    phone.current.position.y = 0.2 + Math.sin(t * 1.1) * 0.05;
+    chips.current.forEach((g, i) => {
+      if (!g) return;
+      g.position.y = CHANNELS[i].y + Math.sin(t * 1.2 + i * 2.1) * 0.08;
+      g.rotation.y = -root.current.rotation.y * 0.8 + Math.sin(t * 0.6 + i) * 0.05;
+    });
+    pin.current.position.y = 1.95 + Math.sin(t * 1.5) * 0.06;
+    pin.current.rotation.y = t * 0.8;
+    ring.current.rotation.z = t * 0.4;
+    typing.current.forEach((m, i) => {
+      if (m) m.scale.setScalar(0.55 + 0.45 * Math.max(0, Math.sin(t * 5 - i * 0.9)));
+    });
+  });
+
+  return (
+    <group ref={root}>
+      {/* pedestal */}
+      <mesh position={[0, -1.7, 0]}>
+        <cylinderGeometry args={[1.55, 1.62, 0.14, 64]} />
+        <meshPhysicalMaterial color="#0d2a1a" metalness={0.85} roughness={0.2} clearcoat={1} envMapIntensity={1.4} />
+      </mesh>
+      <mesh ref={ring} position={[0, -1.62, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[1.3, 1.34, 64, 1, 0, Math.PI * 1.7]} />
+        <meshBasicMaterial color="#4ade80" toneMapped={false} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* phone */}
+      <group ref={phone} position={[0, 0.2, 0]} rotation={[0, 0.1, 0]}>
+        <RoundedBox args={[1.3, 2.62, 0.13]} radius={0.17} smoothness={6}>
+          <meshPhysicalMaterial color="#10201a" metalness={0.9} roughness={0.25} clearcoat={1} envMapIntensity={1.4} />
+        </RoundedBox>
+        <mesh position={[0, 0, 0.068]}>
+          <planeGeometry args={[1.16, 2.48]} />
+          <meshBasicMaterial map={chat} toneMapped={false} />
+        </mesh>
+        {/* typing indicator */}
+        <group position={[-0.3, -1.0, 0.075]}>
+          {[0, 1, 2].map((i) => (
+            <mesh
+              key={i}
+              position={[i * 0.12, 0, 0]}
+              ref={(m) => {
+                if (m) typing.current[i] = m;
+              }}
+            >
+              <circleGeometry args={[0.04, 16]} />
+              <meshBasicMaterial color="#4ade80" toneMapped={false} />
+            </mesh>
+          ))}
+        </group>
+      </group>
+
+      {/* contact channels */}
+      {CHANNELS.map((c, i) => (
+        <group
+          key={c.text}
+          position={[c.x, c.y, c.z]}
+          ref={(g) => {
+            if (g) chips.current[i] = g;
+          }}
+        >
+          <mesh>
+            <planeGeometry args={[1.5, 0.402]} />
+            <meshBasicMaterial map={tex[i]} transparent toneMapped={false} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* location pin */}
+      <group ref={pin} position={[1.5, 1.95, 0.2]}>
+        <mesh position={[0, 0.22, 0]}>
+          <sphereGeometry args={[0.26, 40, 40]} />
+          <meshPhysicalMaterial color="#16a34a" roughness={0.15} metalness={0.2} clearcoat={1} envMapIntensity={1.4} />
+        </mesh>
+        <mesh position={[0, -0.12, 0]} rotation={[Math.PI, 0, 0]}>
+          <coneGeometry args={[0.21, 0.44, 40]} />
+          <meshPhysicalMaterial color="#16a34a" roughness={0.15} metalness={0.2} clearcoat={1} envMapIntensity={1.4} />
+        </mesh>
+        <mesh position={[0, 0.22, 0.17]}>
+          <sphereGeometry args={[0.1, 24, 24]} />
+          <meshBasicMaterial color="#fde047" toneMapped={false} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
