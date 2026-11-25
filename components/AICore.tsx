@@ -410,12 +410,13 @@ function AIText({ palette }: { palette: RobotPalette; mobile: boolean }) {
     return new THREE.CanvasTexture(cv);
   }, []);
 
-  const glass = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#e8fbff", roughness: 0.02, metalness: 0, transparent: true, opacity: 0.16, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2.4, depthWrite: false }), []);
+  const glass = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#e8fbff", roughness: 0.02, metalness: 0, transparent: true, opacity: 0.2, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2.4, depthWrite: false, depthTest: false }), []);
   const rim = useMemo(
     () =>
       new THREE.ShaderMaterial({
         transparent: true,
         depthWrite: false,
+        depthTest: false,
         blending: THREE.AdditiveBlending,
         uniforms: { uC: { value: new THREE.Color("#46e8ff") } },
         vertexShader: "varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }",
@@ -465,22 +466,22 @@ function AIText({ palette }: { palette: RobotPalette; mobile: boolean }) {
           </mesh>
         ))}
       </group>
-      <group ref={sway}>
+      <group ref={sway} position={[0.12, 0.22, 0.38]} scale={1.22}>
         {/* chip + circuits, seen through the glass */}
-        <mesh ref={chip} position={[0, 0, -0.05]} renderOrder={1}>
+        <mesh ref={chip} position={[0, 0, -0.05]} renderOrder={11}>
           <planeGeometry args={[2.5, 2.5]} />
-          <meshBasicMaterial map={chipTex} transparent toneMapped={false} depthWrite={false} blending={THREE.AdditiveBlending} />
+          <meshBasicMaterial map={chipTex} transparent toneMapped={false} depthWrite={false} depthTest={false} blending={THREE.AdditiveBlending} />
         </mesh>
         {/* the glass sphere */}
-        <mesh material={glass} renderOrder={2}>
+        <mesh material={glass} renderOrder={12}>
           <sphereGeometry args={[0.62, 48, 32]} />
         </mesh>
-        <mesh material={rim} renderOrder={3} scale={1.02}>
+        <mesh material={rim} renderOrder={13} scale={1.02}>
           <sphereGeometry args={[0.62, 48, 32]} />
         </mesh>
-        <mesh position={[-0.26, 0.3, 0.5]} renderOrder={4}>
+        <mesh position={[-0.26, 0.3, 0.5]} renderOrder={14}>
           <planeGeometry args={[0.42, 0.26]} />
-          <meshBasicMaterial map={glintTex} transparent toneMapped={false} depthWrite={false} opacity={0.75} />
+          <meshBasicMaterial map={glintTex} transparent toneMapped={false} depthWrite={false} depthTest={false} opacity={0.75} />
         </mesh>
       </group>
       <pointLight color="#36d8ff" intensity={6} distance={4} />
@@ -624,6 +625,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
   const shots = useRef<THREE.MeshBasicMaterial[]>([]);
   const mouse = useRef({ x: 0, y: 0 });
   const scroll = useRef(0);
+  const ndcV = useMemo(() => new THREE.Vector3(), []);
   const en = useRef(0); // seconds since the robot started entering
   const frames = useRef(0); // frames drawn since the scene woke (the entrance waits for the first ones to settle)
   const turn = useRef(0);
@@ -761,9 +763,14 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
     const armIn = sg(1.7, 2.6);
     const aiIn = clamp01((E - 2.6) / 0.9);
 
+    // ---- where the cursor is relative to the robot itself (not the middle of the window), so it follows everywhere
+    robot.current.updateWorldMatrix(true, false);
+    ndcV.setFromMatrixPosition(robot.current.matrixWorld).project(s.camera);
+    const fx = THREE.MathUtils.clamp((mouse.current.x - ndcV.x) * 1.25, -1.2, 1.2);
+    const fy = THREE.MathUtils.clamp((mouse.current.y - (ndcV.y + 0.35)) * 1.1, -1, 1);
     // ---- body: hover, breathing, turns with the cursor (and a little with scroll)
-    robot.current.rotation.y = THREE.MathUtils.damp(robot.current.rotation.y, -0.05 + e * 0.3 + mouse.current.x * 0.75 + (1 - rIn) * 3.0, 3.2, d);
-    robot.current.rotation.x = THREE.MathUtils.damp(robot.current.rotation.x, -mouse.current.y * 0.07, 3.2, d);
+    robot.current.rotation.y = THREE.MathUtils.damp(robot.current.rotation.y, -0.05 + e * 0.3 + fx * 0.85 + (1 - rIn) * 3.0, 4.6, d);
+    robot.current.rotation.x = THREE.MathUtils.damp(robot.current.rotation.x, -fy * 0.1, 4.6, d);
     robot.current.position.y = Math.sin(t * 1.6) * 0.04;
     torso.current.scale.set(1, 1 + Math.sin(t * 1.7) * 0.01, 1 + Math.sin(t * 1.7) * 0.012);
     antenna.current.rotation.z = 0.28 + Math.sin(t * 2.1) * 0.06;
@@ -797,10 +804,10 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
 
     // ---- head follows the brain, then the cursor
     const bp = K.bp;
-    const hy = THREE.MathUtils.clamp(Math.atan2(bp.x, bp.z + 0.5) * 0.4, -0.45, 0.45) + mouse.current.x * 0.32;
-    const hx = THREE.MathUtils.clamp(-Math.atan2(bp.y - 3.4, Math.hypot(bp.x, bp.z)) * 0.5, -0.3, 0.3) - mouse.current.y * 0.22;
-    head.current.rotation.y = THREE.MathUtils.damp(head.current.rotation.y, hy, 6, d);
-    head.current.rotation.x = THREE.MathUtils.damp(head.current.rotation.x, hx, 6, d);
+    const hy = THREE.MathUtils.clamp(Math.atan2(bp.x, bp.z + 0.5) * 0.4, -0.45, 0.45) + fx * 0.6;
+    const hx = THREE.MathUtils.clamp(-Math.atan2(bp.y - 3.4, Math.hypot(bp.x, bp.z)) * 0.5, -0.3, 0.3) - fy * 0.4;
+    head.current.rotation.y = THREE.MathUtils.damp(head.current.rotation.y, hy, 8, d);
+    head.current.rotation.x = THREE.MathUtils.damp(head.current.rotation.x, hx, 8, d);
     const b = Math.max(0, Math.sin(t * 1.3 + 0.7) * 18 - 17);
     eyes.current.scale.y = THREE.MathUtils.clamp(1 - Math.min(b, 1) * 0.9, 0.1, 1);
 

@@ -6,7 +6,6 @@ import gsap from "gsap";
 import type { IntroState } from "./IntroScene";
 
 const IntroScene = dynamic(() => import("./IntroScene"), { ssr: false });
-const Year3D = dynamic(() => import("./Year3D"), { ssr: false });
 
 declare global {
   interface Window {
@@ -71,8 +70,6 @@ export default function Intro() {
   const [show, setShow] = useState(true); // rendered on the server so there is no flash of the site
   const [gl, setGl] = useState(true);
   const [sceneOn, setSceneOn] = useState(false);
-  const [yearOn, setYearOn] = useState(false); // the 3D 2027 canvas is built during the loader, rendered only while it is on screen
-  const [yearRun, setYearRun] = useState(false);
   const [logoRun, setLogoRun] = useState(false); // the 3D logo canvas only renders while the logo is on screen
   const root = useRef<HTMLDivElement>(null);
   const barEl = useRef<HTMLSpanElement>(null);
@@ -109,8 +106,6 @@ export default function Intro() {
     window.dispatchEvent(new Event("nk:intro-reveal"));
     window.dispatchEvent(new Event("nk:intro-done"));
     setSceneOn(false);
-    setYearOn(false);
-    setYearRun(false);
     setLogoRun(false);
     setShow(false);
   }, []);
@@ -203,35 +198,18 @@ export default function Intro() {
         .fromTo(".i-cal-glow", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1.15, duration: 0.7, ease: "power2.out" }, FL)
         .fromTo(".i-shine", { xPercent: -130 }, { xPercent: 130, duration: 0.9, ease: "power2.inOut" }, FL + 0.15);
 
-      const E3 = FL + 1.0;
-      // measure the calendar's own year so the 3D one starts exactly on top of it
-      t.call(
-        () => {
-          const rr = root.current!.getBoundingClientRect();
-          const range = document.createRange();
-          range.selectNodeContents(cur);
-          const r = range.getBoundingClientRect();
-          const k = (2 * 14 * Math.tan((20 * Math.PI) / 180)) / rr.height; // pixels -> scene units at the year's depth
-          state.tx = (r.left + r.width / 2 - rr.left - rr.width / 2) * k;
-          state.ty = -(r.top + r.height / 2 - rr.top - rr.height / 2) * k;
-          state.tw = r.width * k;
-        },
-        undefined,
-        E3 - 0.3
-      )
-        .call(() => setYearRun(true), undefined, E3 - 0.2)
-        .set(".i-y3d", { opacity: 1 }, E3 - 0.05)
-        .to(state, { year: 1, duration: 0.3, ease: "none" }, E3) // cross-fade from the flat year to the 3D one
-        .to(cur, { opacity: 0, duration: 0.3, ease: "none" }, E3 + 0.02)
-        .to(state, { bump: 1, duration: 1.15, ease: "back.out(1.7)" }, E3 + 0.1) // the bump: flat -> raised lettering
-        .to(state, { glow: 1, duration: 0.9, ease: "power2.out" }, E3 + 0.7)
-        .to(state, { turn: 1, duration: 1.6, ease: "sine.inOut" }, E3 + 0.6) // a gentle sway so the depth catches the light
-        .to(".i-cal-glow", { opacity: 1, scale: 1.2, duration: 0.8, ease: "power2.out" }, E3 + 0.6)
-        .to(".i-cal-glow", { opacity: 0.55, duration: 0.5, yoyo: true, repeat: 1, ease: "sine.inOut" }, E3 + 1.5);
-      const calEnd = E3 + 2.9;
-      // the year stays on its calendar page: highlighted, then the whole calendar moves on to the logo (like every earlier year)
-      t.to(".i-cal, .i-track, .i-y3d, .i-cal-glow", { opacity: 0, y: -18, scale: 0.97, duration: 0.5, ease: "power2.in" }, calEnd + 0.02)
-        .call(() => { setYearRun(false); setYearOn(false); }, undefined, calEnd + 0.7)
+      // the calendar lights up: the year keeps its colour and glows, the page gets a golden rim, and light fans out behind it
+      const E3 = FL + 0.5;
+      t.fromTo(".i-rays", { opacity: 0, scale: 0.55 }, { opacity: 1, scale: 1, duration: 1.1, ease: "power2.out" }, E3)
+        .fromTo(".i-cal-ring", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.6, ease: "power2.out" }, E3)
+        .to(".i-cal", { scale: 1.05, duration: 0.9, ease: "back.out(2.2)" }, E3)
+        .to(".i-cal-glow", { opacity: 1, scale: 1.6, duration: 0.9, ease: "power2.out" }, E3 + 0.1)
+        .fromTo(".i-shine", { xPercent: -130 }, { xPercent: 130, duration: 0.9, ease: "power2.inOut" }, E3 + 0.5)
+        .to(".i-cal-ring", { opacity: 0.55, duration: 0.45, yoyo: true, repeat: 3, ease: "sine.inOut" }, E3 + 0.8)
+        .to(cur, { filter: "drop-shadow(0 0 18px rgba(250,204,21,0.95)) drop-shadow(0 0 46px rgba(34,197,94,0.8))", duration: 0.6, ease: "power2.out" }, E3 + 0.3);
+      const calEnd = E3 + 2.8;
+      // the whole lit-up calendar moves on to the logo, like every earlier year
+      t.to(".i-cal, .i-track, .i-cal-glow, .i-rays", { opacity: 0, y: -18, scale: 0.97, duration: 0.5, ease: "power2.in" }, calEnd + 0.02)
         // wait here only if the 3D logo is not built yet (never longer than 3.5 s)
         .call(
           () => {
@@ -285,7 +263,6 @@ export default function Intro() {
       gate.current.ready = true;
       gsap.set(".ld", { autoAlpha: 0 });
       setSceneOn(true);
-      setYearOn(true);
       tl.current?.pause().time(Number(at));
     } else {
       // ---- loader: wait until the page is genuinely ready, then play the intro on a warm, idle main thread
@@ -311,7 +288,6 @@ export default function Intro() {
         )
       );
       if (use3D) {
-        setYearOn(true);
         setSceneOn(true); // build the 3D logo now, while the loader covers the screen, so the calendar never hitches
         track(new Promise((res) => { readyWaiter.current = () => res(null); }));
         track(import("./IntroScene"));
@@ -390,8 +366,10 @@ export default function Intro() {
 
       {/* 1 — calendar page */}
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6">
+        <div className="i-rays pointer-events-none absolute h-[min(70rem,170vw)] w-[min(70rem,170vw)] rounded-full opacity-0 [animation:nk-spin_40s_linear_infinite]" style={{ background: "repeating-conic-gradient(from 0deg, rgba(234,179,8,0.34) 0deg 4deg, transparent 4deg 16deg)", WebkitMaskImage: "radial-gradient(circle, #000 8%, transparent 62%)", maskImage: "radial-gradient(circle, #000 8%, transparent 62%)" }} />
         <div className="i-cal-glow pointer-events-none absolute h-[min(30rem,86vw)] w-[min(30rem,86vw)] rounded-full bg-[radial-gradient(circle,rgba(250,204,21,0.45),rgba(34,197,94,0.25)_45%,transparent_70%)] opacity-0" />
         <div ref={cardEl} className="i-cal relative z-40 w-[min(22rem,82vw)] rounded-[1.4rem] border border-white bg-white shadow-[0_40px_80px_-30px_rgba(20,83,45,0.45),0_2px_0_rgba(255,255,255,0.9)_inset] opacity-0">
+          <span aria-hidden className="i-cal-ring pointer-events-none absolute -inset-[7px] rounded-[1.8rem] border-[3px] border-[#f6c945] opacity-0 shadow-[0_0_34px_8px_rgba(250,204,21,0.55),inset_0_0_26px_rgba(250,204,21,0.35)]" />
           <div className="relative flex h-11 items-center justify-center rounded-t-[1.3rem] bg-gradient-to-r from-[#14532d] via-[#1f7a43] to-[#2f8f4e]">
             <span className="absolute left-6 top-2 h-3 w-3 rounded-full bg-[#f6faf6] shadow-inner" />
             <span className="absolute right-6 top-2 h-3 w-3 rounded-full bg-[#f6faf6] shadow-inner" />
@@ -426,22 +404,6 @@ export default function Intro() {
           </span>
           <span className="font-mono text-[0.62rem] tracking-[0.16em] text-[#c9a24d]">2027</span>
         </div>
-      </div>
-
-      {/* 1b — 2027 as a real 3D object that rises out of the calendar */}
-      <div className="i-y3d pointer-events-none absolute inset-0 z-[45] opacity-0">
-        <div className="absolute inset-0 grid place-items-center">
-          {[0, 1].map((n) => (
-            <span key={n} className="i-ring absolute h-[min(22rem,70vw)] w-[min(22rem,70vw)] rounded-full border-2 border-[#eab308]/70 opacity-0" />
-          ))}
-        </div>
-        {gl ? (
-          yearOn && <Year3D state={state} run={yearRun} />
-        ) : (
-          <div className="absolute inset-0 grid place-items-center">
-            <span className="bg-[linear-gradient(180deg,#fff3b0,#f4c542_45%,#1f7a43)] bg-clip-text font-display text-[clamp(5rem,22vw,11rem)] font-extrabold text-transparent">2027</span>
-          </div>
-        )}
       </div>
 
       {/* 2 — 3D logo (mounted only while needed) or the static logo on weak devices */}
