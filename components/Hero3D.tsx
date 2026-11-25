@@ -21,9 +21,16 @@ export function Presence({ active, children }: { active: boolean; children: Reac
     // eslint-disable-next-line react-hooks/set-state-in-effect -- mount the scene object when its route becomes active
     if (active) setMounted(true);
   }, [active]);
+  const warm = useRef(0);
+  useEffect(() => {
+    if (!mounted) return;
+    warm.current = 0;
+    window.dispatchEvent(new CustomEvent("nk:obj-loading", { detail: true }));
+  }, [mounted]);
   useFrame((_, dt) => {
     const g = ref.current;
     if (!g) return;
+    if (mounted && warm.current < 8 && ++warm.current === 8) window.dispatchEvent(new CustomEvent("nk:obj-loading", { detail: false }));
     const d = Math.min(dt, 0.25);
     const s = THREE.MathUtils.damp(g.scale.x, active ? 1 : 0, 6, d);
     g.scale.setScalar(Math.max(s, 0.0001));
@@ -297,6 +304,29 @@ export function Globe({ palette }: { palette: RobotPalette }) {
   const sat = useRef<THREE.Mesh>(null!);
   const pulses = useRef<THREE.Mesh[]>([]);
   const dotMat = useRef<THREE.PointsMaterial>(null!);
+  const labels = useRef<THREE.Sprite[]>([]);
+  const beacons = useRef<THREE.Mesh[]>([]);
+  const rot = useRef({ y: 0 });
+  const labelTex = useMemo(
+    () =>
+      CITIES.map((c, i) =>
+        canvasTex(384, 96, (g) => {
+          g.fillStyle = i === 0 ? "#14532d" : "rgba(255,255,255,0.97)";
+          g.beginPath();
+          g.roundRect(4, 8, 376, 80, 40);
+          g.fill();
+          g.lineWidth = 4;
+          g.strokeStyle = i === 0 ? "#eab308" : "#16a34a";
+          g.stroke();
+          g.fillStyle = i === 0 ? "#ffffff" : "#14532d";
+          g.font = "700 38px Arial";
+          g.textAlign = "center";
+          g.textBaseline = "middle";
+          g.fillText(i === 0 ? c.n + " · HQ" : c.n, 192, 50);
+        })
+      ),
+    []
+  );
   const mouse = useMouse();
   const atmo = useMemo(() => ({ uC: palette.uB }), [palette]);
 
@@ -333,7 +363,26 @@ export function Globe({ palette }: { palette: RobotPalette }) {
     const t = palette.uTime.value;
     glow.color.copy(palette.uA.value).lerp(new THREE.Color("#eab308"), 0.4);
     if (dotMat.current) dotMat.current.color.copy(palette.uA.value);
-    spin.current.rotation.y = -(CITIES[0].lon * Math.PI) / 180 + t * 0.12 + mouse.current.x * 0.4;
+    // the globe turns to face each of the six countries in turn and highlights it
+    const active = Math.floor(t / 3.4) % CITIES.length;
+    const target = -(CITIES[active].lon * Math.PI) / 180 + mouse.current.x * 0.25;
+    let diff = target - rot.current.y;
+    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+    rot.current.y += diff * (1 - Math.exp(-2.2 * 0.016));
+    spin.current.rotation.y = rot.current.y;
+    labels.current.forEach((sp, i) => {
+      if (!sp) return;
+      const on = i === active;
+      const k = THREE.MathUtils.lerp(sp.scale.x / 1.2, on ? 1.35 : 0.8, 0.1);
+      sp.scale.set(1.2 * k, 0.3 * k, 1);
+      sp.material.opacity = THREE.MathUtils.lerp(sp.material.opacity, on ? 1 : 0.8, 0.1);
+    });
+    beacons.current.forEach((b, i) => {
+      if (!b) return;
+      const ph = (t * 0.8 + i * 0.4) % 1;
+      b.scale.setScalar(0.5 + ph * (i === active ? 2.4 : 1.4));
+      (b.material as THREE.MeshBasicMaterial).opacity = (1 - ph) * (i === active ? 0.9 : 0.4);
+    });
     tilt.current.rotation.x = 0.35 - mouse.current.y * 0.2;
     tilt.current.position.y = Math.sin(t * 1.0) * 0.08;
     sat.current.position.set(Math.cos(t * 0.7) * 2.9, Math.sin(t * 0.7) * 0.5, Math.sin(t * 0.7) * 2.9);
@@ -369,11 +418,36 @@ export function Globe({ palette }: { palette: RobotPalette }) {
             <sphereGeometry args={[0.055, 16, 16]} />
           </mesh>
         ))}
-        {CITIES.map((c) => (
-          <mesh key={c.n} position={ll(c.lat, c.lon, R + 0.02)} material={glow}>
-            <sphereGeometry args={[c.n === "India" ? 0.09 : 0.06, 16, 16]} />
-          </mesh>
-        ))}
+        {CITIES.map((c, i) => {
+          const p = ll(c.lat, c.lon, R + 0.02);
+          const n = p.clone().normalize();
+          return (
+            <group key={c.n}>
+              <mesh position={p} material={glow}>
+                <sphereGeometry args={[i === 0 ? 0.09 : 0.065, 16, 16]} />
+              </mesh>
+              <mesh
+                position={p}
+                quaternion={new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n)}
+                ref={(m) => {
+                  if (m) beacons.current[i] = m;
+                }}
+              >
+                <ringGeometry args={[0.1, 0.13, 32]} />
+                <meshBasicMaterial color={i === 0 ? "#eab308" : "#16a34a"} transparent toneMapped={false} depthWrite={false} side={THREE.DoubleSide} />
+              </mesh>
+              <sprite
+                position={ll(c.lat, c.lon, R + 0.42)}
+                scale={[1.2, 0.3, 1]}
+                ref={(sp) => {
+                  if (sp) labels.current[i] = sp;
+                }}
+              >
+                <spriteMaterial map={labelTex[i]} transparent toneMapped={false} depthWrite={false} />
+              </sprite>
+            </group>
+          );
+        })}
       </group>
       {/* atmosphere */}
       <mesh scale={1.12}>

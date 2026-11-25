@@ -31,17 +31,16 @@ export default function Projects() {
           <h2 data-split className="mb-12 font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-[1.02]">Selected work.</h2>
           <div data-stagger className="grid gap-5 md:grid-cols-3">
             {featured.map((c, i) => (
-              <article key={c.name} data-tilt className={`glare relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-[2rem] bg-gradient-to-br p-8 shadow-[0_34px_70px_-36px_rgba(20,83,45,0.6)] ${TONES[i % TONES.length]}`}>
-                <div className="flex items-start justify-between">
-                  <span className="flex h-28 w-full max-w-[17rem] items-center justify-center rounded-3xl bg-white px-6 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.45)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={c.logo} alt={c.name} className="max-h-[4.5rem] w-full object-contain" />
-                  </span>
-                  <span className="font-mono text-sm opacity-60">0{i + 1}</span>
+              <article key={c.name} data-tilt className={`glare relative flex flex-col overflow-hidden rounded-[2rem] bg-gradient-to-br p-3 shadow-[0_34px_70px_-36px_rgba(20,83,45,0.6)] ${TONES[i % TONES.length]}`}>
+                <div className="relative flex h-44 items-center justify-center rounded-[1.5rem] bg-white px-8 shadow-[0_14px_34px_-18px_rgba(0,0,0,0.45)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={c.logo} alt={c.name} className="max-h-24 w-full object-contain" />
+                  <span className="absolute right-4 top-3 font-mono text-xs font-semibold text-[#14532d]/45">0{i + 1}</span>
                 </div>
-                <div>
-                  <h3 className="font-display text-3xl">{c.name}</h3>
-                  <p className="mt-3 text-[0.95rem] opacity-85">{CASES[c.name]}</p>
+                <div className="px-4 pb-5 pt-6">
+                  <h3 className="font-display text-[1.9rem] leading-tight">{c.name}</h3>
+                  <p className="mt-2 text-[0.95rem] leading-relaxed opacity-85">{CASES[c.name]}</p>
+                  <span className="mt-5 inline-flex rounded-full bg-white/20 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] ring-1 ring-current/25">Case study</span>
                 </div>
               </article>
             ))}
