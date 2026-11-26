@@ -321,11 +321,26 @@ export function FlightStrip({ from, to, note }: { from: string; to: string; note
       let target = 0;
       let shown = 0;
       let shownMsg = false;
+      let go = false; // the plane waits for the strip to appear first
       paint(0);
+      // the strip itself appears: line fades up, end tags pop in, then the plane takes off
+      const pills = root.querySelectorAll<HTMLElement>("[data-pill]");
+      gsap.set(root.firstElementChild, { opacity: 0, y: 26 });
+      gsap.set(pills, { scale: 0.4, opacity: 0, y: 12 });
+      const appear = ScrollTrigger.create({
+        trigger: root,
+        start: "top 98%",
+        once: true,
+        onEnter: () => {
+          gsap.to(root.firstElementChild, { opacity: 1, y: 0, duration: 0.9, ease: "power3.out", delay: 0.45 });
+          gsap.to(pills, { scale: 1, opacity: 1, y: 0, duration: 0.6, ease: "back.out(2)", stagger: 0.18, delay: 0.7 });
+          gsap.delayedCall(0.95, () => (go = true));
+        },
+      });
       const trig = ScrollTrigger.create({ trigger: root, start: "top 92%", end: "bottom 30%", onUpdate: (self) => (target = self.progress) });
       target = trig.progress;
       const tick = () => {
-        const d = target - shown;
+        const d = go ? target - shown : 0;
         if (Math.abs(d) > 0.0005) {
           shown += d * 0.055;
           paint(Math.min(1, Math.max(0, shown)));
@@ -340,6 +355,7 @@ export function FlightStrip({ from, to, note }: { from: string; to: string; note
       return () => {
         gsap.ticker.remove(tick);
         trig.kill();
+        appear.kill();
       };
     });
     mm.add("(prefers-reduced-motion: reduce)", () => {
@@ -361,9 +377,9 @@ export function FlightStrip({ from, to, note }: { from: string; to: string; note
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <span className="rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#14532d] shadow-sm">{from}</span>
+        <span data-pill className="rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#14532d] shadow-sm">{from}</span>
         <p data-sm className="order-last w-full text-center font-display text-lg text-[#14532d] sm:order-none sm:w-auto sm:text-2xl">{note}</p>
-        <span className="rounded-full bg-gradient-to-r from-[#14532d] to-[#22a559] px-3 py-1 text-xs font-bold uppercase tracking-widest text-white shadow-sm">{to}</span>
+        <span data-pill className="rounded-full bg-gradient-to-r from-[#14532d] to-[#22a559] px-3 py-1 text-xs font-bold uppercase tracking-widest text-white shadow-sm">{to}</span>
       </div>
     </div>
   );

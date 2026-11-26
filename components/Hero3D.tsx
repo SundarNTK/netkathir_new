@@ -18,8 +18,19 @@ export function Presence({ active, children }: { active: boolean; children: Reac
   const ref = useRef<THREE.Group>(null!);
   const [mounted, setMounted] = useState(active);
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- mount the scene object when its route becomes active
-    if (active) setMounted(true);
+    // Building a 3D object freezes the page for a moment. On a route change, wait until the new page has faded in
+    // (and the browser is idle) so the transition itself never stutters.
+    if (!active) return;
+    const w = window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (n: number) => void };
+    let idle = 0;
+    const t = window.setTimeout(() => {
+      if (w.requestIdleCallback) idle = w.requestIdleCallback(() => setMounted(true), { timeout: 700 });
+      else setMounted(true);
+    }, 650);
+    return () => {
+      window.clearTimeout(t);
+      if (idle && w.cancelIdleCallback) w.cancelIdleCallback(idle);
+    };
   }, [active]);
   const warm = useRef(0);
   useEffect(() => {

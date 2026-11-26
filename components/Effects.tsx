@@ -123,7 +123,7 @@ export default function Effects() {
         viaClick.current = true;
         gsap.set(curtain.current, { autoAlpha: 1 });
         playCover(label, true);
-      }, 280);
+      }, 900); // only a genuinely slow page gets the loader screen
     };
     document.addEventListener("click", onClick, true); // capture: runs before Next's own Link handler
     return () => document.removeEventListener("click", onClick, true);
@@ -173,7 +173,16 @@ export default function Effects() {
     // The page has arrived. If the loader screen is up, lift it. If the page came quickly there is no loader at all.
     window.clearTimeout(slowTimer.current);
     // the new page eases in (opacity only, so pinned sections keep working)
-    gsap.fromTo("#main", { opacity: 0 }, { opacity: 1, duration: reduce ? 0 : 0.6, delay: 0.05, ease: "power2.out", clearProps: "opacity", overwrite: true });
+    // The page stays invisible until its headline/reveal animations have been prepared (build() below), then eases in, so
+    // titles never flash on screen and then replay.
+    gsap.set("#main", { opacity: 0 });
+    let faded = false;
+    const fadeIn = () => {
+      if (faded) return;
+      faded = true;
+      gsap.to("#main", { opacity: 1, duration: reduce ? 0 : 0.55, ease: "power2.out", clearProps: "opacity", overwrite: true });
+    };
+    const fadeT = setTimeout(fadeIn, 900); // safety net
     const first = firstRun.current;
     firstRun.current = false;
     if (introPlaying) {
@@ -181,7 +190,7 @@ export default function Effects() {
     } else if (viaClick.current || first) {
       gsap.set(curtain.current, { autoAlpha: 1 });
       if (first && !reduce) playCover(NAV.find((n) => n.href === path)?.label ?? "Netkathir", false);
-      const hold = reduce ? 0 : viaClick.current ? 0.35 : 0.9;
+      const hold = reduce ? 0 : viaClick.current ? 0.2 : 0.9;
       gsap.to(".pt-center", { opacity: 0, scale: 1.18, duration: 0.4, delay: hold - 0.1, ease: "power2.in" });
       gsap.to(".pt-strip", {
         yPercent: (i) => (i % 2 ? 100 : -100),
@@ -206,7 +215,10 @@ export default function Effects() {
     let ro: ResizeObserver | undefined;
 
     const build = () => {
-      if (reduce) return;
+      if (reduce) {
+        fadeIn();
+        return;
+      }
       ctx = gsap.context(() => {
         // split text
         document.querySelectorAll<HTMLElement>("[data-split]").forEach((el) => {
@@ -398,6 +410,7 @@ export default function Effects() {
           });
         });
       });
+      fadeIn();
       refresh = setTimeout(() => ScrollTrigger.refresh(), 150);
       // images, fonts and the 3D canvas keep changing the page height after the first measure; pinned sections must be re-measured
       // or they unpin late and the next section slides over them. Re-measure (debounced) whenever the page height settles on a new value.
@@ -422,6 +435,8 @@ export default function Effects() {
       window.removeEventListener("nk:intro-reveal", onReveal);
       if (refresh) clearTimeout(refresh);
       if (timer) clearTimeout(timer);
+      clearTimeout(fadeT);
+      faded = true;
       ro?.disconnect();
       ctx?.revert();
     };
