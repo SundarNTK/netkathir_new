@@ -28,8 +28,8 @@ export default function Home() {
   return (
     <>
       {/* ───────────── HERO ───────────── */}
-      <section className="relative lg:h-[210vh]">
-        <div className="relative flex min-h-screen flex-col justify-start overflow-hidden pt-28 pb-12 lg:sticky lg:top-0 lg:h-screen lg:flex-row lg:items-center lg:justify-center lg:pt-24 lg:pb-10">
+      <section className="relative">
+        <div className="relative flex min-h-screen flex-col justify-start overflow-hidden pt-28 pb-12 lg:h-screen lg:flex-row lg:items-center lg:justify-center lg:pt-24 lg:pb-10">
 
         <div className="relative mx-auto max-w-7xl px-6 w-full">
           <div className="max-w-[34rem]">

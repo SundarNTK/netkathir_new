@@ -338,7 +338,7 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
     const p = window.scrollY / window.innerHeight; // scroll progress in viewports
     const pc = Math.min(p, 3);
     const core = variant === "core";
-    const out = Math.max(0, p - 1.5); // the home hero is pinned for ~1.5 screens while the head transforms; then it leaves
+    const out = p; // the home hero is one screen tall, so the robot scrolls away with the page
     const tx = core ? (mobile ? 0 : stage.x * (1 - 0.06 * Math.min(p / 1.05, 1))) : mobile ? 0 : stage.x * Math.max(0, Math.cos(Math.min(p, 1.3) * 1.2));
     const ty = core ? (mobile ? -0.72 + p * 7.04 : stage.y + out * 4.8) : (mobile ? 0.35 : stage.y) + Math.min(p, 2.5) * 4.8;
     const ts = core ? stage.s * (mobile ? 0.5 : 1) * (1 - Math.min(out, 1) * 0.2) : stage.s * (mobile ? 0.46 : 1) * (1 - Math.min(pc, 2) * 0.16);
