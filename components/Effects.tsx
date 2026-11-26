@@ -117,13 +117,30 @@ export default function Effects() {
       const label = NAV.find((n) => n.href === url.pathname)?.label ?? "Netkathir";
       window.clearTimeout(slowTimer.current);
       viaClick.current = false;
-      gsap.to("#main", { opacity: 0, duration: 0.22, ease: "power1.out", overwrite: true }); // the old page eases out while the new one is fetched
-      router.push(dest);
+      // closing transition: whatever is on screen lifts away, top to bottom, then the next page opens
+      const main = document.getElementById("main");
+      let kids: Element[] = main ? Array.from(main.children) : [];
+      if (kids.length === 1) kids = Array.from(kids[0].children);
+      const foot = document.querySelector("footer");
+      if (foot) kids.push(foot);
+      const vh = window.innerHeight;
+      const seen = kids.filter((k) => {
+        const r = k.getBoundingClientRect();
+        return r.bottom > 0 && r.top < vh;
+      });
+      const CLOSE = 0.5;
+      gsap.killTweensOf(kids);
+      gsap.to(seen, { opacity: 0, y: -46, scale: 0.975, duration: 0.42, ease: "power2.in", stagger: 0.06, overwrite: true });
+      gsap.delayedCall(CLOSE, () => {
+        gsap.set("#main", { opacity: 0 }); // the swap itself happens while nothing is visible
+        gsap.set(kids.filter((k) => k !== foot), { clearProps: "opacity,transform" }); // the footer stays hidden until the next page is ready
+        router.push(dest);
+      });
       slowTimer.current = window.setTimeout(() => {
         viaClick.current = true;
         gsap.set(curtain.current, { autoAlpha: 1 });
         playCover(label, true);
-      }, 900); // only a genuinely slow page gets the loader screen
+      }, 900 + 500); // only a genuinely slow page gets the loader screen (the closing animation takes the first 0.5s)
     };
     document.addEventListener("click", onClick, true); // capture: runs before Next's own Link handler
     return () => document.removeEventListener("click", onClick, true);
@@ -180,7 +197,8 @@ export default function Effects() {
     const fadeIn = () => {
       if (faded) return;
       faded = true;
-      gsap.to("#main", { opacity: 1, duration: reduce ? 0 : 0.55, ease: "power2.out", clearProps: "opacity", overwrite: true });
+      gsap.to("#main", { opacity: 1, duration: reduce ? 0 : 0.6, ease: "power2.out", clearProps: "opacity", overwrite: true });
+      gsap.to("footer", { opacity: 1, y: 0, scale: 1, duration: reduce ? 0 : 0.6, ease: "power2.out", clearProps: "opacity,transform", overwrite: true });
     };
     const fadeT = setTimeout(fadeIn, 900); // safety net
     const first = firstRun.current;
