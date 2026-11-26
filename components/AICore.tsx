@@ -4,6 +4,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { useLive } from "@/lib/live";
 import { traceImageToShapes } from "@/lib/traceShape";
 import type { RobotPalette } from "./Hero3D";
 
@@ -448,7 +449,9 @@ function AIText({ palette }: { palette: RobotPalette; mobile: boolean }) {
     return new THREE.CanvasTexture(cv);
   }, []);
 
+  const live = useLive();
   useFrame(() => {
+    if (!live.current) return;
     const t = palette.uTime.value;
     sway.current.rotation.y = Math.sin(t * 0.8) * 0.22;
     sway.current.position.y = Math.sin(t * 1.6) * 0.04;
@@ -540,7 +543,9 @@ function AiWaveRing({ palette, R, H, y, tilt, x = -0.6, Nu = 120, Nv = 9, speed 
     return { seg, pts };
   }, [Nu, Nv, nodes]);
 
+  const live = useLive();
   useFrame((_, dt) => {
+    if (!live.current) return;
     const t = palette.uTime.value * speed;
     grp.current.rotation.y += Math.min(dt, 0.1) * 0.12 * speed;
     for (let v = 0; v < Nv; v++) {
@@ -818,7 +823,9 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
   }, []);
   const streamU = useMemo(() => ({ uTime: palette.uTime }), [palette]);
 
+  const onStage = useLive();
   useFrame((s, dt) => {
+    if (!onStage.current) return;
     const d = Math.min(dt, 0.25);
     const t = palette.uTime.value;
     const tNow = t;

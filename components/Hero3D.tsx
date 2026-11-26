@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { Edges, RoundedBox } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
+import { LiveCtx, useLive } from "@/lib/live";
 import { WORLD_DOTS } from "@/lib/worldDots";
 export type RobotPalette = {
   uTime: { value: number };
@@ -14,44 +15,85 @@ export type RobotPalette = {
 };
 
 /** Scales a hero object in/out as the route changes, and hides it when it is gone. */
+// Objects are built one at a time while the browser is idle, so every page's 3D is ready before it is visited.
+const warmQueue: (() => void)[] = [];
+let warming = false;
+function pumpWarm() {
+  if (warming) return;
+  const job = warmQueue.shift();
+  if (!job) return;
+  warming = true;
+  const w = window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+  const run = () => {
+    job();
+    window.setTimeout(() => {
+      warming = false;
+      pumpWarm();
+    }, 1500);
+  };
+  if (w.requestIdleCallback) w.requestIdleCallback(run, { timeout: 4000 });
+  else window.setTimeout(run, 300);
+}
+
+/**
+ * Mounts a page's 3D object and keeps it built afterwards (rebuilding geometry and shaders on every visit is what made
+ * page changes stall). Off-screen objects are hidden and their per-frame work is paused through LiveCtx.
+ */
 export function Presence({ active, children }: { active: boolean; children: ReactNode }) {
   const ref = useRef<THREE.Group>(null!);
   const [mounted, setMounted] = useState(active);
+  const mountedRef = useRef(active);
+  const live = useRef(active);
+  const warmFrames = useRef(0);
+  const mount = (warm: boolean) => {
+    if (mountedRef.current) return;
+    mountedRef.current = true;
+    if (warm) warmFrames.current = 4; // draw a few invisible frames so its shaders compile now
+    setMounted(true);
+  };
   useEffect(() => {
-    // Building a 3D object freezes the page for a moment. On a route change, wait until the new page has faded in
-    // (and the browser is idle) so the transition itself never stutters.
-    if (!active) return;
+    // first visit to a page whose object isn't built yet: wait until the page has faded in and the browser is idle
+    if (!active || mountedRef.current) return;
     const w = window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (n: number) => void };
     let idle = 0;
     const t = window.setTimeout(() => {
-      if (w.requestIdleCallback) idle = w.requestIdleCallback(() => setMounted(true), { timeout: 700 });
-      else setMounted(true);
+      if (w.requestIdleCallback) idle = w.requestIdleCallback(() => mount(false), { timeout: 700 });
+      else mount(false);
     }, 650);
     return () => {
       window.clearTimeout(t);
       if (idle && w.cancelIdleCallback) w.cancelIdleCallback(idle);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
-  const warm = useRef(0);
   useEffect(() => {
-    if (!mounted) return;
-    warm.current = 0;
-    window.dispatchEvent(new CustomEvent("nk:obj-loading", { detail: true }));
-  }, [mounted]);
+    // background warm-up of the other pages' objects
+    const t = window.setTimeout(() => {
+      warmQueue.push(() => mount(true));
+      pumpWarm();
+    }, 5000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!mounted || !active) return;
+    window.dispatchEvent(new CustomEvent("nk:obj-loading", { detail: false }));
+  }, [mounted, active]);
   useFrame((_, dt) => {
     const g = ref.current;
     if (!g) return;
-    if (mounted && warm.current < 8 && ++warm.current === 8) window.dispatchEvent(new CustomEvent("nk:obj-loading", { detail: false }));
     const d = Math.min(dt, 0.25);
     const s = THREE.MathUtils.damp(g.scale.x, active ? 1 : 0, 6, d);
     g.scale.setScalar(Math.max(s, 0.0001));
-    g.visible = s > 0.01;
+    const warm = warmFrames.current > 0;
+    if (warm) warmFrames.current -= 1;
+    g.visible = s > 0.01 || warm;
+    live.current = active || s > 0.01 || warm;
     g.rotation.y = THREE.MathUtils.damp(g.rotation.y, active ? 0 : 1.4, 5, d);
-    if (!active && s < 0.012 && mounted) setMounted(false); // unmount: frees its textures, geometry and per-frame work
   });
   return (
     <group ref={ref} scale={0.0001}>
-      {mounted && children}
+      <LiveCtx.Provider value={live}>{mounted && children}</LiveCtx.Provider>
     </group>
   );
 }
@@ -222,7 +264,9 @@ export function Chip({ palette }: { palette: RobotPalette }) {
   const label = useMemo(() => aiLabelTexture(), []);
   const mouse = useMouse();
 
+  const live = useLive();
   useFrame(() => {
+    if (!live.current) return;
     const t = palette.uTime.value;
     glow.color.copy(palette.uC.value).lerp(new THREE.Color("#22d3ee"), 0.5);
     outer.current.position.y = Math.sin(t * 1.1) * 0.1;
@@ -370,7 +414,9 @@ export function Globe({ palette }: { palette: RobotPalette }) {
   const arcGeos = useMemo(() => arcs.map((c) => new THREE.TubeGeometry(c, 60, 0.012, 6)), [arcs]);
   const glow = useMemo(() => new THREE.MeshBasicMaterial({ color: "#eab308", toneMapped: false }), []);
 
+  const live = useLive();
   useFrame(() => {
+    if (!live.current) return;
     const t = palette.uTime.value;
     glow.color.copy(palette.uA.value).lerp(new THREE.Color("#eab308"), 0.4);
     if (dotMat.current) dotMat.current.color.copy(palette.uA.value);
@@ -489,7 +535,9 @@ export function Devices({ palette }: { palette: RobotPalette }) {
   const chat = useMemo(() => chatTexture(), []);
   const mouse = useMouse();
 
+  const live = useLive();
   useFrame(() => {
+    if (!live.current) return;
     const t = palette.uTime.value;
     root.current.rotation.y = THREE.MathUtils.lerp(root.current.rotation.y, -0.35 + mouse.current.x * 0.4, 0.08);
     root.current.rotation.x = THREE.MathUtils.lerp(root.current.rotation.x, 0.08 - mouse.current.y * 0.15, 0.08);
@@ -589,7 +637,9 @@ function editorTexture() {
 
 function Gear({ r, teeth, speed, position, color, rev }: { r: number; teeth: number; speed: number; position: [number, number, number]; color: string; rev?: boolean }) {
   const g = useRef<THREE.Group>(null!);
+  const live = useLive();
   useFrame((_, dt) => {
+    if (!live.current) return;
     g.current.rotation.z += dt * speed * (rev ? -1 : 1);
   });
   return (
@@ -623,7 +673,9 @@ export function Workbench({ palette }: { palette: RobotPalette }) {
   const glow = useMemo(() => new THREE.MeshBasicMaterial({ color: "#4ade80", toneMapped: false }), []);
   const mouse = useMouse();
 
+  const live = useLive();
   useFrame(() => {
+    if (!live.current) return;
     const t = palette.uTime.value;
     glow.color.copy(palette.uC.value).lerp(new THREE.Color("#4ade80"), 0.4);
     root.current.rotation.y = THREE.MathUtils.lerp(root.current.rotation.y, -0.3 + mouse.current.x * 0.35, 0.08);
@@ -709,7 +761,9 @@ export function Articles({ palette }: { palette: RobotPalette }) {
   const tex = useMemo(() => [0, 1, 2].map(articleTexture), []);
   const mouse = useMouse();
 
+  const live = useLive();
   useFrame(() => {
+    if (!live.current) return;
     const t = palette.uTime.value;
     root.current.rotation.y = THREE.MathUtils.lerp(root.current.rotation.y, mouse.current.x * 0.3, 0.08);
     root.current.rotation.x = THREE.MathUtils.lerp(root.current.rotation.x, -mouse.current.y * 0.12, 0.08);
@@ -833,7 +887,9 @@ export function Mail({ palette }: { palette: RobotPalette }) {
   const pocketEdge = useMemo(() => new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-1.5, 0.35, 0), new THREE.Vector3(0, -0.3, 0), new THREE.Vector3(0, -0.3, 0), new THREE.Vector3(1.5, 0.35, 0)]), []);
   const mouse = useMouse();
 
+  const live = useLive();
   useFrame(() => {
+    if (!live.current) return;
     const t = palette.uTime.value;
     root.current.rotation.y = THREE.MathUtils.lerp(root.current.rotation.y, -0.25 + mouse.current.x * 0.35, 0.08);
     root.current.rotation.x = THREE.MathUtils.lerp(root.current.rotation.x, 0.1 - mouse.current.y * 0.12, 0.08);
@@ -962,7 +1018,9 @@ export function ContactScene({ palette }: { palette: RobotPalette }) {
   const chat = useMemo(() => chatTexture(), []);
   const tex = useMemo(() => CHANNELS.map((c) => channelTexture(c.glyph, c.text, c.accent)), []);
 
+  const live = useLive();
   useFrame((_, dt) => {
+    if (!live.current) return;
     const t = palette.uTime.value;
     const d = Math.min(dt, 0.25);
     root.current.rotation.y = THREE.MathUtils.damp(root.current.rotation.y, -0.35 + mouse.current.x * 0.4, 4, d);
