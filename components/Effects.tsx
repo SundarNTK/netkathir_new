@@ -68,14 +68,16 @@ export default function Effects() {
   }, [router]);
 
   // Page-transition choreography shared by link clicks and any other navigation
-  const viaClick = useRef(false);
+  const viaClick = useRef(false); // true while the loader screen is covering the page
+  const slowTimer = useRef(0);
+  const firstRun = useRef(true);
   const playCover = useCallback((label: string, withStrips: boolean) => {
     const nm = document.querySelector<HTMLElement>(".pt-name");
     const mk = document.querySelector<HTMLElement>(".pt-mark");
     if (nm) nm.innerHTML = label.split("").map((c) => `<span class="pt-ch inline-block">${c === " " ? "&nbsp;" : c}</span>`).join("");
     if (mk) mk.textContent = label;
     gsap.killTweensOf(".pt-strip, .pt-center, .pt-plate, .pt-ch, .pt-tx, .pt-bar, .pt-mark, .pt-ring, .pt-spark");
-    gsap.set(".pt-center", { opacity: 0, scale: 1 });
+    gsap.set(".pt-center", { opacity: 0, scale: 1, visibility: "visible" }); // visibility was left hidden by the previous exit
     gsap.set(".pt-plate", { scale: 0.3, rotate: -200, opacity: 0 });
     gsap.set(".pt-ch", { yPercent: 120, rotateX: -80, opacity: 0, transformPerspective: 600 });
     gsap.set(".pt-tx", { y: 14, opacity: 0 });
@@ -111,12 +113,16 @@ export default function Effects() {
         router.push(dest);
         return;
       }
-      // cover the screen quickly and start loading the next page at the same moment (they overlap, so nothing waits)
-      gsap.set(curtain.current, { autoAlpha: 1 });
-      viaClick.current = true;
-      gsap.set(curtain.current, { autoAlpha: 1 });
-      playCover(NAV.find((n) => n.href === url.pathname)?.label ?? "Netkathir", true);
-      gsap.delayedCall(0.12, () => router.push(dest));
+      // navigate right away. The loader screen is only shown if the next page is slow to arrive.
+      const label = NAV.find((n) => n.href === url.pathname)?.label ?? "Netkathir";
+      window.clearTimeout(slowTimer.current);
+      viaClick.current = false;
+      router.push(dest);
+      slowTimer.current = window.setTimeout(() => {
+        viaClick.current = true;
+        gsap.set(curtain.current, { autoAlpha: 1 });
+        playCover(label, true);
+      }, 280);
     };
     document.addEventListener("click", onClick, true); // capture: runs before Next's own Link handler
     return () => document.removeEventListener("click", onClick, true);
@@ -163,13 +169,16 @@ export default function Effects() {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const introPlaying = window.__nkIntro === "playing";
 
-    // Reveal: strips lift away. First load while the anniversary intro owns the screen: stay hidden.
+    // The page has arrived. If the loader screen is up, lift it. If the page came quickly there is no loader at all.
+    window.clearTimeout(slowTimer.current);
+    const first = firstRun.current;
+    firstRun.current = false;
     if (introPlaying) {
       gsap.set(curtain.current, { autoAlpha: 0 });
-    } else {
+    } else if (viaClick.current || first) {
       gsap.set(curtain.current, { autoAlpha: 1 });
-      if (!viaClick.current && !reduce) playCover(NAV.find((n) => n.href === path)?.label ?? "Netkathir", false); // browser back/forward, typed URL…
-      const hold = reduce ? 0 : 0.9;
+      if (first && !reduce) playCover(NAV.find((n) => n.href === path)?.label ?? "Netkathir", false);
+      const hold = reduce ? 0 : viaClick.current ? 0.35 : 0.9;
       gsap.to(".pt-center", { opacity: 0, scale: 1.18, duration: 0.4, delay: hold - 0.1, ease: "power2.in" });
       gsap.to(".pt-strip", {
         yPercent: (i) => (i % 2 ? 100 : -100),
@@ -179,10 +188,13 @@ export default function Effects() {
         delay: hold,
         overwrite: "auto",
         onComplete: () => {
-          gsap.set([curtain.current, ".pt-center"], { autoAlpha: 0, scale: 1 });
+          gsap.set(curtain.current, { autoAlpha: 0 });
+          gsap.set(".pt-center", { opacity: 0, scale: 1 });
           viaClick.current = false;
         },
       });
+    } else {
+      gsap.set(curtain.current, { autoAlpha: 0 });
     }
 
     let ctx: gsap.Context | undefined;
