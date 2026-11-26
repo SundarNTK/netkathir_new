@@ -13,14 +13,18 @@ export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [ready, setReady] = useState(false);
   const [hover, setHover] = useState<number | null>(null);
+  const [pending, setPending] = useState<number | null>(null); // the tab just clicked, selected at once while its page loads
   const [pill, setPill] = useState({ x: 0, w: 0, o: 0 });
   const wrap = useRef<HTMLDivElement>(null);
   const items = useRef<(HTMLAnchorElement | null)[]>([]);
 
   const activeIndex = LINKS.findIndex((n) => (n.href === "/" ? path === "/" : path.startsWith(n.href)));
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- close the menu after navigation
-  useEffect(() => setOpen(false), [path]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- close the menu / settle the selection after navigation
+    setOpen(false);
+    setPending(null);
+  }, [path]);
 
   // wait for the anniversary intro before sliding in
   useEffect(() => {
@@ -43,11 +47,11 @@ export default function Nav() {
 
   // sliding highlight pill
   useEffect(() => {
-    const i = hover ?? activeIndex;
+    const i = hover ?? pending ?? activeIndex;
     const el = i >= 0 ? items.current[i] : null;
     if (!el || !wrap.current) return setPill((p) => ({ ...p, o: 0 }));
     setPill({ x: el.offsetLeft, w: el.offsetWidth, o: 1 });
-  }, [hover, activeIndex, path]);
+  }, [hover, pending, activeIndex, path]);
 
   useEffect(() => {
     document.documentElement.style.overflow = open ? "hidden" : "";
@@ -99,10 +103,11 @@ export default function Nav() {
               : "bg-white/60 border-white shadow-[0_8px_30px_-14px_rgba(22,101,52,0.3)]"
           } backdrop-blur-md`}
         >
+          {/* one green pill that glides between tabs (hover, click and the current page all move the same pill) */}
           <span
             aria-hidden
-            className="pointer-events-none absolute bottom-1.5 h-[2px] rounded-full bg-gradient-to-r from-[#166534] via-[#16a34a] to-[#eab308] transition-all duration-500 ease-[cubic-bezier(.2,.8,.2,1)]"
-            style={{ left: pill.x + 18, width: Math.max(0, pill.w - 36), opacity: 0 }}
+            className="pointer-events-none absolute inset-y-1.5 rounded-full bg-gradient-to-r from-[#14532d] via-[#15803d] to-[#22a559] shadow-[0_8px_20px_-8px_rgba(21,128,61,0.8)] transition-[left,width,opacity] duration-[450ms] ease-[cubic-bezier(.2,.8,.2,1)]"
+            style={{ left: pill.x, width: pill.w, opacity: pill.o }}
           />
           {LINKS.map((n, i) => (
             <Link
@@ -112,8 +117,12 @@ export default function Nav() {
                 items.current[i] = el;
               }}
               onMouseEnter={() => setHover(i)}
+              onClick={() => {
+                setPending(i);
+                setHover(null);
+              }}
               className={`relative z-10 rounded-full px-5 py-2 text-sm transition-colors duration-300 ${
-                i === (hover ?? activeIndex) ? "bg-gradient-to-r from-[#14532d] via-[#15803d] to-[#22a559] font-semibold text-white shadow-[0_8px_20px_-8px_rgba(21,128,61,0.8)]" : "text-ink/65 hover:bg-[#15803d]/10 hover:text-[#14532d]"
+                i === (hover ?? pending ?? activeIndex) ? "font-semibold text-white" : "text-ink/65 hover:text-[#14532d]"
               }`}
             >
               {n.label}
