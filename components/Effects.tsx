@@ -188,6 +188,7 @@ export default function Effects() {
     let ctx: gsap.Context | undefined;
     let refresh: ReturnType<typeof setTimeout> | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let ro: ResizeObserver | undefined;
 
     const build = () => {
       if (reduce) return;
@@ -383,6 +384,18 @@ export default function Effects() {
         });
       });
       refresh = setTimeout(() => ScrollTrigger.refresh(), 150);
+      // images, fonts and the 3D canvas keep changing the page height after the first measure; pinned sections must be re-measured
+      // or they unpin late and the next section slides over them. Re-measure (debounced) whenever the page height settles on a new value.
+      let lastH = document.documentElement.scrollHeight;
+      let t = 0;
+      ro = new ResizeObserver(() => {
+        const h = document.documentElement.scrollHeight;
+        if (Math.abs(h - lastH) < 3) return;
+        lastH = h;
+        window.clearTimeout(t);
+        t = window.setTimeout(() => ScrollTrigger.refresh(), 350);
+      });
+      ro.observe(document.body);
     };
 
     // First load: build page animations when the intro starts dissolving, so the hero animates in as it fades.
@@ -394,6 +407,7 @@ export default function Effects() {
       window.removeEventListener("nk:intro-reveal", onReveal);
       if (refresh) clearTimeout(refresh);
       if (timer) clearTimeout(timer);
+      ro?.disconnect();
       ctx?.revert();
     };
   }, [path]);

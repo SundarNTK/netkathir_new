@@ -105,7 +105,16 @@ export function FlightJourney({ kicker, title, stops }: { kicker: string; title:
         if (bar) bar.style.transform = `scaleX(${v.toFixed(3)})`;
       };
       setP(0);
-      const tl = gsap.timeline({ scrollTrigger: { trigger: root, start: "top top", end: "+=3900", pin: true, scrub: 0.7, anticipatePin: 1 } });
+      const tl = gsap.timeline({ scrollTrigger: {
+          trigger: root,
+          start: "top top",
+          end: "+=4200",
+          pin: true,
+          scrub: 0.7,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+        },
+      });
       tl.to(st, { p: 1, ease: "none", duration: 0.82, onUpdate: () => setP(st.p) }, 0);
       tl.to({}, { duration: 0.18 }, 0.82); // hold at the end so every stage can be read
       // stays light: white to a soft mint
@@ -151,7 +160,7 @@ export function FlightJourney({ kicker, title, stops }: { kicker: string; title:
         </div>
 
         {/* desktop: plane flies along the path */}
-        <div className="relative mx-auto hidden w-[min(100%,160vh)] md:block" style={{ aspectRatio: "1200 / 520" }}>
+        <div className="relative mx-auto hidden w-[min(100%,calc((100vh-14rem)*2.3))] md:block" style={{ aspectRatio: "1200 / 520" }}>
           <svg viewBox="0 0 1200 520" className="absolute inset-0 h-full w-full overflow-visible" fill="none">
             <defs>
               <linearGradient id="fj-grad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1200" y2="0">
