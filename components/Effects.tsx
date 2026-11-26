@@ -110,7 +110,7 @@ export default function Effects() {
       e.preventDefault();
       const dest = url.pathname + url.search + url.hash;
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        router.push(dest);
+        router.push(dest, { scroll: false }); // we reset the scroll ourselves (Next's own scroll could land on a pinned section)
         return;
       }
       // navigate right away. The loader screen is only shown if the next page is slow to arrive.
@@ -134,7 +134,7 @@ export default function Effects() {
       gsap.delayedCall(CLOSE, () => {
         gsap.set("#main", { opacity: 0 }); // the swap itself happens while nothing is visible
         gsap.set(kids.filter((k) => k !== foot), { clearProps: "opacity,transform" }); // the footer stays hidden until the next page is ready
-        router.push(dest);
+        router.push(dest, { scroll: false }); // we reset the scroll ourselves (Next's own scroll could land on a pinned section)
       });
       slowTimer.current = window.setTimeout(() => {
         viaClick.current = true;
@@ -197,6 +197,10 @@ export default function Effects() {
     const fadeIn = () => {
       if (faded) return;
       faded = true;
+      if (!location.hash) {
+        lenisRef.current?.scrollTo(0, { immediate: true, force: true });
+        window.scrollTo(0, 0); // make sure every new page opens at its top
+      }
       gsap.to("#main", { opacity: 1, duration: reduce ? 0 : 0.6, ease: "power2.out", clearProps: "opacity", overwrite: true });
       gsap.to("footer", { opacity: 1, y: 0, scale: 1, duration: reduce ? 0 : 0.6, ease: "power2.out", clearProps: "opacity,transform", overwrite: true });
     };
