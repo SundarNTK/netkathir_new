@@ -101,25 +101,24 @@ export default function NextPage() {
     <a
       ref={root}
       href={next.href}
-      className="group relative mt-10 block overflow-hidden rounded-2xl border border-white/15 bg-white/[0.04] px-5 py-4 sm:px-7 sm:py-5"
+      className="group relative mt-8 block overflow-hidden rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3 sm:px-5"
       style={{ ["--np" as string]: 0 }}
     >
       <span ref={fill} aria-hidden className="absolute inset-0 origin-left bg-[linear-gradient(100deg,#14532d,#22a559_60%,#eab308)]" style={{ transform: "scaleX(0)" }} />
-      <span aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full border border-white/10" />
-      <span className="relative flex flex-wrap items-center justify-between gap-5">
+      <span aria-hidden className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full border border-white/10" />
+      <span className="relative flex flex-wrap items-center justify-between gap-4">
         <span>
-          <span className="block font-mono text-[0.62rem] uppercase tracking-[0.28em] text-[#bbf7d0]">Keep scrolling · Up next</span>
-          <span className="mt-1 block font-display text-[clamp(1.4rem,2.6vw,2rem)] leading-[1.1] text-white">{next.label}</span>
+          <span className="block font-mono text-[0.58rem] uppercase tracking-[0.24em] text-[#bbf7d0]">Keep scrolling · Up next</span>
+          <span className="block font-display text-[clamp(1.1rem,1.8vw,1.35rem)] leading-[1.15] text-white">{next.label}</span>
         </span>
         <span className="flex items-center gap-4">
-          <span ref={pct} className="font-mono text-sm tracking-widest text-white/70">0%</span>
-          <span ref={arrow} className="grid h-10 w-10 place-items-center rounded-full bg-white text-lg text-[#14532d] shadow-[0_10px_30px_-8px_rgba(0,0,0,0.6)]">→</span>
+          <span ref={pct} className="font-mono text-xs tracking-widest text-white/70">0%</span>
+          <span ref={arrow} className="grid h-8 w-8 place-items-center rounded-full bg-white text-sm text-[#14532d] shadow-[0_10px_30px_-8px_rgba(0,0,0,0.6)]">→</span>
         </span>
       </span>
-      <span className="relative mt-3 block h-[3px] overflow-hidden rounded bg-white/15">
+      <span className="relative mt-2.5 block h-[2px] overflow-hidden rounded bg-white/15">
         <span aria-hidden className="absolute inset-y-0 left-0 w-full origin-left bg-[#fde68a]" style={{ transform: "scaleX(var(--np))" }} />
       </span>
-      <span className="relative mt-2 block text-[0.7rem] text-white/50">Scroll down to open the next page, or click.</span>
     </a>
   );
 }
