@@ -15,7 +15,7 @@ export default function Contact() {
         room
       />
       <FlightStrip from="Your message" to="Our inbox" note="We reply within one working day." />
-      <section className="pb-16">
+      <section className="pb-10 md:pb-14">
         <div className="mx-auto max-w-7xl px-6 grid lg:grid-cols-[1.3fr_1fr] gap-12">
           <ContactForm />
           <aside data-reveal className="space-y-8">

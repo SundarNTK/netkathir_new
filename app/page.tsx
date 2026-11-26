@@ -102,7 +102,7 @@ export default function Home() {
       </section>
 
       {/* ───────────── CLIENT LOGOS ───────────── */}
-      <section className="py-14 overflow-hidden">
+      <section className="py-10 md:py-12 overflow-hidden">
         <p className="mb-8 text-center font-mono text-xs uppercase tracking-[0.3em] text-ink/40">Trusted by teams across 6 countries</p>
         <div className="marquee-track items-center">
           {logos.map((c, i) => (
@@ -118,7 +118,7 @@ export default function Home() {
       </section>
 
       {/* ───────────── 11 YEARS ───────────── */}
-      <section className="py-16">
+      <section className="py-10 md:py-14">
         <div className="mx-auto max-w-7xl px-6 grid md:grid-cols-2 gap-16 items-end">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-ice mb-4">Why Netkathir</p>
@@ -136,7 +136,7 @@ export default function Home() {
       </section>
 
       {/* ───────────── AI CAPABILITIES ───────────── */}
-      <section className="py-14">
+      <section className="py-10 md:py-12">
         <div className="mx-auto max-w-7xl px-6 grid lg:grid-cols-[0.9fr_1.1fr] gap-16">
           <div className="lg:sticky lg:top-32 self-start">
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-ice mb-4">Artificial Intelligence</p>
@@ -174,7 +174,7 @@ export default function Home() {
       <FlightJourney kicker="How we deliver" title="From idea to AI, in flight." stops={JOURNEY} />
 
       {/* ───────────── SHOWCASE ───────────── */}
-      <section className="py-14">
+      <section className="py-10 md:py-12">
         <div className="mx-auto max-w-7xl px-6">
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-glow mb-4">Explore</p>
           <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-20">
@@ -221,7 +221,7 @@ export default function Home() {
       />
 
       {/* ───────────── SERVICE GROUPS ───────────── */}
-      <section className="py-14">
+      <section className="py-10 md:py-12">
         <div className="mx-auto max-w-7xl px-6">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
             <div>
@@ -258,7 +258,7 @@ export default function Home() {
       </section>
 
       {/* ───────────── TESTIMONIALS ───────────── */}
-      <section className="py-14">
+      <section className="py-10 md:py-12">
         <div className="mx-auto max-w-7xl px-6">
           <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#14532d]/10 bg-white px-4 py-1.5 text-sm font-semibold text-[#15803d] shadow-sm"><span className="h-1.5 w-1.5 rounded-full bg-[#eab308]" />Testimonials</p>
           <h2 data-split className="mb-8 font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-[1.02]">Trusted by teams worldwide.</h2>
@@ -278,7 +278,7 @@ export default function Home() {
       </section>
 
       {/* ───────────── ISO ───────────── */}
-      <section className="py-16">
+      <section className="py-10 md:py-14">
         <div className="mx-auto max-w-5xl px-6 text-center">
           <div className="relative mx-auto w-56 h-56 mb-6 flex items-center justify-center">
             {[0, 1, 2].map((i) => (
@@ -300,7 +300,7 @@ export default function Home() {
       </section>
 
       {/* ───────────── CTA ───────────── */}
-      <section className="py-16">
+      <section className="py-10 md:py-14">
         <div className="mx-auto max-w-7xl px-6">
           <h2 data-split className="font-display text-[clamp(2.4rem,7vw,6.5rem)] leading-[0.95] max-w-5xl mb-8">
             We build your future with AI &amp; ERP.

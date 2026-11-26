@@ -291,7 +291,8 @@ function Dust({ shared, count }: { shared: Shared; count: number }) {
 function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
   const path = usePathname();
   const stage = STAGES[path] ?? STAGES["/"];
-  const variant = VARIANT[path] ?? "core";
+  // phones: inner pages skip their 3D object (it sat on top of the page title and costs battery); the home robot stays
+  const variant = mobile && path !== "/" ? "none" : VARIANT[path] ?? "core";
   const group = useRef<THREE.Group>(null!);
   const spin = useRef<THREE.Group>(null!);
   const mouse = useRef({ x: 0, y: 0 });
@@ -416,8 +417,8 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
 
 export default function Scene() {
   const path = usePathname();
-  const variant = VARIANT[path] ?? "core";
   const mobile = typeof window !== "undefined" && window.innerWidth < 800;
+  const variant = mobile && path !== "/" ? "none" : VARIANT[path] ?? "core";
   const reduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   // pause the GPU entirely when the tab is hidden or the hero has scrolled away
   const [active, setActive] = useState(true);

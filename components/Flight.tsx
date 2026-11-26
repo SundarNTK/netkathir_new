@@ -256,7 +256,7 @@ export function FlyAnywhere({ lead, items, mark, caption }: { lead: string; item
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       const st = { p: 0 };
       paint(0);
-      const tl = gsap.timeline({ scrollTrigger: { trigger: root, start: "top top", end: `+=${n * 260}`, pin: true, scrub: 0.6, anticipatePin: 1 } });
+      const tl = gsap.timeline({ scrollTrigger: { trigger: root, start: "top top", end: `+=${n * 170}`, pin: true, scrub: 0.6, anticipatePin: 1 } });
       tl.to(st, { p: 1, ease: "none", duration: 1, onUpdate: () => paint(st.p) }, 0);
       if (word) tl.fromTo(word, { xPercent: 12 }, { xPercent: -22, ease: "none", duration: 1 }, 0);
       if (line) tl.fromTo(line, { scaleX: 0.25 }, { scaleX: 1, ease: "none", duration: 0.25 }, 0);
@@ -272,7 +272,7 @@ export function FlyAnywhere({ lead, items, mark, caption }: { lead: string; item
       <div data-mark aria-hidden className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 whitespace-nowrap font-display text-[clamp(9rem,26vw,24rem)] font-semibold leading-none text-white/[0.05]">
         {mark}
       </div>
-      <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col items-center justify-center px-6">
+      <div className="relative mx-auto flex h-screen max-h-[52rem] max-w-7xl flex-col items-center justify-center px-6">
         <p className="mb-8 font-mono text-xs uppercase tracking-[0.3em] text-[#86efac]">{caption ?? "Our reach"}</p>
         <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-8">
           <p className="text-right font-display text-[clamp(1.2rem,3.4vw,3rem)] leading-tight">{lead}</p>

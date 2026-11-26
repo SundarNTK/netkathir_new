@@ -182,8 +182,20 @@ export default function Effects() {
 
   // Per-page animations + reveal
   useEffect(() => {
-    lenisRef.current?.scrollTo(0, { immediate: true, force: true });
-    window.scrollTo(0, 0);
+    // Back on a page that was visited before, the browser/React may restore its old scroll position a moment later,
+    // and the smooth-scroll engine keeps its own copy too. Force the top several times while the page settles.
+    const toTop = () => {
+      if (location.hash) return;
+      const l = lenisRef.current;
+      if (l) {
+        l.resize();
+        l.scrollTo(0, { immediate: true, force: true });
+      }
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+    };
+    toTop();
+    const tops = [40, 160, 400, 800].map((ms) => window.setTimeout(toTop, ms));
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const introPlaying = window.__nkIntro === "playing";
 
@@ -197,10 +209,7 @@ export default function Effects() {
     const fadeIn = () => {
       if (faded) return;
       faded = true;
-      if (!location.hash) {
-        lenisRef.current?.scrollTo(0, { immediate: true, force: true });
-        window.scrollTo(0, 0); // make sure every new page opens at its top
-      }
+      toTop();
       gsap.to("#main", { opacity: 1, duration: reduce ? 0 : 0.6, ease: "power2.out", clearProps: "opacity", overwrite: true });
       gsap.to("footer", { opacity: 1, y: 0, scale: 1, duration: reduce ? 0 : 0.6, ease: "power2.out", clearProps: "opacity,transform", overwrite: true });
     };
@@ -458,6 +467,7 @@ export default function Effects() {
       if (refresh) clearTimeout(refresh);
       if (timer) clearTimeout(timer);
       clearTimeout(fadeT);
+      tops.forEach((t) => window.clearTimeout(t));
       faded = true;
       ro?.disconnect();
       ctx?.revert();

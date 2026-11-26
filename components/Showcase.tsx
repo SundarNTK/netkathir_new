@@ -247,7 +247,7 @@ export function Collage({ tag, lines, text, cta, href, main, floats, sticker }: 
   }, []);
 
   return (
-    <section ref={sec} data-nolift className="relative z-10 -mt-16 overflow-hidden bg-[#f5f4ec] pb-24 pt-32 md:pt-44" style={{ borderRadius: "50% 50% 0 0 / 6rem 6rem 0 0" }}>
+    <section ref={sec} data-nolift className="relative z-10 -mt-10 overflow-hidden bg-[#f5f4ec] pb-16 pt-20 md:pt-28" style={{ borderRadius: "50% 50% 0 0 / 6rem 6rem 0 0" }}>
       <svg data-c-topo aria-hidden className="pointer-events-none absolute inset-0 h-[115%] w-full opacity-60" viewBox="0 0 1200 800" fill="none" preserveAspectRatio="none">
         {[0, 1, 2, 3, 4, 5].map((i) => (
           <path key={i} d={`M-50 ${120 + i * 120} C 200 ${40 + i * 120}, 380 ${260 + i * 110}, 620 ${150 + i * 120} S 1000 ${60 + i * 110}, 1260 ${180 + i * 120}`} stroke="#14532d" strokeOpacity=".09" strokeWidth="1.3" />
@@ -352,6 +352,27 @@ const SECTORS: Record<string, string> = {
   APPGM: "Portal · Malaysia",
 };
 
+/** A client logo hanging on the wall: wire and nail, gold frame, cream mat, white picture area. */
+function LogoFrame({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="relative">
+      <svg aria-hidden viewBox="0 0 160 40" className="absolute -top-9 left-1/2 h-10 w-40 -translate-x-1/2" fill="none">
+        <path d="M22 40 L80 8 L138 40" stroke="#a8761a" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="80" cy="7" r="5" fill="#8a6414" />
+        <circle cx="78.5" cy="5.5" r="1.8" fill="#f6dc8a" />
+      </svg>
+      <div className="rounded-[6px] bg-[linear-gradient(145deg,#fbe9a8_0%,#d9ad3f_38%,#a97a1c_62%,#f1d27c_100%)] p-[10px] shadow-[0_34px_46px_-22px_rgba(0,0,0,0.55),0_2px_0_rgba(255,255,255,0.6)_inset]">
+        <div className="rounded-[3px] bg-[#fffaf0] p-[10px] shadow-[inset_0_0_0_1px_rgba(138,100,20,0.35),inset_0_6px_14px_rgba(0,0,0,0.12)]">
+          <div className="relative aspect-[16/10] bg-white shadow-[inset_0_0_14px_rgba(0,0,0,0.08)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={src} alt={alt} className="absolute inset-3 h-[calc(100%-1.5rem)] w-[calc(100%-1.5rem)] object-contain" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ClientReel({ clients, notes }: { clients: { name: string; logo: string }[]; notes: Record<string, string> }) {
   const sec = useRef<HTMLElement>(null);
 
@@ -444,19 +465,7 @@ export function ClientReel({ clients, notes }: { clients: { name: string; logo: 
                 {/* the client logo hangs on the wall like a framed picture */}
                 <div className="relative flex flex-1 items-center justify-center pb-4 pt-12">
                 <div data-rl-plate className="relative w-[min(18rem,54%)]">
-                  <svg aria-hidden viewBox="0 0 160 40" className="absolute -top-9 left-1/2 h-10 w-40 -translate-x-1/2" fill="none">
-                    <path d="M22 40 L80 8 L138 40" stroke="#a8761a" strokeWidth="2" strokeLinecap="round" />
-                    <circle cx="80" cy="7" r="5" fill="#8a6414" />
-                    <circle cx="78.5" cy="5.5" r="1.8" fill="#f6dc8a" />
-                  </svg>
-                  <div className="rounded-[6px] bg-[linear-gradient(145deg,#fbe9a8_0%,#d9ad3f_38%,#a97a1c_62%,#f1d27c_100%)] p-[10px] shadow-[0_34px_46px_-22px_rgba(0,0,0,0.55),0_2px_0_rgba(255,255,255,0.6)_inset]">
-                    <div className="rounded-[3px] bg-[#fffaf0] p-[10px] shadow-[inset_0_0_0_1px_rgba(138,100,20,0.35),inset_0_6px_14px_rgba(0,0,0,0.12)]">
-                      <div className="relative aspect-[16/10] bg-white shadow-[inset_0_0_14px_rgba(0,0,0,0.08)]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={c.logo} alt={c.name} className="absolute inset-3 h-[calc(100%-1.5rem)] w-[calc(100%-1.5rem)] object-contain" />
-                      </div>
-                    </div>
-                  </div>
+                  <LogoFrame src={c.logo} alt={c.name} />
                 </div>
                 </div>
                 <div className="relative">
@@ -478,11 +487,10 @@ export function ClientReel({ clients, notes }: { clients: { name: string; logo: 
           const t = REEL_TONES[i % REEL_TONES.length];
           return (
             <div key={c.name} data-reveal className="rounded-3xl p-5 shadow-sm" style={{ background: `linear-gradient(145deg,#fff,${t[0]} 45%,${t[1]})`, color: t[2] }}>
-              <div className="grid h-24 w-44 place-items-center rounded-xl bg-white p-3 shadow">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={c.logo} alt={c.name} className="max-h-full max-w-full object-contain" />
+              <div className="mx-auto mb-2 mt-9 w-[min(15rem,78%)]">
+                <LogoFrame src={c.logo} alt={c.name} />
               </div>
-              <h3 className="mt-4 font-display text-2xl">{c.name}</h3>
+              <h3 className="mt-5 font-display text-2xl">{c.name}</h3>
               <p className="mt-1 text-sm opacity-80">{notes[c.name] ?? "Delivered by Netkathir."}</p>
             </div>
           );

@@ -17,7 +17,7 @@ export default function About() {
         room
       />
 
-      <section className="py-14">
+      <section className="py-10 md:py-12">
         <div className="mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <div>
             <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#14532d]/10 bg-white px-4 py-1.5 text-sm font-semibold text-[#15803d] shadow-sm"><span className="h-1.5 w-1.5 rounded-full bg-[#eab308]" />Who we are</p>
@@ -37,7 +37,7 @@ export default function About() {
         </div>
       </section>
 
-      <section className="px-3 py-14 sm:px-6">
+      <section className="px-3 py-10 md:py-12 sm:px-6">
         <div data-panel className="mx-auto grid max-w-7xl gap-10 rounded-[2rem] bg-gradient-to-br from-[#052e16] via-[#14532d] to-[#166534] px-6 py-16 text-center text-white sm:grid-cols-3 md:py-24">
           {[
             ["11", "+", "Years of excellence"],
@@ -54,7 +54,7 @@ export default function About() {
         </div>
       </section>
 
-      <section className="py-14">
+      <section className="py-10 md:py-12">
         <div className="mx-auto max-w-7xl px-6">
           <div className="mb-8 max-w-3xl">
             <p className="inline-flex items-center gap-2 rounded-full border border-white bg-white/70 px-4 py-1.5 text-sm font-semibold text-ice shadow-[0_10px_30px_-14px_rgba(22,101,52,0.5)] backdrop-blur-xl mb-6">
@@ -94,7 +94,7 @@ export default function About() {
         </div>
       </section>
       <Ticker items={VALUES.map((v) => v[0])} />
-      <section className="py-14">
+      <section className="py-10 md:py-12">
         <div className="mx-auto max-w-7xl px-6">
           <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-8">What we stand for.</h2>
           <div data-stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -115,7 +115,7 @@ export default function About() {
         </div>
       </section>
 
-      <section className="py-14">
+      <section className="py-10 md:py-12">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <div className="relative mx-auto mb-6 grid h-36 w-36 place-items-center">
             <span aria-hidden className="absolute h-36 w-36 rounded-full bg-white shadow-[0_10px_28px_-16px_rgba(20,83,45,0.45)]" />

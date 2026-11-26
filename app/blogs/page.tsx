@@ -33,7 +33,7 @@ export default function Blogs() {
         </div>
       </section>
 
-      <section className="pb-20 pt-10">
+      <section className="pb-12 md:pb-16 pt-10">
         <div className="mx-auto grid max-w-7xl gap-6 px-6 sm:grid-cols-2 lg:grid-cols-3">
           {rest.map((b) => (
             <a
