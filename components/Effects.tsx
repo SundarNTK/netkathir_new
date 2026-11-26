@@ -306,6 +306,28 @@ export default function Effects() {
           });
         });
 
+        // data-batch: children pop in quickly, row by row, as they enter the viewport
+        gsap.utils.toArray<HTMLElement>("[data-batch]").forEach((grid) => {
+          const items = Array.from(grid.children) as HTMLElement[];
+          gsap.set(items, { opacity: 0, y: 40, scale: 0.96, filter: "blur(6px)" });
+          ScrollTrigger.batch(items, {
+            start: "top 92%",
+            once: true,
+            onEnter: (batch) =>
+              gsap.to(batch, {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                filter: "blur(0px)",
+                duration: 0.65,
+                ease: "power3.out",
+                stagger: 0.08,
+                overwrite: true,
+                onComplete: () => gsap.set(batch, { clearProps: "transform,opacity,filter" }),
+              }),
+          });
+        });
+
         gsap.utils.toArray<HTMLElement>("[data-count]").forEach((el) => {
           const end = Number(el.dataset.count);
           const suffix = el.dataset.suffix ?? "";

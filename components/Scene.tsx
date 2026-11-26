@@ -344,16 +344,21 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
     const core = variant === "core";
     const out = p; // the home hero is one screen tall, so the robot scrolls away with the page
     const tx = core ? (mobile ? 0 : stage.x * (1 - 0.06 * Math.min(p / 1.05, 1))) : mobile ? 0 : stage.x * Math.max(0, Math.cos(Math.min(p, 1.3) * 1.2));
-    // phones: stand the robot in the gap the home page leaves for it (measured), whatever the title height is
+    // phones: stand the 3D object in the gap the page leaves for it (measured: the home hero's robot slot, or an
+    // inner page's PageHero slot), whatever the header and title heights are. The slot scrolls with the page, so
+    // the measurement already follows the scroll.
     let mty = -0.42 + p * 7.04;
-    if (core && mobile) {
+    let slotted = false;
+    if (mobile) {
       const slot = document.querySelector<HTMLElement>("[data-robot-slot]");
       if (slot) {
         const r = slot.getBoundingClientRect();
         mty = 7.04 * (0.5 - (r.top + r.height * 0.5) / window.innerHeight) + 0.03;
+        slotted = true;
       }
     }
-    const ty = core ? (mobile ? mty : stage.y + out * 4.8) : (mobile ? 1.75 : stage.y) + Math.min(p, 2.5) * 4.8;
+    const ty =
+      mobile && slotted ? mty : core ? (mobile ? mty : stage.y + out * 4.8) : (mobile ? 1.75 : stage.y) + Math.min(p, 2.5) * 4.8;
     const ts = core ? stage.s * (mobile ? 0.5 : 1) * (1 - Math.min(out, 1) * 0.2) : stage.s * (mobile ? 0.46 : 1) * (1 - Math.min(pc, 2) * 0.16);
     const g = group.current;
     if (snap.current) {

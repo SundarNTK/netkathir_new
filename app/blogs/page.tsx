@@ -34,26 +34,43 @@ export default function Blogs() {
       </section>
 
       <section className="pb-12 md:pb-16 pt-10">
-        <div className="mx-auto grid max-w-7xl gap-6 px-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div data-batch className="mx-auto grid max-w-7xl gap-7 px-6 sm:grid-cols-2 lg:grid-cols-3">
           {rest.map((b) => (
             <a
               key={b.n}
               href={b.url}
               target="_blank"
               rel="noreferrer"
-              data-reveal
               data-tilt
-              className="glare group block overflow-hidden rounded-[1.75rem] border border-[#14532d]/10 bg-white shadow-[0_24px_60px_-36px_rgba(20,83,45,0.5)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_34px_70px_-30px_rgba(20,83,45,0.6)]"
+              className="bl-card glare group relative flex flex-col overflow-hidden rounded-[1.75rem] border border-[#14532d]/10 bg-white"
             >
-              <div className="relative h-52 overflow-hidden">
+              <div className="relative aspect-[16/9] overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={b.image} alt="" className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
-                <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 font-mono text-[0.7rem] font-semibold text-[#14532d]">{b.n}</span>
+                <img src={b.image} alt="" loading="lazy" className="bl-img h-full w-full object-cover" />
+                <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#04140c]/70 via-[#04140c]/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 font-mono text-[0.7rem] font-semibold text-[#14532d] shadow-sm backdrop-blur">
+                  #{b.n}
+                </span>
+                <span className="absolute bottom-4 left-4 translate-y-3 rounded-full bg-[#facc15] px-3 py-1 text-xs font-semibold text-[#14532d] opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                  Read article
+                </span>
               </div>
-              <div className="p-6">
-                <p className="mb-3 font-mono text-xs text-[#a16207]">{b.date}</p>
-                <h3 className="font-display text-[1.45rem] leading-snug transition-colors group-hover:text-[#15803d]">{b.title}</h3>
+              <div className="flex flex-1 flex-col p-6">
+                <p className="mb-3 flex items-center gap-2 font-mono text-xs text-[#a16207]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#ca8a04]" />
+                  {b.date}
+                </p>
+                <h3 className="font-display text-[1.35rem] leading-snug transition-colors duration-300 group-hover:text-[#15803d]">{b.title}</h3>
+                <div className="mt-auto flex items-center justify-between pt-6">
+                  <span className="text-sm font-semibold text-[#15803d]">Read more</span>
+                  <span className="bl-arrow grid h-10 w-10 place-items-center rounded-full border border-[#15803d]/25 text-[#15803d]">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                      <path d="M7 17L17 7M9 7h8v8" />
+                    </svg>
+                  </span>
+                </div>
               </div>
+              <span aria-hidden className="bl-bar" />
             </a>
           ))}
         </div>
