@@ -316,11 +316,31 @@ export function FlightStrip({ from, to, note }: { from: string; to: string; note
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       gsap.set(tr, { strokeDasharray: len, strokeDashoffset: len });
       gsap.set(msg, { autoAlpha: 0, y: 18 });
-      const st = { p: 0 };
+      // The plane always starts at the beginning and flies to wherever the scroll position says it should be: on arrival it
+      // visibly glides there, and afterwards it follows the scroll smoothly.
+      let target = 0;
+      let shown = 0;
+      let shownMsg = false;
       paint(0);
-      const tl = gsap.timeline({ scrollTrigger: { trigger: root, start: "top 92%", end: "bottom 30%", scrub: 0.7 } });
-      tl.to(st, { p: 1, ease: "none", duration: 1, onUpdate: () => paint(st.p) }, 0);
-      tl.to(msg, { autoAlpha: 1, y: 0, duration: 0.2, ease: "power2.out" }, 0.55);
+      const trig = ScrollTrigger.create({ trigger: root, start: "top 92%", end: "bottom 30%", onUpdate: (self) => (target = self.progress) });
+      target = trig.progress;
+      const tick = () => {
+        const d = target - shown;
+        if (Math.abs(d) > 0.0005) {
+          shown += d * 0.055;
+          paint(Math.min(1, Math.max(0, shown)));
+        }
+        const want = shown > 0.5;
+        if (want !== shownMsg) {
+          shownMsg = want;
+          gsap.to(msg, { autoAlpha: want ? 1 : 0, y: want ? 0 : 18, duration: 0.5, ease: "power2.out", overwrite: "auto" });
+        }
+      };
+      gsap.ticker.add(tick);
+      return () => {
+        gsap.ticker.remove(tick);
+        trig.kill();
+      };
     });
     mm.add("(prefers-reduced-motion: reduce)", () => {
       gsap.set(tr, { strokeDasharray: len, strokeDashoffset: 0 });

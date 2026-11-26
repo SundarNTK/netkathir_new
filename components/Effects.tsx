@@ -117,6 +117,7 @@ export default function Effects() {
       const label = NAV.find((n) => n.href === url.pathname)?.label ?? "Netkathir";
       window.clearTimeout(slowTimer.current);
       viaClick.current = false;
+      gsap.to("#main", { opacity: 0, duration: 0.22, ease: "power1.out", overwrite: true }); // the old page eases out while the new one is fetched
       router.push(dest);
       slowTimer.current = window.setTimeout(() => {
         viaClick.current = true;
@@ -171,6 +172,8 @@ export default function Effects() {
 
     // The page has arrived. If the loader screen is up, lift it. If the page came quickly there is no loader at all.
     window.clearTimeout(slowTimer.current);
+    // the new page eases in (opacity only, so pinned sections keep working)
+    gsap.fromTo("#main", { opacity: 0 }, { opacity: 1, duration: reduce ? 0 : 0.6, delay: 0.05, ease: "power2.out", clearProps: "opacity", overwrite: true });
     const first = firstRun.current;
     firstRun.current = false;
     if (introPlaying) {
