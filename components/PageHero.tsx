@@ -12,7 +12,9 @@ export default function PageHero({
   room?: boolean;
 }) {
   return (
-    <section className={room ? "relative min-h-[62vh] flex items-end pb-12 pt-32" : "relative pt-28 pb-8"}>
+    <section className={room ? "relative pb-8 pt-24 lg:flex lg:min-h-[62vh] lg:items-end lg:pb-12 lg:pt-32" : "relative pt-28 pb-8"}>
+      {/* phones: the page's 3D object stands in this space above the title */}
+      {room && <div className="h-[min(38vh,17rem)] lg:hidden" aria-hidden />}
       <div className="relative mx-auto w-full max-w-7xl px-6">
         <p
           data-reveal

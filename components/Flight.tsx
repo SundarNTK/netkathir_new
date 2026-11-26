@@ -140,7 +140,7 @@ export function FlightJourney({ kicker, title, stops }: { kicker: string; title:
         <span key={i} data-float aria-hidden className="pointer-events-none absolute rounded-[50%] bg-[radial-gradient(closest-side,rgba(255,255,255,.95),rgba(255,255,255,0))] opacity-70 mix-blend-soft-light md:opacity-100" style={{ left: l, top: t, width: w, height: h }} />
       ))}
 
-      <div className="mx-auto flex min-h-screen max-w-7xl flex-col justify-center px-6 py-24 md:py-10">
+      <div className="mx-auto flex max-w-7xl flex-col justify-center px-6 py-8 md:min-h-screen md:py-10">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4 md:mb-2">
           <div>
             <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#14532d]/15 bg-white px-4 py-1.5 text-sm font-semibold text-[#15803d] shadow-sm">
@@ -272,7 +272,7 @@ export function FlyAnywhere({ lead, items, mark, caption }: { lead: string; item
       <div data-mark aria-hidden className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 whitespace-nowrap font-display text-[clamp(9rem,26vw,24rem)] font-semibold leading-none text-white/[0.05]">
         {mark}
       </div>
-      <div className="relative mx-auto flex h-screen max-h-[52rem] max-w-7xl flex-col items-center justify-center px-6">
+      <div className="relative mx-auto flex h-[72vh] max-h-[52rem] max-w-7xl md:h-screen flex-col items-center justify-center px-6">
         <p className="mb-8 font-mono text-xs uppercase tracking-[0.3em] text-[#86efac]">{caption ?? "Our reach"}</p>
         <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-8">
           <p className="text-right font-display text-[clamp(1.2rem,3.4vw,3rem)] leading-tight">{lead}</p>

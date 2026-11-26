@@ -12,6 +12,9 @@ import * as THREE from "three";
 type Stage = { x: number; y: number; s: number; pal: [string, string, string] };
 
 /** Per-route stage: the AI core slides, scales and re-colours as you navigate. */
+// pages whose hero leaves room for the 3D object on phones (PageHero `room`)
+const MOBILE_3D = new Set(["/", "/about", "/contact"]);
+
 const STAGES: Record<string, Stage> = {
   "/": { x: 3.2, y: -0.05, s: 0.95, pal: ["#14532d", "#16a34a", "#eab308"] },
   "/services": { x: 2.7, y: -0.1, s: 1.0, pal: ["#166534", "#22c55e", "#facc15"] },
@@ -292,7 +295,7 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
   const path = usePathname();
   const stage = STAGES[path] ?? STAGES["/"];
   // phones: inner pages skip their 3D object (it sat on top of the page title and costs battery); the home robot stays
-  const variant = mobile && path !== "/" ? "none" : VARIANT[path] ?? "core";
+  const variant = mobile && !MOBILE_3D.has(path) ? "none" : VARIANT[path] ?? "core";
   const group = useRef<THREE.Group>(null!);
   const spin = useRef<THREE.Group>(null!);
   const mouse = useRef({ x: 0, y: 0 });
@@ -341,7 +344,7 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
     const core = variant === "core";
     const out = p; // the home hero is one screen tall, so the robot scrolls away with the page
     const tx = core ? (mobile ? 0 : stage.x * (1 - 0.06 * Math.min(p / 1.05, 1))) : mobile ? 0 : stage.x * Math.max(0, Math.cos(Math.min(p, 1.3) * 1.2));
-    const ty = core ? (mobile ? -0.42 + p * 7.04 : stage.y + out * 4.8) : (mobile ? 0.35 : stage.y) + Math.min(p, 2.5) * 4.8;
+    const ty = core ? (mobile ? -0.42 + p * 7.04 : stage.y + out * 4.8) : (mobile ? 1.75 : stage.y) + Math.min(p, 2.5) * 4.8;
     const ts = core ? stage.s * (mobile ? 0.5 : 1) * (1 - Math.min(out, 1) * 0.2) : stage.s * (mobile ? 0.46 : 1) * (1 - Math.min(pc, 2) * 0.16);
     const g = group.current;
     if (snap.current) {
@@ -418,7 +421,7 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
 export default function Scene() {
   const path = usePathname();
   const mobile = typeof window !== "undefined" && window.innerWidth < 800;
-  const variant = mobile && path !== "/" ? "none" : VARIANT[path] ?? "core";
+  const variant = mobile && !MOBILE_3D.has(path) ? "none" : VARIANT[path] ?? "core";
   const reduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   // pause the GPU entirely when the tab is hidden or the hero has scrolled away
   const [active, setActive] = useState(true);

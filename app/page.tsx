@@ -177,7 +177,7 @@ export default function Home() {
       <section className="py-10 md:py-12">
         <div className="mx-auto max-w-7xl px-6">
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-glow mb-4">Explore</p>
-          <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-20">
+          <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-8 md:mb-20">
             The work, in color.
           </h2>
           <div data-stagger className="grid gap-5 pb-10 sm:grid-cols-2 lg:grid-cols-4">
