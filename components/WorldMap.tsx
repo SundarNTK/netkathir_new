@@ -71,7 +71,7 @@ export default function WorldMap() {
       {PINS.map((p) => (
         <span
           key={p.name}
-          className={`absolute whitespace-nowrap rounded-full border border-white bg-white/85 px-3 py-1.5 text-[0.7rem] font-semibold shadow-[0_12px_30px_-12px_rgba(22,101,52,0.6)] backdrop-blur-xl sm:text-sm ${labelPos[p.label]} ${
+          className={`absolute hidden whitespace-nowrap rounded-full sm:block border border-white bg-white/85 px-3 py-1.5 text-[0.7rem] font-semibold shadow-[0_12px_30px_-12px_rgba(22,101,52,0.6)] backdrop-blur-xl sm:text-sm ${labelPos[p.label]} ${
             p.hq ? "bg-gradient-to-r from-[#166534] to-[#eab308] !border-transparent text-white" : "text-ink"
           }`}
           style={{ left: `${(px(p.lon) / W) * 100}%`, top: `${(py(p.lat) / H) * 100}%` }}

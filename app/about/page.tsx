@@ -77,7 +77,7 @@ export default function About() {
                 <p className="max-w-[16rem] text-sm text-muted">Headquartered in Puducherry, India — building for clients across four continents.</p>
               </div>
 
-              <div className="relative flex flex-1 items-center rounded-3xl border border-white bg-gradient-to-br from-white/80 via-white/50 to-violet/10 px-3 py-10 sm:px-8">
+              <div className="relative flex flex-1 items-center rounded-3xl border border-white bg-gradient-to-br from-white/80 via-white/50 to-violet/10 px-1 py-4 sm:px-8 sm:py-10">
                 <WorldMap />
               </div>
 

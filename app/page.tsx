@@ -54,7 +54,7 @@ export default function Home() {
             AI-First Software Company
           </h1>
           {/* mobile: the robot stands in this gap, under the title and above the subtitle */}
-          <div className="h-[min(38vh,17.5rem)] lg:hidden" aria-hidden />
+          <div data-robot-slot className="h-[min(38vh,17.5rem)] lg:hidden" aria-hidden />
           <h2 data-split data-delay="0.9" className="font-display text-[clamp(1.1rem,min(2.3vw,3.6vh),2.1rem)] leading-tight mt-6 text-ink/90 lg:mt-[clamp(0.7rem,2.2vh,1.6rem)]">
             Intelligence engineered into every line.
           </h2>
