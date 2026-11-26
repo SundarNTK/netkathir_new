@@ -341,7 +341,7 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
     const core = variant === "core";
     const out = p; // the home hero is one screen tall, so the robot scrolls away with the page
     const tx = core ? (mobile ? 0 : stage.x * (1 - 0.06 * Math.min(p / 1.05, 1))) : mobile ? 0 : stage.x * Math.max(0, Math.cos(Math.min(p, 1.3) * 1.2));
-    const ty = core ? (mobile ? -0.72 + p * 7.04 : stage.y + out * 4.8) : (mobile ? 0.35 : stage.y) + Math.min(p, 2.5) * 4.8;
+    const ty = core ? (mobile ? -0.42 + p * 7.04 : stage.y + out * 4.8) : (mobile ? 0.35 : stage.y) + Math.min(p, 2.5) * 4.8;
     const ts = core ? stage.s * (mobile ? 0.5 : 1) * (1 - Math.min(out, 1) * 0.2) : stage.s * (mobile ? 0.46 : 1) * (1 - Math.min(pc, 2) * 0.16);
     const g = group.current;
     if (snap.current) {
