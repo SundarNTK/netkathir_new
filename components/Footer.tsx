@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { NAV, SITE } from "@/lib/data";
 import FooterCta from "./FooterCta";
+import NextPage from "./NextPage";
 
 export default function Footer() {
   return (
@@ -60,6 +61,8 @@ export default function Footer() {
             </ul>
           </div>
         </div>
+
+        <NextPage />
 
         <div className="mt-16 pt-6 border-t border-white/10 flex flex-wrap gap-4 justify-between text-xs text-muted">
           <p>Copyright © 2026 Netkathir Technologies. All rights reserved.</p>
