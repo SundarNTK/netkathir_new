@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -67,6 +67,36 @@ export default function Effects() {
     idle(() => NAV.forEach((n) => router.prefetch(n.href)));
   }, [router]);
 
+  // Page-transition choreography shared by link clicks and any other navigation
+  const viaClick = useRef(false);
+  const playCover = useCallback((label: string, withStrips: boolean) => {
+    const nm = document.querySelector<HTMLElement>(".pt-name");
+    const mk = document.querySelector<HTMLElement>(".pt-mark");
+    if (nm) nm.innerHTML = label.split("").map((c) => `<span class="pt-ch inline-block">${c === " " ? "&nbsp;" : c}</span>`).join("");
+    if (mk) mk.textContent = label;
+    gsap.killTweensOf(".pt-strip, .pt-center, .pt-plate, .pt-ch, .pt-tx, .pt-bar, .pt-mark, .pt-ring, .pt-spark");
+    gsap.set(".pt-center", { opacity: 0, scale: 1 });
+    gsap.set(".pt-plate", { scale: 0.3, rotate: -200, opacity: 0 });
+    gsap.set(".pt-ch", { yPercent: 120, rotateX: -80, opacity: 0, transformPerspective: 600 });
+    gsap.set(".pt-tx", { y: 14, opacity: 0 });
+    gsap.set(".pt-bar", { scaleX: 0 });
+    gsap.set(".pt-ring", { scale: 0.4, opacity: 0 });
+    gsap.set(".pt-mark", { xPercent: 10, opacity: 0 });
+    gsap.set(".pt-spark", { y: 0, opacity: 0 });
+    if (withStrips) {
+      gsap.fromTo(".pt-strip", { yPercent: (i) => (i % 2 ? 100 : -100) }, { yPercent: 0, duration: 0.6, ease: "power4.inOut", stagger: { each: 0.045, from: "center" } });
+    }
+    const d = withStrips ? 0.32 : 0.05;
+    gsap.to(".pt-center", { opacity: 1, duration: 0.15, delay: d });
+    gsap.to(".pt-mark", { xPercent: -10, opacity: 1, duration: 1.6, delay: d, ease: "power2.out" });
+    gsap.to(".pt-plate", { scale: 1, rotate: 0, opacity: 1, duration: 0.7, delay: d, ease: "back.out(1.6)" });
+    gsap.fromTo(".pt-ring", { scale: 0.4, opacity: 0.8 }, { scale: 3.4, opacity: 0, duration: 1.3, delay: d + 0.1, ease: "power2.out", stagger: 0.28 });
+    gsap.to(".pt-tx", { y: 0, opacity: 1, duration: 0.4, delay: d + 0.2, stagger: 0.1, ease: "power3.out" });
+    gsap.to(".pt-ch", { yPercent: 0, rotateX: 0, opacity: 1, duration: 0.55, delay: d + 0.25, stagger: 0.035, ease: "back.out(1.5)" });
+    gsap.to(".pt-bar", { scaleX: 1, duration: 0.9, delay: d + 0.15, ease: "power2.inOut" });
+    gsap.fromTo(".pt-spark", { y: 20, opacity: 0 }, { y: -120, opacity: 1, duration: 1.1, delay: d + 0.1, ease: "power1.out", stagger: { each: 0.05, from: "random" }, onComplete: () => gsap.to(".pt-spark", { opacity: 0, duration: 0.2 }) });
+  }, []);
+
   // Page transition: intercept internal links, cover the screen, then navigate
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -83,24 +113,14 @@ export default function Effects() {
       }
       // cover the screen quickly and start loading the next page at the same moment (they overlap, so nothing waits)
       gsap.set(curtain.current, { autoAlpha: 1 });
-      const target = NAV.find((n) => n.href === url.pathname)?.label ?? "Netkathir";
-      const nm = document.querySelector<HTMLElement>(".pt-name");
-      if (nm) nm.textContent = target;
-      gsap.killTweensOf(".pt-strip, .pt-center, .pt-plate, .pt-text, .pt-bar, .pt-ringline");
-      gsap.set(".pt-center", { opacity: 0 });
-      gsap.set(".pt-plate", { scale: 0.5, rotate: -25, opacity: 0 });
-      gsap.set(".pt-text", { y: 18, opacity: 0 });
-      gsap.set(".pt-bar", { scaleX: 0 });
-      gsap.fromTo(".pt-strip", { yPercent: 100 }, { yPercent: 0, duration: 0.5, ease: "power3.inOut", stagger: { each: 0.035, from: "edges" } });
-      gsap.to(".pt-center", { opacity: 1, duration: 0.2, delay: 0.3 });
-      gsap.to(".pt-plate", { scale: 1, rotate: 0, opacity: 1, duration: 0.55, delay: 0.32, ease: "back.out(1.8)" });
-      gsap.to(".pt-text", { y: 0, opacity: 1, duration: 0.45, delay: 0.45, stagger: 0.08, ease: "power3.out" });
-      gsap.to(".pt-bar", { scaleX: 1, duration: 0.8, delay: 0.4, ease: "power2.inOut" });
+      viaClick.current = true;
+      gsap.set(curtain.current, { autoAlpha: 1 });
+      playCover(NAV.find((n) => n.href === url.pathname)?.label ?? "Netkathir", true);
       gsap.delayedCall(0.12, () => router.push(dest));
     };
     document.addEventListener("click", onClick, true); // capture: runs before Next's own Link handler
     return () => document.removeEventListener("click", onClick, true);
-  }, [router]);
+  }, [router, playCover]);
 
   // Cursor
   useEffect(() => {
@@ -148,15 +168,20 @@ export default function Effects() {
       gsap.set(curtain.current, { autoAlpha: 0 });
     } else {
       gsap.set(curtain.current, { autoAlpha: 1 });
-      gsap.to(".pt-center", { opacity: 0, scale: 1.12, duration: 0.35, delay: 0.55, ease: "power2.in" });
+      if (!viaClick.current && !reduce) playCover(NAV.find((n) => n.href === path)?.label ?? "Netkathir", false); // browser back/forward, typed URL…
+      const hold = reduce ? 0 : 0.9;
+      gsap.to(".pt-center", { opacity: 0, scale: 1.18, duration: 0.4, delay: hold - 0.1, ease: "power2.in" });
       gsap.to(".pt-strip", {
-        yPercent: -100,
-        duration: reduce ? 0 : 0.6,
-        ease: "power3.inOut",
-        stagger: { each: 0.04, from: "center" },
-        delay: reduce ? 0 : 0.7,
+        yPercent: (i) => (i % 2 ? 100 : -100),
+        duration: reduce ? 0 : 0.7,
+        ease: "power4.inOut",
+        stagger: { each: 0.05, from: "edges" },
+        delay: hold,
         overwrite: "auto",
-        onComplete: () => gsap.set([curtain.current, ".pt-center"], { autoAlpha: 0, scale: 1 }),
+        onComplete: () => {
+          gsap.set([curtain.current, ".pt-center"], { autoAlpha: 0, scale: 1 });
+          viaClick.current = false;
+        },
       });
     }
 
@@ -382,19 +407,27 @@ export default function Effects() {
             <span aria-hidden className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#eab308]/25 to-transparent" />
           </div>
         ))}
-        <div className="pt-center absolute inset-0 flex flex-col items-center justify-center opacity-0">
-          <div aria-hidden className="absolute h-[28rem] w-[28rem] rounded-full bg-[radial-gradient(circle,rgba(250,204,21,0.22),rgba(34,197,94,0.14)_45%,transparent_70%)]" />
-          <div className="pt-plate relative grid h-28 w-28 place-items-center">
-            <span aria-hidden className="absolute -inset-1.5 rounded-full [animation:nk-spin_1.6s_linear_infinite]" style={{ background: "conic-gradient(from 0deg, transparent 0deg, #fde68a 90deg, #22c55e 200deg, transparent 280deg)", WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px))", mask: "radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px))" }} />
-            <span className="relative grid h-24 w-24 place-items-center rounded-full bg-white shadow-[0_0_46px_rgba(250,204,21,0.45)]">
+        <div className="pt-center absolute inset-0 flex flex-col items-center justify-center overflow-hidden opacity-0">
+          <p aria-hidden className="pt-mark pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 whitespace-nowrap font-display text-[clamp(8rem,26vw,24rem)] font-semibold leading-none text-white/[0.06] opacity-0">Netkathir</p>
+          <div aria-hidden className="absolute h-[34rem] w-[34rem] rounded-full bg-[radial-gradient(circle,rgba(250,204,21,0.26),rgba(34,197,94,0.16)_45%,transparent_70%)]" />
+          {[0, 1, 2].map((n) => (
+            <span key={n} aria-hidden className="pt-ring absolute h-44 w-44 rounded-full border-2 border-[#fde68a]/70 opacity-0 shadow-[0_0_24px_rgba(250,204,21,0.45)]" />
+          ))}
+          {Array.from({ length: 18 }, (_, n) => (
+            <span key={n} aria-hidden className="pt-spark absolute h-1.5 w-1.5 rounded-full bg-[#fde68a] opacity-0 shadow-[0_0_10px_#facc15]" style={{ left: `${30 + ((n * 37) % 40)}%`, top: `${48 + ((n * 13) % 18)}%` }} />
+          ))}
+          <div className="pt-plate relative grid h-32 w-32 place-items-center">
+            <span aria-hidden className="absolute -inset-2 rounded-full [animation:nk-spin_1.4s_linear_infinite]" style={{ background: "conic-gradient(from 0deg, transparent 0deg, #fde68a 90deg, #22c55e 200deg, transparent 280deg)", WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px))", mask: "radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px))" }} />
+            <span aria-hidden className="absolute -inset-5 rounded-full border border-dashed border-[#fde68a]/40 [animation:nk-spin_9s_linear_infinite_reverse]" />
+            <span className="relative grid h-28 w-28 place-items-center rounded-full bg-white shadow-[0_0_60px_rgba(250,204,21,0.55)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/brand/netkathir-emblem.png" alt="" className="h-[4.4rem] w-[4.4rem] object-contain" />
+              <img src="/images/brand/netkathir-emblem.png" alt="" className="h-[5.2rem] w-[5.2rem] object-contain" />
             </span>
           </div>
-          <p className="pt-text relative mt-6 font-mono text-[0.68rem] uppercase tracking-[0.4em] text-[#bbf7d0]">Opening</p>
-          <p className="pt-text pt-name relative mt-1 font-display text-4xl tracking-tight text-white md:text-6xl">Netkathir</p>
-          <span className="relative mt-6 block h-[3px] w-48 overflow-hidden rounded bg-white/15">
-            <span className="pt-bar absolute inset-0 origin-left bg-gradient-to-r from-[#22c55e] to-[#fde68a]" style={{ transform: "scaleX(0)" }} />
+          <p className="pt-tx relative mt-7 font-mono text-[0.68rem] uppercase tracking-[0.45em] text-[#bbf7d0]">Now opening</p>
+          <p className="pt-name relative mt-1 flex overflow-hidden px-2 pb-2 font-display text-5xl tracking-tight text-white [text-shadow:0_0_40px_rgba(134,239,172,0.5)] md:text-7xl">Netkathir</p>
+          <span className="pt-tx relative mt-5 block h-[3px] w-60 overflow-hidden rounded bg-white/15">
+            <span className="pt-bar absolute inset-0 origin-left bg-gradient-to-r from-[#22c55e] via-[#fde68a] to-[#eab308]" style={{ transform: "scaleX(0)" }} />
           </span>
         </div>
       </div>
