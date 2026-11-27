@@ -20,7 +20,7 @@ const MESSAGES = [
   "With gratitude to every client, partner and team member on this journey.",
 ];
 const FINALE = "Now entering the AI era.".split(" ");
-const fxFlags = (): FxFlags => ({ fire: false, confetti: false, warpOn: false, warp: 0 });
+const fxFlags = (): FxFlags => ({ warpOn: false, warp: 0, bokeh: false, morph: 0, morphOut: 0 });
 const YEARS = Array.from({ length: 13 }, (_, i) => 2015 + i); // the last page torn is 2026, which reveals 2027
 
 // a laurel wreath: each side is a curved stem with pairs of pointed leaves, bigger at the bottom, smaller at the tips
@@ -84,6 +84,7 @@ export default function Intro() {
   const ldBar = useRef<HTMLSpanElement>(null);
   const fxEl = useRef<HTMLCanvasElement>(null);
   const warpEl = useRef<HTMLCanvasElement>(null);
+  const bigEl = useRef<HTMLSpanElement>(null);
 
   const resume = useCallback(() => {
     const g = gate.current;
@@ -154,7 +155,7 @@ export default function Intro() {
       gsap.set(".i-ch", { yPercent: 120, rotateX: -80, opacity: 0, transformPerspective: 700 });
       gsap.set(".i-fbg, .i-warp, .i-flash, .i-shock, .i-plate", { opacity: 0 });
       gsap.set(".i-shock", { scale: 0.2 });
-      gsap.set(".i-glow", { opacity: 0 });
+      gsap.set(".i-glow, .i-night, .i-big, .i-flare, .i-cap, .i-big-halo", { opacity: 0 });
 
       // ---- 1. calendar: the page turns from 2015 to 2026, slowing a little as it lands
       t.fromTo(".i-cal", { opacity: 0, y: 26, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" }, 0)
@@ -206,30 +207,47 @@ export default function Intro() {
           .to(barEl.current, { width: `${(i / (YEARS.length - 1)) * 100}%`, duration: gap, ease: "none" }, at);
         at += gap;
       }
-      // 2027 has landed on the calendar: it glows, then the flat year bumps out of the page into 3D lettering
+      // 2027 lands on the calendar. Night falls, the year glows, then breaks into thousands of points of gold light
+      // that sweep across the screen and rebuild a monumental 2027, which hardens into solid gold.
       const FL = at + 0.05;
-      const GLOW = "drop-shadow(0 0 14px rgba(250,204,21,0.9)) drop-shadow(0 0 38px rgba(34,197,94,0.65))";
-      t.to(cur, { filter: GLOW, duration: 0.5, ease: "power2.out" }, FL)
-        .fromTo(".i-cal-glow", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1.15, duration: 0.7, ease: "power2.out" }, FL)
+      t.to(".i-night", { opacity: 1, duration: 1.2, ease: "power2.inOut" }, FL - 0.1)
+        .call(() => { fl.bokeh = true; }, undefined, FL)
+        .to(".i-track", { opacity: 0, duration: 0.5, ease: "power2.out" }, FL)
+        .to(".i-cal", { boxShadow: "0 50px 120px -30px rgba(0,0,0,0.8), 0 0 0 1px rgba(246,220,138,0.4), 0 0 90px -10px rgba(250,204,21,0.35)", duration: 1.1, ease: "power2.out" }, FL)
+        .to(cur, { filter: "drop-shadow(0 0 14px rgba(250,204,21,0.9)) drop-shadow(0 0 38px rgba(34,197,94,0.6))", duration: 0.6, ease: "power2.out" }, FL)
+        .fromTo(".i-cal-glow", { opacity: 0, scale: 0.7 }, { opacity: 0.9, scale: 1.2, duration: 0.8, ease: "power2.out" }, FL)
         .fromTo(".i-shine", { xPercent: -130 }, { xPercent: 130, duration: 0.9, ease: "power2.inOut" }, FL + 0.15);
 
-      // the calendar lights up: the year keeps its colour and glows, the page gets a golden rim, and light fans out behind it
-      const E3 = FL + 0.5;
-      t.fromTo(".i-rays", { opacity: 0, scale: 0.55 }, { opacity: 1, scale: 1, duration: 1.1, ease: "power2.out" }, E3)
-        .fromTo(".i-cal-ring", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.6, ease: "power2.out" }, E3)
-        .to(".i-cal", { scale: 1.05, duration: 0.9, ease: "back.out(2.2)" }, E3)
-        .to(".i-cal-glow", { opacity: 1, scale: 1.6, duration: 0.9, ease: "power2.out" }, E3 + 0.1)
-        .fromTo(".i-shine", { xPercent: -130 }, { xPercent: 130, duration: 0.9, ease: "power2.inOut" }, E3 + 0.5)
-        .to(".i-cal-ring", { opacity: 0.55, duration: 0.45, yoyo: true, repeat: 5, ease: "sine.inOut" }, E3 + 0.8)
-        .to(cur, { filter: "drop-shadow(0 0 18px rgba(250,204,21,0.95)) drop-shadow(0 0 46px rgba(34,197,94,0.8))", duration: 0.6, ease: "power2.out" }, E3 + 0.3);
-      t.call(() => { fl.fire = true; fl.confetti = true; }, undefined, E3 + 0.1)
-        .call(() => { fl.fire = false; fl.confetti = false; }, undefined, E3 + 3.3);
-      const calEnd = E3 + 3.9;
-      // the whole lit-up calendar moves on to the logo, like every earlier year
-      t.to(".i-fx", { opacity: 0, duration: 0.45, ease: "power2.in" }, calEnd - 0.2) // the party ends with the calendar
-        .call(() => { fl.fire = false; fl.confetti = false; fl.kill = true; }, undefined, calEnd + 0.3)
-        .set(".i-fx", { opacity: 1 }, calEnd + 0.4)
-        .to(".i-cal, .i-track, .i-cal-glow, .i-rays", { opacity: 0, y: -18, scale: 0.97, duration: 0.5, ease: "power2.in" }, calEnd + 0.02)
+      // the year dissolves into light
+      const D = FL + 1.1;
+      // the text is sampled a beat early, while nothing else is moving, so the flight itself starts without a hitch
+      t.call(() => {
+        fl.morph = 0;
+        fl.morphOut = 0;
+        if (engine && bigEl.current) engine.formText(cur, bigEl.current);
+      }, undefined, FL + 0.45)
+        .to(cur, { opacity: 0, duration: 0.35, ease: "power1.in" }, D + 0.02)
+        .to(".i-cal", { opacity: 0, scale: 0.94, duration: 0.5, ease: "power2.out" }, D)
+        .to(".i-cal-glow", { opacity: 0, scale: 0.6, duration: 0.8, ease: "power2.in" }, D + 0.1)
+        .to(fl, { morph: 1, duration: 2.6, ease: "none" }, D);
+
+      // the light locks into place and hardens into metal; an anamorphic flare cuts across it
+      const M = D + 2.45;
+      t.fromTo(".i-big", { opacity: 0, scale: 1.04 }, { opacity: 1, scale: 1, duration: 1.0, ease: "power2.out" }, M)
+        .to(fl, { morphOut: 1, duration: 1.6, ease: "power1.in" }, M + 0.2)
+        .fromTo(".i-flare", { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 0.9, ease: "power3.out" }, M + 0.05)
+        .to(".i-flare", { opacity: 0, scaleX: 1.25, duration: 1.4, ease: "power2.in" }, M + 1.1)
+        .fromTo(".i-big-shine", { backgroundPosition: "160% 0" }, { backgroundPosition: "-60% 0", duration: 1.6, ease: "power2.inOut" }, M + 0.6)
+        .fromTo(".i-big-halo", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 1.4, ease: "power2.out" }, M)
+        .fromTo(".i-cap", { opacity: 0, letterSpacing: "1.2em", y: 8 }, { opacity: 1, letterSpacing: compact ? "0.32em" : "0.6em", y: 0, duration: 1.3, ease: "power3.out" }, M + 0.7)
+        .fromTo(".i-cap-rule", { scaleX: 0 }, { scaleX: 1, duration: 1.1, ease: "power3.inOut" }, M + 0.8)
+        .to(".i-big-wrap", { scale: 1.03, duration: 3, ease: "none" }, M);
+
+      const calEnd = M + 3.1;
+      t.to(".i-big-wrap", { opacity: 0, y: -16, duration: 0.6, ease: "power2.in" }, calEnd - 0.1)
+        .call(() => { fl.bokeh = false; fl.kill = true; }, undefined, calEnd + 0.6)
+        .to(".i-track, .i-cal-glow", { opacity: 0, duration: 0.3 }, calEnd)
+        .to(".i-night", { opacity: 0, duration: 0.8, ease: "power2.inOut" }, calEnd + 0.05)
         // wait here only if the 3D logo is not built yet (never longer than 3.5 s)
         .call(
           () => {
@@ -403,12 +421,21 @@ export default function Intro() {
         }}
       />
 
+      {/* night sky for the 2027 celebration: deep emerald to black, a faint haze low down */}
+      <div
+        className="i-night pointer-events-none absolute inset-0 opacity-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 60% at 50% 38%, #0d3a24 0%, #061a11 50%, #020806 100%), #020806",
+        }}
+      >
+        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-[linear-gradient(0deg,rgba(201,162,77,0.14),transparent)]" />
+      </div>
+
       {/* 1 — calendar page */}
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6">
-        <div className="i-rays pointer-events-none absolute h-[min(70rem,170vw)] w-[min(70rem,170vw)] rounded-full opacity-0 [animation:nk-spin_40s_linear_infinite]" style={{ background: "repeating-conic-gradient(from 0deg, rgba(234,179,8,0.34) 0deg 4deg, transparent 4deg 16deg)", WebkitMaskImage: "radial-gradient(circle, #000 8%, transparent 62%)", maskImage: "radial-gradient(circle, #000 8%, transparent 62%)" }} />
         <div className="i-cal-glow pointer-events-none absolute h-[min(30rem,86vw)] w-[min(30rem,86vw)] rounded-full bg-[radial-gradient(circle,rgba(250,204,21,0.45),rgba(34,197,94,0.25)_45%,transparent_70%)] opacity-0" />
         <div ref={cardEl} className="i-cal relative z-40 w-[min(22rem,82vw)] rounded-[1.4rem] border border-white bg-white shadow-[0_40px_80px_-30px_rgba(20,83,45,0.45),0_2px_0_rgba(255,255,255,0.9)_inset] opacity-0">
-          <span aria-hidden className="i-cal-ring pointer-events-none absolute -inset-[7px] rounded-[1.8rem] border-[3px] border-[#f6c945] opacity-0 shadow-[0_0_34px_8px_rgba(250,204,21,0.55),inset_0_0_26px_rgba(250,204,21,0.35)]" />
           <div className="relative flex h-11 items-center justify-center rounded-t-[1.3rem] bg-gradient-to-r from-[#14532d] via-[#1f7a43] to-[#2f8f4e]">
             <span className="absolute left-6 top-2 h-3 w-3 rounded-full bg-[#f6faf6] shadow-inner" />
             <span className="absolute right-6 top-2 h-3 w-3 rounded-full bg-[#f6faf6] shadow-inner" />
@@ -442,6 +469,59 @@ export default function Intro() {
             <span ref={barEl} className="absolute inset-y-0 left-0 w-0 rounded-full bg-gradient-to-r from-[#1f7a43] to-[#c9a24d]" />
           </span>
           <span className="font-mono text-[0.62rem] tracking-[0.16em] text-[#c9a24d]">2027</span>
+        </div>
+      </div>
+
+      {/* the monumental 2027 the particles rebuild: solid metallic gold, a light sweep, an anamorphic flare */}
+      <div className="i-big-wrap pointer-events-none absolute inset-0 z-[35] flex will-change-transform flex-col items-center justify-center px-4">
+        <span aria-hidden className="i-big-halo absolute h-[min(46rem,120vw)] w-[min(46rem,120vw)] rounded-full opacity-0 bg-[radial-gradient(circle,rgba(250,204,21,0.22),rgba(34,150,80,0.12)_45%,transparent_70%)]" />
+        <div className="relative -translate-y-[2vh]">
+          <span
+            ref={bigEl}
+            className="i-big relative block will-change-[transform,opacity] font-display text-[clamp(6rem,min(30vw,40vh),24rem)] font-semibold leading-none tracking-[-0.04em] tabular-nums opacity-0"
+            style={{
+              backgroundImage: "linear-gradient(180deg,#fff7dc 0%,#f6dc8a 28%,#d4a944 50%,#8a6414 68%,#c9a24d 84%,#f6dc8a 100%)",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              color: "transparent",
+              filter: "drop-shadow(0 0 30px rgba(250,204,21,0.35)) drop-shadow(0 20px 40px rgba(0,0,0,0.6))",
+            }}
+          >
+            2027
+          </span>
+          {/* light sweeping across the metal */}
+          <span
+            aria-hidden
+            className="i-big-shine pointer-events-none absolute inset-0 block font-display text-[clamp(6rem,min(30vw,40vh),24rem)] font-semibold leading-none tracking-[-0.04em] tabular-nums"
+            style={{
+              backgroundImage: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.95) 50%, transparent 60%)",
+              backgroundSize: "250% 100%",
+              backgroundPosition: "160% 0",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              color: "transparent",
+            }}
+          >
+            2027
+          </span>
+          {/* anamorphic lens flare */}
+          <span aria-hidden className="i-flare absolute left-1/2 top-1/2 h-10 w-[min(110vw,90rem)] -translate-x-1/2 -translate-y-1/2 opacity-0 mix-blend-screen">
+            {/* soft glow */}
+            <span
+              className="absolute inset-x-0 top-1/2 h-6 -translate-y-1/2 rounded-full blur-[10px]"
+              style={{ background: "radial-gradient(ellipse 50% 50% at 50% 50%, rgba(250,214,120,0.55), rgba(250,204,21,0.12) 55%, rgba(250,204,21,0) 100%)" }}
+            />
+            {/* bright core line */}
+            <span
+              className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full"
+              style={{ background: "linear-gradient(90deg, rgba(255,240,200,0), rgba(255,236,180,0.35) 22%, #fffaf0 50%, rgba(255,236,180,0.35) 78%, rgba(255,240,200,0))" }}
+            />
+          </span>
+        </div>
+        <div className="mt-[clamp(0.6rem,2vh,1.4rem)] flex items-center gap-4">
+          <span className="i-cap-rule h-px w-10 origin-right scale-x-0 bg-gradient-to-l from-[#d4a944] to-transparent sm:w-20" />
+          <span className="i-cap whitespace-nowrap font-mono text-[0.68rem] uppercase text-[#f6dc8a] opacity-0 sm:text-[0.8rem]">A new chapter begins</span>
+          <span className="i-cap-rule h-px w-10 origin-left scale-x-0 bg-gradient-to-r from-[#d4a944] to-transparent sm:w-20" />
         </div>
       </div>
 
@@ -564,8 +644,8 @@ export default function Intro() {
         </div>
       </div>
 
-      {/* celebration canvas (fireworks + confetti) and the light flood used by the transition */}
-      <canvas ref={fxEl} aria-hidden className="i-fx pointer-events-none absolute inset-0 z-[50] h-full w-full" />
+      {/* celebration canvas (fireworks + gold glitter, drawn behind the calendar card) and the light flood used by the transition */}
+      <canvas ref={fxEl} aria-hidden className="i-fx pointer-events-none absolute inset-0 z-[30] h-full w-full" />
       <div className="i-flash pointer-events-none absolute inset-0 z-[55] opacity-0" style={{ background: "radial-gradient(circle at 50% 46%, #ffffff 0%, #fff7d6 35%, #f6faf6 100%)" }} />
 
       <button

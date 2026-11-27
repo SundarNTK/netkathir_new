@@ -1,17 +1,106 @@
-/* Canvas effects for the opening: real-looking fireworks + confetti for the celebration, and a warp-speed
-   tunnel for the "AI era" finale. Plain 2D canvas, one shared ticker, nothing runs unless a flag is on. */
+/* Canvas effects for the opening.
+   - 2027 reveal: the calendar's year breaks into thousands of points of gold light that swirl across the screen and
+     rebuild a monumental "2027" (sampled from the real DOM text, so it lines up exactly), over drifting gold bokeh.
+   - Finale: a warp-speed star tunnel.
+   Plain 2D canvas, one shared ticker, nothing runs unless a flag is on. */
 
-export type FxFlags = { fire: boolean; confetti: boolean; warpOn: boolean; warp: number; kill?: boolean };
+export type FxFlags = {
+  warpOn: boolean;
+  warp: number;
+  kill?: boolean;
+  bokeh?: boolean;
+  morph?: number; // 0 → 1: particles travel from the calendar year to the big year
+  morphOut?: number; // 0 → 1: particles settle into gold dust and fade as the solid year takes over
+};
 
-const GOLD = ["#facc15", "#fbbf24", "#f59e0b", "#fde68a"];
-const GREEN = ["#16a34a", "#22c55e", "#15803d", "#4ade80"];
-const MIX = [...GOLD, ...GREEN, "#ffffff"];
+type P = {
+  sx: number; sy: number; tx: number; ty: number; cx: number; cy: number;
+  x: number; y: number; px: number; py: number;
+  delay: number; size: number; ph: number; hue: number; dx: number; dy: number;
+};
+type Bokeh = { x: number; y: number; r: number; vy: number; vx: number; a: number; gold: boolean; ph: number };
+type Star = { a: number; z: number; sp: number; col: string };
+
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
 
-type Rocket = { x: number; y: number; vx: number; vy: number; fuse: number; col: string };
-type Spark = { x: number; y: number; px: number; py: number; vx: number; vy: number; life: number; max: number; col: string; w: number; twinkle: boolean };
-type Chip = { x: number; y: number; vy: number; vx: number; w: number; h: number; rot: number; vr: number; ph: number; sw: number; col: string; delay: number };
-type Star = { a: number; z: number; sp: number; col: string };
+function glowSprite(r: number, g: number, b: number) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const x = c.getContext("2d")!;
+  const grd = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grd.addColorStop(0, "rgba(255,255,255,1)");
+  grd.addColorStop(0.2, `rgba(${r},${g},${b},0.9)`);
+  grd.addColorStop(0.5, `rgba(${r},${g},${b},0.22)`);
+  grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
+  x.fillStyle = grd;
+  x.fillRect(0, 0, 64, 64);
+  return c;
+}
+
+/** a camera-lens bokeh disc: soft edge, slightly brighter rim */
+function bokehSprite(r: number, g: number, b: number) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const x = c.getContext("2d")!;
+  const grd = x.createRadialGradient(64, 64, 0, 64, 64, 62);
+  grd.addColorStop(0, `rgba(${r},${g},${b},0.55)`);
+  grd.addColorStop(0.82, `rgba(${r},${g},${b},0.7)`);
+  grd.addColorStop(0.92, `rgba(${r},${g},${b},0.9)`);
+  grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
+  x.fillStyle = grd;
+  x.beginPath();
+  x.arc(64, 64, 62, 0, Math.PI * 2);
+  x.fill();
+  return c;
+}
+
+/**
+ * Sample the lit pixels of an element's text, in viewport coordinates. Each character is drawn where the browser
+ * actually laid it out (measured with a Range), so letter-spacing and kerning match the DOM text exactly.
+ */
+function sampleText(el: HTMLElement, gap: number) {
+  const r = el.getBoundingClientRect();
+  const cs = getComputedStyle(el);
+  // the element may be scaled by a parent transform: correct the font size by the rendered/laid-out ratio
+  const k = el.offsetWidth ? r.width / el.offsetWidth : 1;
+  const fs = parseFloat(cs.fontSize) * k;
+  const w = Math.max(1, Math.ceil(r.width));
+  const h = Math.max(1, Math.ceil(r.height));
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  const x = c.getContext("2d", { willReadFrequently: true })!;
+  x.font = `${cs.fontWeight} ${fs}px ${cs.fontFamily}`;
+  x.textAlign = "left";
+  x.textBaseline = "alphabetic";
+  x.fillStyle = "#fff";
+  const node = Array.from(el.childNodes).find((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
+  if (node) {
+    const txt = node.textContent ?? "";
+    const range = document.createRange();
+    for (let i = 0; i < txt.length; i++) {
+      const ch = txt[i];
+      if (!ch.trim()) continue;
+      range.setStart(node, i);
+      range.setEnd(node, i + 1);
+      const cr = range.getBoundingClientRect();
+      const m = x.measureText(ch);
+      // the character's line box is centred on its font ascent+descent; find the baseline inside it
+      const fa = m.fontBoundingBoxAscent ?? fs * 0.9;
+      const fd = m.fontBoundingBoxDescent ?? fs * 0.22;
+      const base = cr.top - r.top + (cr.height - (fa + fd)) / 2 + fa;
+      x.fillText(ch, cr.left - r.left, base);
+    }
+  }
+  const d = x.getImageData(0, 0, w, h).data;
+  const pts: [number, number][] = [];
+  for (let yy = 0; yy < h; yy += gap) {
+    for (let xx = 0; xx < w; xx += gap) {
+      if (d[(yy * w + xx) * 4 + 3] > 140) pts.push([r.left + xx, r.top + yy]);
+    }
+  }
+  return pts;
+}
 
 export function createFx(fxCv: HTMLCanvasElement, wpCv: HTMLCanvasElement, f: FxFlags) {
   const fx = fxCv.getContext("2d")!;
@@ -20,7 +109,7 @@ export function createFx(fxCv: HTMLCanvasElement, wpCv: HTMLCanvasElement, f: Fx
   let H = 0;
   let dpr = 1;
   const resize = () => {
-    dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+    dpr = Math.min(window.devicePixelRatio || 1, 1.25); // soft glows don't need retina resolution; keeps every frame cheap
     W = window.innerWidth;
     H = window.innerHeight;
     for (const c of [fxCv, wpCv]) {
@@ -32,57 +121,87 @@ export function createFx(fxCv: HTMLCanvasElement, wpCv: HTMLCanvasElement, f: Fx
   };
   resize();
 
-  const rockets: Rocket[] = [];
-  const sparks: Spark[] = [];
-  const chips: Chip[] = [];
+  const gold = glowSprite(255, 208, 110);
+  const warm = glowSprite(255, 236, 190);
+  const green = glowSprite(120, 235, 160);
+  const bGold = bokehSprite(246, 210, 130);
+  const bGreen = bokehSprite(70, 190, 110);
+
+  let parts: P[] = [];
+  const bokeh: Bokeh[] = [];
   const stars: Star[] = Array.from({ length: 280 }, () => ({ a: Math.random() * Math.PI * 2, z: Math.random(), sp: 0.5 + Math.random() * 0.9, col: pick(["#fde68a", "#86efac", "#ffffff", "#facc15", "#4ade80"]) }));
-  let launchT = 0;
-  let wasConfetti = false;
+  let t = 0;
   let dirty = false;
   let wpDirty = false;
 
-  const burst = (x: number, y: number, big: boolean) => {
-    const n = big ? 120 : 80;
-    const ring = Math.random() > 0.55;
-    const c1 = pick(MIX);
-    const c2 = pick(MIX);
+  const spawnBokeh = () => {
+    bokeh.length = 0;
+    const n = W < 700 ? 14 : 26;
     for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2 + Math.random() * 0.08;
-      const sp = ring ? 230 : 90 + Math.random() * 270;
-      sparks.push({ x, y, px: x, py: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0, max: 1.1 + Math.random() * 0.9, col: i % 3 ? c1 : c2, w: 1.4 + Math.random() * 1.4, twinkle: Math.random() > 0.6 });
+      const near = Math.random();
+      bokeh.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: 14 + near * (W < 700 ? 40 : 70),
+        vy: -(4 + near * 14),
+        vx: (Math.random() - 0.5) * 6,
+        a: 0.05 + (1 - near) * 0.1,
+        gold: Math.random() > 0.3,
+        ph: Math.random() * 6.28,
+      });
     }
-    // a bright flash at the core
-    sparks.push({ x, y, px: x, py: y, vx: 0, vy: 0, life: 0, max: 0.25, col: "#fff7c2", w: 26, twinkle: false });
   };
 
+  /** build the particle field: from the calendar year (src) to the big year (dst) */
+  const formText = (src: HTMLElement, dst: HTMLElement) => {
+    const small = W < 700;
+    const dRect = dst.getBoundingClientRect();
+    const fs = parseFloat(getComputedStyle(dst).fontSize) || 200;
+    let gap = Math.max(3, Math.round(fs / (small ? 34 : 46)));
+    let to = sampleText(dst, gap);
+    const cap = small ? 1200 : 2200;
+    if (to.length > cap) {
+      // one resample at the spacing that fits the budget (point count falls with the square of the spacing)
+      gap = Math.ceil(gap * Math.sqrt(to.length / cap));
+      to = sampleText(dst, gap);
+    }
+    const from = sampleText(src, Math.max(2, Math.round(gap * 0.4)));
+    const cx = dRect.left + dRect.width / 2;
+    parts = to.map(([gx, gy], i) => {
+      // nudge each point off the sampling grid so the lettering reads as scattered light, not a dot matrix
+      const tx = gx + (Math.random() - 0.5) * gap * 0.9;
+      const ty = gy + (Math.random() - 0.5) * gap * 0.9;
+      const [sx, sy] = from.length ? from[Math.floor((i / to.length) * from.length)] : [W / 2, H / 2];
+      // each point arcs through the air on its own curve, sweeping wide around the centre
+      const side = sx < cx ? -1 : 1;
+      const mx = (sx + tx) / 2 + side * (W * (0.12 + Math.random() * 0.28));
+      const my = (sy + ty) / 2 - H * (0.1 + Math.random() * 0.3);
+      return {
+        sx, sy, tx, ty, cx: mx, cy: my, x: sx, y: sy, px: sx, py: sy,
+        delay: Math.random() * 0.4 + (Math.abs(sx - cx) / W) * 0.25,
+        size: 2 + Math.random() * 2.6,
+        ph: Math.random() * 6.28,
+        hue: Math.random(),
+        dx: (Math.random() - 0.5) * 60,
+        dy: -20 - Math.random() * 70,
+      };
+    });
+    dirty = true;
+  };
+
+  const ease = (p: number) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+
   const tickFx = (dt: number) => {
+    t += dt;
     if (f.kill) {
-      rockets.length = 0;
-      sparks.length = 0;
-      chips.length = 0;
+      parts = [];
+      bokeh.length = 0;
       f.kill = false;
     }
-    if (f.fire) {
-      launchT -= dt;
-      if (launchT <= 0) {
-        launchT = 0.28 + Math.random() * 0.3;
-        const x = W * (0.12 + Math.random() * 0.76);
-        const rise = H * (0.5 + Math.random() * 0.25);
-        rockets.push({ x, y: H + 10, vx: (Math.random() - 0.5) * 40, vy: -(rise / 0.95), fuse: 0.85 + Math.random() * 0.25, col: pick(GOLD) });
-      }
-    }
-    if (f.confetti && !wasConfetti) {
-      for (let i = 0; i < 190; i++) {
-        const left = i % 2 === 0;
-        chips.push({
-          x: Math.random() * W, y: -20 - Math.random() * H * 0.5, vy: 110 + Math.random() * 190, vx: (Math.random() - 0.5) * 60,
-          w: 6 + Math.random() * 7, h: 10 + Math.random() * 9, rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 9, ph: Math.random() * 6.28, sw: 20 + Math.random() * 40,
-          col: pick(left ? [...GOLD, "#ffffff"] : [...GREEN, "#fde68a"]), delay: Math.random() * 1.6,
-        });
-      }
-    }
-    wasConfetti = f.confetti;
-    if (!f.fire && !f.confetti && !rockets.length && !sparks.length && !chips.length) {
+    if (f.bokeh && !bokeh.length) spawnBokeh();
+    if (!f.bokeh && bokeh.length) bokeh.length = 0;
+
+    if (!parts.length && !bokeh.length) {
       if (dirty) {
         fx.clearRect(0, 0, W, H);
         dirty = false;
@@ -90,84 +209,67 @@ export function createFx(fxCv: HTMLCanvasElement, wpCv: HTMLCanvasElement, f: Fx
       return;
     }
     dirty = true;
-    // fade the previous frame so sparks leave trails
-    fx.globalCompositeOperation = "destination-out";
-    fx.fillStyle = "rgba(0,0,0,0.22)";
-    fx.fillRect(0, 0, W, H);
-    fx.globalCompositeOperation = "source-over";
+    fx.clearRect(0, 0, W, H);
+    fx.globalCompositeOperation = "lighter";
 
-    for (let i = rockets.length - 1; i >= 0; i--) {
-      const r = rockets[i];
-      r.fuse -= dt;
-      r.vy += 90 * dt;
-      r.x += r.vx * dt;
-      r.y += r.vy * dt;
-      fx.fillStyle = r.col;
-      fx.beginPath();
-      fx.arc(r.x, r.y, 2.4, 0, 6.3);
-      fx.fill();
-      if (Math.random() > 0.3) sparks.push({ x: r.x, y: r.y, px: r.x, py: r.y, vx: (Math.random() - 0.5) * 24, vy: 30 + Math.random() * 40, life: 0, max: 0.45, col: "#fbbf24", w: 1.4, twinkle: false });
-      if (r.fuse <= 0) {
-        burst(r.x, r.y, Math.random() > 0.5);
-        rockets.splice(i, 1);
+    for (const b of bokeh) {
+      b.y += b.vy * dt;
+      b.x += b.vx * dt;
+      b.ph += dt * 0.6;
+      if (b.y < -b.r * 2) {
+        b.y = H + b.r;
+        b.x = Math.random() * W;
       }
+      fx.globalAlpha = b.a * (0.75 + 0.25 * Math.sin(b.ph));
+      const s = b.r * 2;
+      fx.drawImage(b.gold ? bGold : bGreen, b.x - b.r, b.y - b.r, s, s);
     }
-    for (let i = sparks.length - 1; i >= 0; i--) {
-      const s = sparks[i];
-      s.life += dt;
-      if (s.life >= s.max) {
-        sparks.splice(i, 1);
-        continue;
+
+    const m = f.morph ?? 0;
+    const out = f.morphOut ?? 0;
+    // streaks are batched into two paths (one per colour) and stroked once each: far cheaper than a stroke per point
+    const trailGold = new Path2D();
+    const trailGreen = new Path2D();
+    let trails = 0;
+    for (const p of m > 0 ? parts : []) {
+      const k = Math.min(1, Math.max(0, (m - p.delay * 0.55) / 0.55));
+      const e = ease(k);
+      const u = 1 - e;
+      p.px = p.x;
+      p.py = p.y;
+      // quadratic bezier from the calendar to the big year
+      p.x = u * u * p.sx + 2 * u * e * p.cx + e * e * p.tx;
+      p.y = u * u * p.sy + 2 * u * e * p.cy + e * e * p.ty;
+      // once the solid year takes over, the light lifts away as fine gold dust
+      p.x += p.dx * out * out;
+      p.y += p.dy * out * out;
+      const arrived = k >= 1;
+      const shimmer = arrived ? 0.7 + 0.3 * Math.sin(t * 6 + p.ph) : 1;
+      const a = (k > 0 ? 1 : 0.85) * shimmer * (1 - out);
+      if (a <= 0.01) continue;
+      const moving = k > 0 && k < 1;
+      if (moving) {
+        const tp = p.hue > 0.82 ? trailGreen : trailGold;
+        tp.moveTo(p.px - (p.x - p.px) * 0.8, p.py - (p.y - p.py) * 0.8);
+        tp.lineTo(p.x, p.y);
+        trails++;
       }
-      s.px = s.x;
-      s.py = s.y;
-      s.vx *= 1 - 1.6 * dt;
-      s.vy = s.vy * (1 - 1.6 * dt) + 200 * dt;
-      s.x += s.vx * dt;
-      s.y += s.vy * dt;
-      const k = 1 - s.life / s.max;
-      const tw = s.twinkle ? 0.5 + 0.5 * Math.sin(s.life * 40) : 1;
-      fx.globalAlpha = Math.max(0, k * tw);
-      fx.strokeStyle = s.col;
-      fx.fillStyle = s.col;
-      if (s.w > 10) {
-        fx.beginPath();
-        fx.arc(s.x, s.y, s.w * (1 + (1 - k) * 2), 0, 6.3);
-        fx.fill();
-      } else {
-        fx.lineWidth = s.w * (0.5 + k * 0.7);
-        fx.lineCap = "round";
-        fx.beginPath();
-        fx.moveTo(s.px, s.py);
-        fx.lineTo(s.x, s.y);
-        fx.stroke();
-      }
+      const sz = p.size * (moving ? 4.2 : 3.2) * (1 + out * 0.5);
+      fx.globalAlpha = a;
+      fx.drawImage(p.hue > 0.82 ? green : p.hue > 0.6 ? warm : gold, p.x - sz / 2, p.y - sz / 2, sz, sz);
     }
+    if (trails) {
+      fx.lineCap = "round";
+      fx.lineWidth = 1.3;
+      fx.globalAlpha = 0.28;
+      fx.strokeStyle = "rgb(255,214,130)";
+      fx.stroke(trailGold);
+      fx.strokeStyle = "rgb(150,240,180)";
+      fx.stroke(trailGreen);
+    }
+    if (out >= 1) parts = [];
     fx.globalAlpha = 1;
-    for (let i = chips.length - 1; i >= 0; i--) {
-      const c = chips[i];
-      if (c.delay > 0) {
-        c.delay -= dt;
-        continue;
-      }
-      c.y += c.vy * dt;
-      c.ph += dt * 3;
-      c.x += (c.vx + Math.sin(c.ph) * c.sw) * dt;
-      c.rot += c.vr * dt;
-      if (c.y > H + 30) {
-        chips.splice(i, 1);
-        continue;
-      }
-      fx.save();
-      fx.translate(c.x, c.y);
-      fx.rotate(c.rot);
-      fx.scale(1, Math.cos(c.ph * 1.7)); // flutter: the piece turns edge-on and back
-      fx.fillStyle = c.col;
-      fx.globalAlpha = 0.95;
-      fx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
-      fx.restore();
-    }
-    fx.globalAlpha = 1;
+    fx.globalCompositeOperation = "source-over";
   };
 
   const tickWarp = (dt: number) => {
@@ -214,6 +316,7 @@ export function createFx(fxCv: HTMLCanvasElement, wpCv: HTMLCanvasElement, f: Fx
       tickFx(dt);
       tickWarp(dt);
     },
+    formText,
     resize,
     clear: () => {
       fx.clearRect(0, 0, W, H);
