@@ -51,7 +51,7 @@ export default function Projects() {
         </div>
       </section>
 
-      <LetterWall rows={["AUTOMATE", "INTEGRATE", "DELIVER"]} stamp="Netkathir · 2015 — 2026" title="11 years. 50+ projects. One team" sub="From hospitals to marine to e-commerce — software that keeps running." />
+      <LetterWall rows={["PLAN", "DESIGN", "BUILD", "CONNECT", "AUTOMATE", "INTEGRATE", "DELIVER", "SUPPORT", "SCALE", "SECURE", "MAINTAIN"]} stamp="Netkathir · 2015 — 2026" title="11 years. 50+ projects. One team" sub="From hospitals to marine to e-commerce — software that keeps running." />
       <section className="px-3 py-10 md:py-14 sm:px-6">
         <div data-panel className="mx-auto grid max-w-7xl gap-10 rounded-[2rem] bg-gradient-to-br from-[#052e16] via-[#14532d] to-[#166534] px-6 py-16 text-center text-white sm:grid-cols-3 md:py-24">
           {[

@@ -299,25 +299,44 @@ export function Collage({ tag, lines, text, cta, href, main, floats, sticker }: 
 }
 
 /* ──────────────────────────────────────────────────────────────
-   LetterWall — giant extruded letters in rows that slide against each
-   other while a card floats in the middle.
+   LetterWall — opposing marquees behind the card. Each line is one
+   word, looped so the gaps stay even, sliding left and right.
    ────────────────────────────────────────────────────────────── */
-export function LetterWall({ rows, title, sub, stamp }: { rows: string[]; title: string; sub: string; stamp: string }) {
-  const ext = Array.from({ length: 6 }, (_, i) => `${i + 1}px ${i + 1}px 0 #0b3a1f`).join(",");
+function Ribbon({ word, reverse, duration, color }: { word: string; reverse: boolean; duration: number; color: string }) {
+  const half = (id: string) =>
+    Array.from({ length: 16 }, (_, k) => (
+      <span key={`${id}-${k}`} className="inline-flex shrink-0 items-center gap-5 pr-5 sm:gap-7 sm:pr-7">
+        <span className="font-display text-[clamp(0.95rem,1.55vw,1.3rem)] font-semibold uppercase leading-none" style={{ color, letterSpacing: "0.16em" }}>
+          {word}
+        </span>
+        <span aria-hidden className="h-1 w-1 shrink-0 rounded-full" style={{ background: color, opacity: 0.75 }} />
+      </span>
+    ));
   return (
-    <section data-nolift className="relative my-8 overflow-hidden bg-[#06190e] py-7">
-      <div aria-hidden className="absolute inset-0 opacity-70" style={{ backgroundImage: "radial-gradient(rgba(134,239,172,.2) 1.2px, transparent 1.4px)", backgroundSize: "28px 28px" }} />
-      <div className="relative space-y-1">
+    <div className="overflow-hidden">
+      <div className={`marquee-track items-center${reverse ? " rev" : ""}`} style={{ animationDuration: `${duration}s` }}>
+        <div className="flex">{half("a")}</div>
+        <div className="flex" aria-hidden>{half("b")}</div>
+      </div>
+    </div>
+  );
+}
+
+export function LetterWall({ rows, title, sub, stamp }: { rows: string[]; title: string; sub: string; stamp: string }) {
+  return (
+    <section data-nolift className="relative my-8 overflow-hidden bg-[#06190e] px-4 py-10 sm:py-12">
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(22,101,52,0.45),transparent_62%)]" />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 flex flex-col justify-between py-3"
+        style={{ WebkitMaskImage: "linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent)", maskImage: "linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent)" }}
+      >
         {rows.map((r, i) => (
-          <div key={r + i} data-scrub-x={i % 2 ? "1" : "-1"} className="flex justify-center gap-[0.35em] whitespace-nowrap font-display text-[clamp(3.6rem,10.5vw,9rem)] font-bold uppercase leading-[0.84]" style={{ color: i % 2 ? "#22c55e" : "#eab308", textShadow: ext }}>
-            {Array.from({ length: 3 }).map((_, k) => (
-              <span key={k}>{r}</span>
-            ))}
-          </div>
+          <Ribbon key={r + i} word={r} reverse={i % 2 === 1} duration={48 + (i % 4) * 10} color={i % 2 ? "#c6f5d4" : "#ffe9a3"} />
         ))}
       </div>
-      <div className="pointer-events-none absolute inset-0 grid place-items-center px-4">
-        <div data-reveal className="pointer-events-auto w-full max-w-md rounded-sm bg-[#efefea] p-6 text-[#06190e] shadow-[0_40px_90px_-30px_rgba(0,0,0,0.9)] sm:p-8">
+      <div className="relative z-10 mx-auto w-full max-w-md">
+        <div data-reveal className="rounded-sm bg-[#efefea] p-6 text-[#06190e] shadow-[0_40px_90px_-30px_rgba(0,0,0,0.9)] sm:p-8">
           <p className="font-mono text-[0.7rem] uppercase tracking-[0.3em] text-[#15803d]">{stamp}</p>
           <h3 className="mt-3 font-display text-2xl leading-[1.05] sm:text-3xl">{title}</h3>
           <p className="mt-3 text-sm text-[#3f5a4a]">{sub}</p>
