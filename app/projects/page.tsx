@@ -1,4 +1,5 @@
 import PageHero from "@/components/PageHero";
+import StatCards from "@/components/StatCards";
 import { FlightStrip } from "@/components/Flight";
 import { ClientReel, LetterWall } from "@/components/Showcase";
 import Ticker from "@/components/Ticker";
@@ -52,18 +53,9 @@ export default function Projects() {
       </section>
 
       <LetterWall rows={["PLAN", "DESIGN", "BUILD", "CONNECT", "AUTOMATE", "INTEGRATE", "DELIVER", "SUPPORT", "SCALE", "SECURE", "MAINTAIN"]} stamp="Netkathir · 2015 — 2026" title="11 years. 50+ projects. One team" sub="From hospitals to marine to e-commerce — software that keeps running." />
-      <section className="px-3 py-10 md:py-14 sm:px-6">
-        <div data-panel className="mx-auto grid max-w-7xl gap-10 rounded-[2rem] bg-gradient-to-br from-[#052e16] via-[#14532d] to-[#166534] px-6 py-16 text-center text-white sm:grid-cols-3 md:py-24">
-          {[
-            ["11", "+", "Years of delivery"],
-            ["6", "", "Countries served"],
-            ["50", "+", "Engineers"],
-          ].map(([n, s, l]) => (
-            <div key={l}>
-              <div data-count={n} data-suffix={s} className="font-display text-[clamp(4.5rem,10vw,8rem)] leading-none text-grad-night">{n}{s}</div>
-              <p className="mt-2 text-white/70">{l}</p>
-            </div>
-          ))}
+      <section className="px-3 py-10 sm:px-6 md:py-14">
+        <div className="mx-auto max-w-7xl">
+          <StatCards items={[["11", "+", "Years of delivery", "years"], ["6", "", "Countries served", "countries"], ["50", "+", "Engineers", "people"]]} />
         </div>
       </section>
 

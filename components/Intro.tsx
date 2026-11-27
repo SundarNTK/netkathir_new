@@ -375,7 +375,7 @@ export default function Intro() {
         });
       };
       Promise.all(tasks).then(() => window.setTimeout(finish, Math.max(0, 1100 - (performance.now() - started))));
-      window.setTimeout(finish, 8000); // never hold the visitor longer than this
+      window.setTimeout(finish, 22000); // never hold the visitor longer than this (the 3D warm-up has its own 20s safety net)
     }
 
     return () => {

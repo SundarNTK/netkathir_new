@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Capabilities from "@/components/Capabilities";
 import { FlightJourney, FlyAnywhere } from "@/components/Flight";
 import { Collage } from "@/components/Showcase";
 import { CLIENTS, IMAGES, SERVICE_GROUPS, TESTIMONIALS } from "@/lib/data";
@@ -235,30 +236,9 @@ export default function Home() {
             </div>
             <Link href="/services" className="btn">All services →</Link>
           </div>
-          <div data-stagger className="grid gap-5 md:grid-cols-2">
-            {SERVICE_GROUPS.map((g, i) => (
-              <Link
-                key={g.name}
-                href="/services"
-                className="group relative flex flex-col overflow-hidden rounded-[1.75rem] border border-[#14532d]/10 bg-white p-8 shadow-[0_24px_60px_-34px_rgba(20,83,45,0.45)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_34px_70px_-30px_rgba(20,83,45,0.6)]"
-              >
-                <span className="absolute inset-x-0 top-0 h-1 origin-left scale-x-[0.18] bg-gradient-to-r from-[#14532d] via-[#22a559] to-[#eab308] transition-transform duration-700 group-hover:scale-x-100" />
-                <div className="flex items-start justify-between gap-4">
-                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-[#14532d] to-[#22a559] font-display text-lg font-bold text-white shadow-[0_10px_20px_-8px_rgba(21,128,61,0.8)]">0{i + 1}</span>
-                  <span className="rounded-full bg-[#fef3c7] px-3 py-1 text-xs font-bold text-[#92620a]">{g.items.length} services</span>
-                </div>
-                <h3 className="mt-6 font-display text-[1.7rem] font-semibold leading-tight">{g.name}</h3>
-                <p className="mt-2 max-w-md text-[0.95rem] text-muted">{g.blurb}</p>
-                <ul className="mt-6 flex flex-wrap gap-2">
-                  {g.items.slice(0, 3).map((it) => (
-                    <li key={it} className="rounded-full border border-[#14532d]/10 bg-[#f1f8f3] px-3 py-1.5 text-xs font-medium text-[#14532d]">{it.replace(/ \(.*\)/, "")}</li>
-                  ))}
-                  {g.items.length > 3 && <li className="rounded-full px-2 py-1.5 text-xs font-semibold text-[#15803d]">+{g.items.length - 3} more</li>}
-                </ul>
-                <span className="mt-7 inline-flex items-center gap-2 text-sm font-semibold text-[#15803d]">Explore <span className="transition-transform duration-300 group-hover:translate-x-1.5">→</span></span>
-              </Link>
-            ))}
-          </div>
+          <Capabilities
+            groups={SERVICE_GROUPS.map((g, i) => ({ ...g, image: [IMAGES.heroes.services, IMAGES.heroes.products, IMAGES.heroes.projects, IMAGES.heroes.about][i % 4] }))}
+          />
         </div>
       </section>
 

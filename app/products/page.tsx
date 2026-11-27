@@ -2,7 +2,8 @@ import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import { FlightStrip } from "@/components/Flight";
 import Ticker from "@/components/Ticker";
-import { PRODUCTS } from "@/lib/data";
+import Demo from "@/components/Demo";
+import { IMAGES, PRODUCTS } from "@/lib/data";
 
 export const metadata = { title: "Products — Netkathir Technologies" };
 
@@ -53,10 +54,9 @@ export default function Products() {
         ))}
       </div>
 
-      <section className="px-3 pb-12 md:pb-16 sm:px-6">
-        <div data-panel className="mx-auto max-w-7xl rounded-[2rem] bg-gradient-to-br from-[#052e16] via-[#14532d] to-[#166534] px-6 py-16 text-center text-white md:py-24">
-          <h2 data-split className="mx-auto max-w-3xl font-display text-[clamp(2rem,4.6vw,4rem)] leading-[1.03]">Want to see one of them in action?</h2>
-          <Link href="/contact" className="btn mt-8 !border-transparent !bg-[#fde68a] !text-[#14532d]">Book a demo →</Link>
+      <section className="px-3 pb-12 sm:px-6 md:pb-16">
+        <div className="mx-auto max-w-7xl">
+          <Demo photos={[IMAGES.garage.invoicing, IMAGES.garage.owners, IMAGES.garage.mechanics]} />
         </div>
       </section>
     </div>

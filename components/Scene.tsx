@@ -330,9 +330,12 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
 
   const frames = useRef(0);
   useFrame((state, d) => {
-    if (frames.current < 4 && ++frames.current === 4) {
+    // the loader waits for this: every 3D object has been built, compiled and drawn once, so nothing hitches afterwards
+    // (a safety net releases it anyway if some device is very slow)
+    if (!frames.current && ((window as unknown as { __nkWarm?: boolean }).__nkWarm || state.clock.elapsedTime > 20)) {
+      frames.current = 1;
       (window as unknown as { __nkSceneReady?: boolean }).__nkSceneReady = true;
-      window.dispatchEvent(new Event("nk:scene-ready")); // the loader waits for this, so the site never stutters while it first renders
+      window.dispatchEvent(new Event("nk:scene-ready"));
     }
     const dt = Math.min(d, 0.25);
     shared.uTime.value += dt;
@@ -396,30 +399,30 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
 
   return (
     <>
-      {variant !== "core" && variant !== "mail" && <Dust shared={shared} count={mobile ? 250 : 650} />}
+      {variant !== "none" && variant !== "core" && variant !== "mail" && <Dust shared={shared} count={mobile ? 250 : 650} />}
       <group ref={group}>
-        <Presence active={variant === "core"}>
+        <Presence active={variant === "core"} warm>
           <AICore palette={shared} mobile={mobile} />
         </Presence>
-        <Presence active={variant === "chip"}>
+        <Presence active={variant === "chip"} warm={!mobile}>
           <Chip palette={shared} />
         </Presence>
-        <Presence active={variant === "globe"}>
+        <Presence active={variant === "globe"} warm>
           <Globe palette={shared} />
         </Presence>
-        <Presence active={variant === "devices"}>
+        <Presence active={variant === "devices"} warm={!mobile}>
           <Devices palette={shared} />
         </Presence>
-        <Presence active={variant === "work"}>
+        <Presence active={variant === "work"} warm={!mobile}>
           <Workbench palette={shared} />
         </Presence>
-        <Presence active={variant === "articles"}>
+        <Presence active={variant === "articles"} warm={!mobile}>
           <Articles palette={shared} />
         </Presence>
-        <Presence active={variant === "mail"}>
+        <Presence active={variant === "mail"} warm>
           <ContactScene palette={shared} mobile={mobile} />
         </Presence>
-        <Presence active={variant !== "none" && variant !== "core" && variant !== "services" && variant !== "mail"}>
+        <Presence active={variant !== "none" && variant !== "core" && variant !== "services" && variant !== "mail"} warm>
           <group ref={spin} scale={variant === "core" ? 0.8 : variant === "globe" ? 0.5 : 1}>
             <Network shared={shared} count={mobile ? 30 : 46} />
             <Rings shared={shared} />
@@ -440,6 +443,17 @@ export default function Scene() {
   const [active, setActive] = useState(true);
   // While the intro plays (after the first frame is drawn) the hero scene sleeps, so the intro animation owns the GPU.
   const [asleep, setAsleep] = useState(false);
+  // until the warm-up has finished the canvas keeps drawing (even on a page without 3D, hidden), so the loader can be released
+  const [warmed, setWarmed] = useState(() => typeof window !== "undefined" && !!(window as unknown as { __nkWarm?: boolean }).__nkWarm);
+  useEffect(() => {
+    const f = () => setWarmed(true);
+    window.addEventListener("nk:scene-warm", f);
+    window.addEventListener("nk:scene-ready", f);
+    return () => {
+      window.removeEventListener("nk:scene-warm", f);
+      window.removeEventListener("nk:scene-ready", f);
+    };
+  }, []);
   useEffect(() => {
     const sleep = () => {
       if ((window as unknown as { __nkIntro?: string }).__nkIntro === "playing") setAsleep(true);
@@ -465,14 +479,14 @@ export default function Scene() {
       document.removeEventListener("visibilitychange", f);
     };
   }, [path]);
-  if (variant === "none") return null;
+  const hidden = variant === "none";
   return (
     <Canvas
-      frameloop={active && !asleep ? "always" : "never"}
+      frameloop={!warmed || (active && !asleep && !hidden) ? "always" : "never"}
       dpr={[1, mobile ? 1.25 : 1.5]}
       camera={{ position: [0, 0, 8.5], fov: 45 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-      style={{ position: "absolute", inset: 0, opacity: active ? 1 : 0, transition: "opacity .5s" }}
+      style={{ position: "absolute", inset: 0, opacity: active && !hidden ? 1 : 0, transition: "opacity .5s" }}
     >
       <World mobile={mobile} reduced={reduced} />
     </Canvas>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Steps from "@/components/Steps";
 import PageHero from "@/components/PageHero";
 import { FlightStrip } from "@/components/Flight";
 import { ServiceReveal } from "@/components/Showcase";
@@ -34,18 +35,12 @@ export default function Services() {
 
       <ServiceReveal areas={AREAS} />
 
-      <section className="px-3 py-12 md:py-16 sm:px-6">
-        <div data-panel className="mx-auto max-w-7xl rounded-[2rem] bg-gradient-to-br from-[#052e16] via-[#14532d] to-[#166534] px-6 py-16 text-white md:px-12 md:py-24">
-          <p className="mb-4 font-mono text-xs uppercase tracking-[0.3em] text-[#fde68a]">How we work</p>
+      <section className="px-3 py-6 sm:px-6 sm:py-12 md:py-16">
+        <div className="mx-auto max-w-7xl rounded-[2rem] border border-white bg-gradient-to-br from-[#f1fbf4] via-white to-[#fff8de] px-5 py-9 shadow-[0_44px_90px_-54px_rgba(20,83,45,0.55)] sm:px-10 sm:py-14 md:px-14 md:py-20">
+          <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#14532d]/10 bg-white px-4 py-1.5 text-sm font-semibold text-[#15803d] shadow-sm"><span className="h-1.5 w-1.5 rounded-full bg-[#eab308]" />How we work</p>
           <h2 data-split className="max-w-3xl font-display text-[clamp(2.2rem,5vw,4.4rem)] leading-[1.02]">From first conversation to production</h2>
-          <div data-stagger className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map(([t, d], i) => (
-              <div key={t} data-tilt className="glare rounded-3xl border border-white/10 bg-white/[0.06] p-7">
-                <span className="font-display text-5xl text-[#fde68a]">0{i + 1}</span>
-                <h3 className="mt-6 font-display text-2xl">{t}</h3>
-                <p className="mt-2 text-sm text-white/70">{d}</p>
-              </div>
-            ))}
+          <div className="mt-8 sm:mt-12">
+            <Steps steps={STEPS} />
           </div>
         </div>
       </section>

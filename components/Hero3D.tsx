@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/immutability -- imperative three.js animation: values are mutated per frame by design */
 "use client";
 
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { Edges, RoundedBox } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
@@ -14,51 +14,64 @@ export type RobotPalette = {
   uC: { value: THREE.Color };
 };
 
-/** Scales a hero object in/out as the route changes, and hides it when it is gone. */
-// Objects are built one at a time while the browser is idle, so every page's 3D is ready before it is visited.
-const warmQueue: (() => void)[] = [];
-let warming = false;
-function pumpWarm() {
-  if (warming) return;
-  const job = warmQueue.shift();
-  if (!job) return;
-  warming = true;
-  const w = window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
-  const run = () => {
-    job();
-    window.setTimeout(() => {
-      warming = false;
-      pumpWarm();
-    }, 1500);
-  };
-  if (w.requestIdleCallback) w.requestIdleCallback(run, { timeout: 4000 });
-  else window.setTimeout(run, 300);
+/**
+ * Every page's 3D object is built, shader-compiled and drawn once, one after another (the visitor's current page first),
+ * while the loader screen is still up. Nothing is ever built while someone is scrolling or changing page, which is what
+ * made the site hitch. `nk:scene-warm` is announced when the last object is ready; the loader waits for it.
+ */
+type Job = () => Promise<void>;
+const warm = { queue: [] as Job[], running: false, total: 0, done: 0, finished: false };
+
+function finishWarm() {
+  if (warm.finished) return;
+  warm.finished = true;
+  (window as unknown as { __nkWarm?: boolean }).__nkWarm = true;
+  window.dispatchEvent(new Event("nk:scene-warm"));
+}
+async function pumpWarm() {
+  if (warm.running) return;
+  warm.running = true;
+  while (warm.queue.length) {
+    const job = warm.queue.shift()!;
+    try {
+      await job();
+    } catch {
+      /* a failed warm-up just means that object builds lazily later */
+    }
+    warm.done++;
+    window.dispatchEvent(new CustomEvent("nk:scene-progress", { detail: warm.done / Math.max(1, warm.total) }));
+  }
+  warm.running = false;
+  if (warm.done >= warm.total) finishWarm();
 }
 
-/**
- * Mounts a page's 3D object and keeps it built afterwards (rebuilding geometry and shaders on every visit is what made
- * page changes stall). Off-screen objects are hidden and their per-frame work is paused through LiveCtx.
- */
-export function Presence({ active, children }: { active: boolean; children: ReactNode }) {
+/** Scales a hero object in/out as the route changes, and hides it when it is gone. Off-screen objects are hidden and their per-frame work is paused through LiveCtx. */
+export function Presence({ active, warm: doWarm = true, children }: { active: boolean; warm?: boolean; children: ReactNode }) {
   const ref = useRef<THREE.Group>(null!);
+  const { gl, scene, camera } = useThree();
   const [mounted, setMounted] = useState(active);
   const mountedRef = useRef(active);
   const live = useRef(active);
-  const warmFrames = useRef(0);
-  const mount = (warm: boolean) => {
+  const warmFrames = useRef(active ? 6 : 0); // draws (while still invisibly small) so shaders compile and textures upload now
+  const waiter = useRef<{ n: number; res: () => void } | null>(null);
+  const frames = (n: number) =>
+    new Promise<void>((res) => {
+      waiter.current = { n, res };
+    });
+  const mount = () => {
     if (mountedRef.current) return;
     mountedRef.current = true;
-    if (warm) warmFrames.current = 4; // draw a few invisible frames so its shaders compile now
     setMounted(true);
   };
   useEffect(() => {
-    // first visit to a page whose object isn't built yet: wait until the page has faded in and the browser is idle
+    // an object that is not part of the up-front warm-up (phones skip the desktop-only ones) builds lazily on its first visit,
+    // once the page has faded in and the browser is idle
     if (!active || mountedRef.current) return;
     const w = window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (n: number) => void };
     let idle = 0;
     const t = window.setTimeout(() => {
-      if (w.requestIdleCallback) idle = w.requestIdleCallback(() => mount(false), { timeout: 700 });
-      else mount(false);
+      if (w.requestIdleCallback) idle = w.requestIdleCallback(() => mount(), { timeout: 700 });
+      else mount();
     }, 650);
     return () => {
       window.clearTimeout(t);
@@ -67,12 +80,24 @@ export function Presence({ active, children }: { active: boolean; children: Reac
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
   useEffect(() => {
-    // background warm-up of the other pages' objects
-    const t = window.setTimeout(() => {
-      warmQueue.push(() => mount(true));
-      pumpWarm();
-    }, 5000);
-    return () => window.clearTimeout(t);
+    if (!doWarm || warm.finished) return;
+    warm.total++;
+    const job: Job = async () => {
+      mount();
+      await frames(2); // its children are in the scene
+      const g = ref.current;
+      if (g) g.visible = true;
+      warmFrames.current = 8;
+      try {
+        await gl.compileAsync(scene, camera); // programs link on the GPU's own threads
+      } catch {
+        /* older GPUs: they compile on the first draw, which happens below */
+      }
+      await frames(3); // textures uploaded, everything has been drawn once
+    };
+    if (active) warm.queue.unshift(job);
+    else warm.queue.push(job);
+    queueMicrotask(pumpWarm);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
@@ -80,15 +105,20 @@ export function Presence({ active, children }: { active: boolean; children: Reac
     window.dispatchEvent(new CustomEvent("nk:obj-loading", { detail: false }));
   }, [mounted, active]);
   useFrame((_, dt) => {
+    const w = waiter.current;
+    if (w && --w.n <= 0) {
+      waiter.current = null;
+      w.res();
+    }
     const g = ref.current;
     if (!g) return;
     const d = Math.min(dt, 0.25);
     const s = THREE.MathUtils.damp(g.scale.x, active ? 1 : 0, 6, d);
     g.scale.setScalar(Math.max(s, 0.0001));
-    const warm = warmFrames.current > 0;
-    if (warm) warmFrames.current -= 1;
-    g.visible = s > 0.01 || warm;
-    live.current = active || s > 0.01 || warm;
+    const warming = warmFrames.current > 0;
+    if (warming) warmFrames.current -= 1;
+    g.visible = s > 0.01 || warming;
+    live.current = active || s > 0.01 || warming;
     g.rotation.y = THREE.MathUtils.damp(g.rotation.y, active ? 0 : 1.4, 5, d);
   });
   return (

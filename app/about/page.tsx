@@ -1,4 +1,7 @@
 import PageHero from "@/components/PageHero";
+import Story from "@/components/Story";
+import StatCards from "@/components/StatCards";
+import ValueRows from "@/components/ValueRows";
 import Ticker from "@/components/Ticker";
 import Founder from "@/components/Founder";
 import WorldMap from "@/components/WorldMap";
@@ -17,40 +20,38 @@ export default function About() {
         room
       />
 
-      <section className="py-10 md:py-12">
-        <div className="mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+      <section className="py-10 md:py-14">
+        <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
             <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#14532d]/10 bg-white px-4 py-1.5 text-sm font-semibold text-[#15803d] shadow-sm"><span className="h-1.5 w-1.5 rounded-full bg-[#eab308]" />Who we are</p>
             <h2 data-split className="font-display text-[clamp(2.4rem,5vw,4.4rem)] leading-[1.02]">Founded 2015. AI-first today</h2>
-          </div>
-          <div data-reveal className="space-y-8">
-            <p className="text-[clamp(1.15rem,1.7vw,1.5rem)] leading-relaxed text-ink/85">
+            <p data-reveal className="mt-7 max-w-xl text-[clamp(1.08rem,1.5vw,1.3rem)] leading-relaxed text-ink/80">
               Netkathir was founded in 2015 to build custom ERP and CRM systems, AI automation and enterprise applications — and today we also run our own products, Garage Bill and HRMS.
             </p>
-            <p className="border-l-4 border-[#eab308] pl-5 font-display text-[clamp(1.3rem,2vw,1.8rem)] font-semibold leading-snug text-[#14532d]">We connect AI to real business workflows, not demos.</p>
-            <div className="flex flex-wrap gap-3">
+            <p data-reveal className="mt-7 max-w-xl font-display text-[clamp(1.4rem,2.2vw,2rem)] font-semibold leading-snug text-[#14532d]">
+              We connect AI to <span className="hl">real business workflows</span>, not demos.
+            </p>
+            <div data-reveal className="mt-9 flex flex-wrap gap-3">
               {["Custom ERP & CRM", "AI automation", "Enterprise applications", "Garage Bill", "HRMS"].map((t) => (
-                <span key={t} className="rounded-full border border-[#14532d]/10 bg-white px-4 py-2 text-sm font-semibold text-[#14532d] shadow-sm">{t}</span>
+                <span key={t} className="rounded-full border border-[#14532d]/10 bg-white px-4 py-2 text-sm font-semibold text-[#14532d] shadow-sm transition-transform duration-300 hover:-translate-y-1">{t}</span>
               ))}
             </div>
+          </div>
+          <div data-reveal>
+            <Story
+              photos={[
+                { src: "/images/contact/puducherry.jpg", year: "2015", cap: "Founded in Puducherry, India" },
+                { src: "/images/contact/dubai.jpg", year: "2019", cap: "Incorporated, reaching the Gulf" },
+                { src: IMAGES.heroes.about, year: "TODAY", cap: "50+ people, six countries" },
+              ]}
+            />
           </div>
         </div>
       </section>
 
-      <section className="px-3 py-10 md:py-12 sm:px-6">
-        <div data-panel className="mx-auto grid max-w-7xl gap-10 rounded-[2rem] bg-gradient-to-br from-[#052e16] via-[#14532d] to-[#166534] px-6 py-16 text-center text-white sm:grid-cols-3 md:py-24">
-          {[
-            ["11", "+", "Years of excellence"],
-            ["50", "+", "Team members"],
-            ["6", "", "Countries"],
-          ].map(([n, s, l]) => (
-            <div key={l}>
-              <div data-count={n} data-suffix={s} className="font-display text-[clamp(5rem,12vw,10rem)] leading-none text-grad-night">
-                {n}{s}
-              </div>
-              <p className="mt-2 text-white/70">{l}</p>
-            </div>
-          ))}
+      <section className="px-3 py-10 sm:px-6 md:py-12">
+        <div className="mx-auto max-w-7xl">
+          <StatCards items={[["11", "+", "Years of excellence", "years"], ["50", "+", "Team members", "people"], ["6", "", "Countries", "countries"]]} />
         </div>
       </section>
 
@@ -97,21 +98,7 @@ export default function About() {
       <section className="py-10 md:py-12">
         <div className="mx-auto max-w-7xl px-6">
           <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-8">What we stand for</h2>
-          <div data-stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {VALUES.map(([t, d], i) => {
-              const tones = ["bg-white", "bg-[#ecfccb]", "bg-[#fef3c7]", "bg-[#14532d] text-white"];
-              const dark = i % 4 === 3;
-              return (
-                <div key={t} data-tilt className={`glare flex min-h-[15rem] flex-col justify-between rounded-[1.75rem] border border-[#14532d]/10 p-7 shadow-[0_24px_60px_-36px_rgba(20,83,45,0.5)] ${tones[i % 4]}`}>
-                  <span className={`font-display text-5xl ${dark ? "text-[#fde68a]" : "text-[#15803d]/40"}`}>0{i + 1}</span>
-                  <div>
-                    <h3 className="mb-2 font-display text-2xl">{t}</h3>
-                    <p className={`text-sm ${dark ? "text-white/75" : "text-muted"}`}>{d}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <ValueRows rows={VALUES.map(([t, d], i) => ({ t, d, image: [IMAGES.heroes.blogs, IMAGES.heroes.contact, IMAGES.heroes.home, IMAGES.heroes.garage][i % 4] }))} />
         </div>
       </section>
 

@@ -768,7 +768,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
       upA.quaternion.setFromUnitVectors(DOWN, K.a.copy(K.E).sub(S).normalize());
       fo.position.copy(K.E);
       K.y.copy(K.E).sub(K.W).normalize();
-      if (isG) K.z.set(1, 0, 0.25).lerp(K.v2.set(0.05, 1, 0.12), hold);
+      if (isG) K.z.set(1, 0, 0.25).lerp(K.v2.set(0.05, 1, 0.62), hold);
       else K.z.set(-1, 0, 0.25).lerp(K.v2.set(-0.15, 0, 1), waveW);
       K.z.normalize();
       K.x.crossVectors(K.y, K.z).normalize();
@@ -782,7 +782,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
         const flutter = !isG ? 0.08 * env * Math.sin(wph - 0.9 - fi * 0.35) : 0;
         const relax = !isG ? waveW * (0.16 + (fi === 1 ? 0 : 0.08)) : 0;
         f.rotation.x = -(curl + relax + flutter) * (k % 2 ? 0.9 : 1);
-        if (k % 2 === 0) f.rotation.z = !isG ? -(fi - 1) * 0.16 * waveW : 0;
+        if (k % 2 === 0) f.rotation.z = !isG ? -(fi - 1) * 0.16 * waveW : (fi - 1) * 0.14 * hold;
       });
       const hand = (a === 0 ? handP : handR).current;
       if (hand) {
@@ -1043,7 +1043,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
                           </group>
                         </group>
                       ))}
-                      <group position={[-sd * 0.155, -0.08, 0.04]} rotation={[0.3, 0, -sd * 1.05]}>
+                      <group position={[0.155, a === 0 ? -0.08 : -0.12, 0.04]} rotation={a === 0 ? [0.3, 0, 1.05] : [0.1, 0, 0.55]}>
                         <mesh geometry={G.sph} material={M.black} scale={0.032} />
                         <mesh geometry={G.cap(0.04, 0.085)} material={M.shell} position={[0, -0.07, 0]} />
                       </group>
