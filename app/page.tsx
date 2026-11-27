@@ -56,7 +56,7 @@ export default function Home() {
           {/* mobile: the robot stands in this gap, under the title and above the subtitle */}
           <div data-robot-slot className="h-[min(38vh,17.5rem)] lg:hidden" aria-hidden />
           <h2 data-split data-delay="0.9" className="font-display text-[clamp(1.1rem,min(2.3vw,3.6vh),2.1rem)] leading-tight mt-6 text-ink/90 lg:mt-[clamp(0.7rem,2.2vh,1.6rem)]">
-            Intelligence engineered into every line.
+            Intelligence engineered into every line
           </h2>
           <p data-reveal data-delay="1.1" className="mt-[clamp(0.5rem,1.8vh,1.4rem)] max-w-xl text-muted text-[clamp(0.9rem,2.1vh,1.1rem)]">
             AI agents, GenAI and enterprise software that plug into real workflows — for healthcare, education, eCommerce, manufacturing and HR.
@@ -123,7 +123,7 @@ export default function Home() {
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-ice mb-4">Why Netkathir</p>
             <h2 data-split className="font-display text-[clamp(2.4rem,6vw,5.5rem)] leading-[0.95]">
-              Building software that ships.
+              Building software that ships
             </h2>
           </div>
           <div className="flex items-end gap-6">
@@ -141,7 +141,7 @@ export default function Home() {
           <div className="lg:sticky lg:top-32 self-start">
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-ice mb-4">Artificial Intelligence</p>
             <h2 data-split className="font-display text-[clamp(2.4rem,5.5vw,5rem)] leading-[0.95]">
-              AI that connects to real workflows.
+              AI that connects to real workflows
             </h2>
             <p data-reveal className="mt-8 text-muted max-w-md text-lg">
               {ai.blurb} From first prototype to production — secure, measurable and built around how your team already works.
@@ -171,14 +171,14 @@ export default function Home() {
         </div>
       </section>
 
-      <FlightJourney kicker="How we deliver" title="From idea to AI, in flight." stops={JOURNEY} />
+      <FlightJourney kicker="How we deliver" title="From idea to AI, in flight" stops={JOURNEY} />
 
       {/* ───────────── SHOWCASE ───────────── */}
       <section className="py-10 md:py-12">
         <div className="mx-auto max-w-7xl px-6">
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-glow mb-4">Explore</p>
           <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-8 md:mb-20">
-            The work, in color.
+            The work, in color
           </h2>
           <div data-stagger className="grid gap-5 pb-10 sm:grid-cols-2 lg:grid-cols-4">
             {SHOWCASE.map((s, i) => (
@@ -226,7 +226,7 @@ export default function Home() {
           <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
             <div>
               <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#14532d]/10 bg-white px-4 py-1.5 text-sm font-semibold text-[#15803d] shadow-sm"><span className="h-1.5 w-1.5 rounded-full bg-[#eab308]" />Capabilities</p>
-              <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-[1.02]">Built for what&apos;s next.</h2>
+              <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-[1.02]">Built for what&apos;s next</h2>
             </div>
             <Link href="/services" className="btn">All services →</Link>
           </div>
@@ -261,7 +261,7 @@ export default function Home() {
       <section className="py-10 md:py-12">
         <div className="mx-auto max-w-7xl px-6">
           <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#14532d]/10 bg-white px-4 py-1.5 text-sm font-semibold text-[#15803d] shadow-sm"><span className="h-1.5 w-1.5 rounded-full bg-[#eab308]" />Testimonials</p>
-          <h2 data-split className="mb-8 font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-[1.02]">Trusted by teams worldwide.</h2>
+          <h2 data-split className="mb-8 font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-[1.02]">Trusted by teams worldwide</h2>
           <div data-stagger className="grid gap-5 md:grid-cols-3">
             {TESTIMONIALS.map((t, i) => (
               <figure key={t.org} className={`relative flex min-h-[19rem] flex-col justify-between overflow-hidden rounded-[1.75rem] border p-8 ${i === 1 ? "border-transparent bg-gradient-to-br from-[#14532d] via-[#166534] to-[#15803d] text-white shadow-[0_34px_70px_-30px_rgba(20,83,45,0.8)]" : "border-[#14532d]/10 bg-white shadow-[0_24px_60px_-34px_rgba(20,83,45,0.4)]"}`}>
@@ -294,7 +294,7 @@ export default function Home() {
           </div>
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-ice mb-4">Security &amp; Trust</p>
           <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none">
-            Proven security with ISO 27001 certification.
+            Proven security with ISO 27001 certification
           </h2>
         </div>
       </section>
@@ -303,7 +303,7 @@ export default function Home() {
       <section className="py-10 md:py-14">
         <div className="mx-auto max-w-7xl px-6">
           <h2 data-split className="font-display text-[clamp(2.4rem,7vw,6.5rem)] leading-[0.95] max-w-5xl mb-8">
-            We build your future with AI &amp; ERP.
+            We build your future with AI &amp; ERP
           </h2>
           <div data-stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[

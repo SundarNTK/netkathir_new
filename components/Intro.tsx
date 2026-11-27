@@ -155,7 +155,7 @@ export default function Intro() {
       gsap.set(".i-ch", { yPercent: 120, rotateX: -80, opacity: 0, transformPerspective: 700 });
       gsap.set(".i-fbg, .i-warp, .i-flash, .i-shock, .i-plate", { opacity: 0 });
       gsap.set(".i-shock", { scale: 0.2 });
-      gsap.set(".i-glow, .i-night, .i-big, .i-flare, .i-cap, .i-big-halo", { opacity: 0 });
+      gsap.set(".i-glow, .i-night, .i-big, .i-cap, .i-big-halo", { opacity: 0 });
 
       // ---- 1. calendar: the page turns from 2015 to 2026, slowing a little as it lands
       t.fromTo(".i-cal", { opacity: 0, y: 26, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" }, 0)
@@ -235,8 +235,6 @@ export default function Intro() {
       const M = D + 2.45;
       t.fromTo(".i-big", { opacity: 0, scale: 1.04 }, { opacity: 1, scale: 1, duration: 1.0, ease: "power2.out" }, M)
         .to(fl, { morphOut: 1, duration: 1.6, ease: "power1.in" }, M + 0.2)
-        .fromTo(".i-flare", { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 0.9, ease: "power3.out" }, M + 0.05)
-        .to(".i-flare", { opacity: 0, scaleX: 1.25, duration: 1.4, ease: "power2.in" }, M + 1.1)
         .fromTo(".i-big-shine", { backgroundPosition: "160% 0" }, { backgroundPosition: "-60% 0", duration: 1.6, ease: "power2.inOut" }, M + 0.6)
         .fromTo(".i-big-halo", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 1.4, ease: "power2.out" }, M)
         .fromTo(".i-cap", { opacity: 0, letterSpacing: "1.2em", y: 8 }, { opacity: 1, letterSpacing: compact ? "0.32em" : "0.6em", y: 0, duration: 1.3, ease: "power3.out" }, M + 0.7)
@@ -503,19 +501,6 @@ export default function Intro() {
             }}
           >
             2027
-          </span>
-          {/* anamorphic lens flare */}
-          <span aria-hidden className="i-flare absolute left-1/2 top-1/2 h-10 w-[min(110vw,90rem)] -translate-x-1/2 -translate-y-1/2 opacity-0 mix-blend-screen">
-            {/* soft glow */}
-            <span
-              className="absolute inset-x-0 top-1/2 h-6 -translate-y-1/2 rounded-full blur-[10px]"
-              style={{ background: "radial-gradient(ellipse 50% 50% at 50% 50%, rgba(250,214,120,0.55), rgba(250,204,21,0.12) 55%, rgba(250,204,21,0) 100%)" }}
-            />
-            {/* bright core line */}
-            <span
-              className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full"
-              style={{ background: "linear-gradient(90deg, rgba(255,240,200,0), rgba(255,236,180,0.35) 22%, #fffaf0 50%, rgba(255,236,180,0.35) 78%, rgba(255,240,200,0))" }}
-            />
           </span>
         </div>
         <div className="mt-[clamp(0.6rem,2vh,1.4rem)] flex items-center gap-4">

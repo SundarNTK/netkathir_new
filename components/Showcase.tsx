@@ -99,7 +99,7 @@ export function ServiceReveal({ areas }: { areas: Area[] }) {
       <div className="relative hidden h-screen items-center justify-center overflow-hidden px-3 md:flex">
         <div data-sr-head className="absolute inset-x-0 top-[14vh] z-10 text-center">
           <p className="mb-3 font-mono text-xs uppercase tracking-[0.3em] text-[#15803d]">What we offer</p>
-          <h2 className="font-display text-[clamp(2.4rem,5.6vw,5rem)] leading-[1] text-[#0a2417]">Twenty capabilities.<br />Four disciplines.</h2>
+          <h2 className="font-display text-[clamp(2.4rem,5.6vw,5rem)] leading-[1] text-[#0a2417]">Twenty capabilities.<br />Four disciplines</h2>
         </div>
         <div data-sr-panel className="relative mt-16 h-[calc(100vh-7rem)] w-full max-w-[84rem] overflow-hidden" style={{ backgroundColor: areas[0].bg, clipPath: "inset(16% 26% 16% 26% round 3rem)", ["--sr-ink" as string]: areas[0].ink, color: "var(--sr-ink)" }}>
           {/* right: pictures wipe over each other */}
@@ -162,7 +162,7 @@ export function ServiceReveal({ areas }: { areas: Area[] }) {
 
       {/* mobile / reduced motion: simple stacked cards */}
       <div className="space-y-5 px-4 py-14 md:hidden">
-        <h2 data-split className="font-display text-[clamp(2rem,8vw,3rem)] leading-none text-[#0a2417]">Twenty capabilities. Four disciplines.</h2>
+        <h2 data-split className="font-display text-[clamp(2rem,8vw,3rem)] leading-none text-[#0a2417]">Twenty capabilities. Four disciplines</h2>
         {areas.map((a, i) => (
           <div key={a.name} data-reveal className="overflow-hidden rounded-3xl border border-[#14532d]/10 shadow-sm" style={{ background: a.bg, color: a.ink }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -444,7 +444,7 @@ export function ClientReel({ clients, notes }: { clients: { name: string; logo: 
         <div className="mx-auto mb-8 flex w-full max-w-7xl items-end justify-between gap-6 px-6 pt-20">
           <div>
             <p className="mb-3 font-mono text-xs uppercase tracking-[0.3em] text-[#15803d]">Everyone we have worked with</p>
-            <h2 className="font-display text-[clamp(2.2rem,4.6vw,4.2rem)] leading-[1] text-[#0a2417]">Clients who trust us.</h2>
+            <h2 className="font-display text-[clamp(2.2rem,4.6vw,4.2rem)] leading-[1] text-[#0a2417]">Clients who trust us</h2>
           </div>
           <div className="text-right font-mono text-xs uppercase tracking-[0.3em] text-[#0a2417]/70">
             <span data-rl-now className="font-display text-5xl normal-case tracking-normal text-[#0a2417]">01</span> / {String(clients.length).padStart(2, "0")}
@@ -482,7 +482,7 @@ export function ClientReel({ clients, notes }: { clients: { name: string; logo: 
       {/* mobile / reduced motion: a simple stack */}
       <div className="space-y-4 px-4 py-14 md:hidden">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#15803d]">Everyone we have worked with</p>
-        <h2 data-split className="font-display text-[clamp(2rem,8vw,3rem)] leading-none text-[#0a2417]">Clients who trust us.</h2>
+        <h2 data-split className="font-display text-[clamp(2rem,8vw,3rem)] leading-none text-[#0a2417]">Clients who trust us</h2>
         {clients.map((c, i) => {
           const t = REEL_TONES[i % REEL_TONES.length];
           return (

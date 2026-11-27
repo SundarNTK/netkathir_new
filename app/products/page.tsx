@@ -11,11 +11,11 @@ export default function Products() {
     <div className="relative isolate">
       <PageHero
         kicker="Products"
-        title="Products Built by Netkathir."
+        title="Products Built by Netkathir"
         sub="Software we design, run and stand behind ourselves."
       />
       <Ticker items={["Garage Bill", "HRMS", "Designed in-house", "Run and supported by Netkathir"]} />
-      <FlightStrip from="Prototype" to="In production" note="Built in-house. Flown by real teams." />
+      <FlightStrip from="Prototype" to="In production" note="Built in-house. Flown by real teams" />
 
       <div className="space-y-6 pb-16 md:space-y-10">
         {PRODUCTS.map((p, i) => (

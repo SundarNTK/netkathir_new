@@ -123,7 +123,7 @@ export const PRODUCTS = [
   {
     name: "Garage Bill",
     tag: "Available Now",
-    line: "Wrenches to Wallets.",
+    line: "Wrenches to Wallets",
     text: "Billing and workshop management built for garages and service centres.",
     live: true,
     image: IMAGES.garage.invoicing,
@@ -133,7 +133,7 @@ export const PRODUCTS = [
   {
     name: "HRMS",
     tag: "Available Now",
-    line: "People operations, simplified.",
+    line: "People operations, simplified",
     text: "Payroll, leave, attendance, recruitment and performance in one platform.",
     live: true,
     image: IMAGES.heroes.products,
@@ -143,7 +143,7 @@ export const PRODUCTS = [
   {
     name: "Coolie",
     tag: "Coming Soon",
-    line: "Something new is on its way.",
+    line: "Something new is on its way",
     text: "Our next product is in the works. Stay tuned.",
     live: false,
     image: IMAGES.heroes.garage,

@@ -11,11 +11,11 @@ export default function Blogs() {
     <div className="relative isolate">
       <PageHero
         kicker="Insights"
-        title="Insights / Blogs."
+        title="Insights / Blogs"
         sub="Notes on AI, cloud, DevOps and building software that lasts."
       />
       <Ticker items={["AI", "Cloud", "DevOps", "ERP", "Software engineering"]} />
-      <FlightStrip from="Question" to="Answer" note="Notes from the cockpit." />
+      <FlightStrip from="Question" to="Answer" note="Notes from the cockpit" />
 
       <section className="py-10">
         <div className="mx-auto max-w-7xl px-6">

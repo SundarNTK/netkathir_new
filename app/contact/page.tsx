@@ -11,11 +11,11 @@ export default function Contact() {
     <>
       <PageHero
         kicker="Contact"
-        title="Let's Build Your Next Intelligent Solution."
+        title="Let's Build Your Next Intelligent Solution"
         image={IMAGES.heroes.contact}
         room
       />
-      <FlightStrip from="Your message" to="Our inbox" note="We reply within one working day." />
+      <FlightStrip from="Your message" to="Our inbox" note="We reply within one working day" />
       <section className="pb-10 md:pb-14">
         <div className="mx-auto grid max-w-7xl items-start gap-6 px-4 sm:px-6 md:gap-8 lg:grid-cols-[1.3fr_1fr] lg:items-stretch lg:gap-10">
           <ContactForm />

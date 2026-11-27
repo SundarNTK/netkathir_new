@@ -11,7 +11,7 @@ export default function About() {
     <div className="relative isolate">
       <PageHero
         kicker="About Us"
-        title="The People and Purpose Behind Netkathir."
+        title="The People and Purpose Behind Netkathir"
         sub="Founded 2015 · Trusted by clients worldwide."
         image={IMAGES.heroes.about}
         room
@@ -21,7 +21,7 @@ export default function About() {
         <div className="mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <div>
             <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#14532d]/10 bg-white px-4 py-1.5 text-sm font-semibold text-[#15803d] shadow-sm"><span className="h-1.5 w-1.5 rounded-full bg-[#eab308]" />Who we are</p>
-            <h2 data-split className="font-display text-[clamp(2.4rem,5vw,4.4rem)] leading-[1.02]">Founded 2015. AI-first today.</h2>
+            <h2 data-split className="font-display text-[clamp(2.4rem,5vw,4.4rem)] leading-[1.02]">Founded 2015. AI-first today</h2>
           </div>
           <div data-reveal className="space-y-8">
             <p className="text-[clamp(1.15rem,1.7vw,1.5rem)] leading-relaxed text-ink/85">
@@ -61,7 +61,7 @@ export default function About() {
               <span className="h-1.5 w-1.5 rounded-full bg-violet" /> Leadership &amp; Global Presence
             </p>
             <h2 data-split className="font-display text-[clamp(2.4rem,5vw,4.6rem)] leading-[0.98]">
-              Led by vision. Delivering worldwide.
+              Led by vision. Delivering worldwide
             </h2>
           </div>
 
@@ -72,7 +72,7 @@ export default function About() {
               <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <p className="text-sm font-semibold text-ice">Global presence</p>
-                  <h3 className="font-display text-3xl sm:text-4xl leading-tight">Six countries. One team.</h3>
+                  <h3 className="font-display text-3xl sm:text-4xl leading-tight">Six countries. One team</h3>
                 </div>
                 <p className="max-w-[16rem] text-sm text-muted">Headquartered in Puducherry, India — building for clients across four continents.</p>
               </div>
@@ -96,7 +96,7 @@ export default function About() {
       <Ticker items={VALUES.map((v) => v[0])} />
       <section className="py-10 md:py-12">
         <div className="mx-auto max-w-7xl px-6">
-          <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-8">What we stand for.</h2>
+          <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-8">What we stand for</h2>
           <div data-stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {VALUES.map(([t, d], i) => {
               const tones = ["bg-white", "bg-[#ecfccb]", "bg-[#fef3c7]", "bg-[#14532d] text-white"];

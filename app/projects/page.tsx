@@ -24,14 +24,14 @@ export default function Projects() {
     <div className="relative isolate">
       <PageHero
         kicker="Projects"
-        title="Transforming Ideas into Intelligent Solutions."
+        title="Transforming Ideas into Intelligent Solutions"
       />
       <Ticker items={["Healthcare", "Education", "eCommerce", "Manufacturing", "HR"]} />
-      <FlightStrip from="2015" to="2026" note="11 years of clients, one flight path." />
+      <FlightStrip from="2015" to="2026" note="11 years of clients, one flight path" />
 
       <section className="py-10">
         <div className="mx-auto max-w-7xl px-6">
-          <h2 data-split className="mb-12 font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-[1.02]">Selected work.</h2>
+          <h2 data-split className="mb-12 font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-[1.02]">Selected work</h2>
           <div data-stagger className="grid gap-5 md:grid-cols-3">
             {featured.map((c, i) => (
               <article key={c.name} data-tilt className={`glare relative flex flex-col overflow-hidden rounded-[2rem] bg-gradient-to-br p-3 shadow-[0_34px_70px_-36px_rgba(20,83,45,0.6)] ${TONES[i % TONES.length]}`}>
@@ -51,7 +51,7 @@ export default function Projects() {
         </div>
       </section>
 
-      <LetterWall rows={["AUTOMATE", "INTEGRATE", "DELIVER"]} stamp="Netkathir · 2015 — 2026" title="11 years. 50+ projects. One team." sub="From hospitals to marine to e-commerce — software that keeps running." />
+      <LetterWall rows={["AUTOMATE", "INTEGRATE", "DELIVER"]} stamp="Netkathir · 2015 — 2026" title="11 years. 50+ projects. One team" sub="From hospitals to marine to e-commerce — software that keeps running." />
       <section className="px-3 py-10 md:py-14 sm:px-6">
         <div data-panel className="mx-auto grid max-w-7xl gap-10 rounded-[2rem] bg-gradient-to-br from-[#052e16] via-[#14532d] to-[#166534] px-6 py-16 text-center text-white sm:grid-cols-3 md:py-24">
           {[

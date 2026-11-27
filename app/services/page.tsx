@@ -26,18 +26,18 @@ export default function Services() {
     <div className="relative isolate">
       <PageHero
         kicker="Services"
-        title="Our Services."
+        title="Our Services"
         sub="Twenty capabilities across four disciplines — one team to take you from idea to scale."
       />
       <Ticker items={["AI & GenAI", "Enterprise Software", "Cloud & DevOps", "Digital Transformation"]} />
-      <FlightStrip from="Your idea" to="Live" note="Brief in. Working software out." />
+      <FlightStrip from="Your idea" to="Live" note="Brief in. Working software out" />
 
       <ServiceReveal areas={AREAS} />
 
       <section className="px-3 py-12 md:py-16 sm:px-6">
         <div data-panel className="mx-auto max-w-7xl rounded-[2rem] bg-gradient-to-br from-[#052e16] via-[#14532d] to-[#166534] px-6 py-16 text-white md:px-12 md:py-24">
           <p className="mb-4 font-mono text-xs uppercase tracking-[0.3em] text-[#fde68a]">How we work</p>
-          <h2 data-split className="max-w-3xl font-display text-[clamp(2.2rem,5vw,4.4rem)] leading-[1.02]">From first conversation to production.</h2>
+          <h2 data-split className="max-w-3xl font-display text-[clamp(2.2rem,5vw,4.4rem)] leading-[1.02]">From first conversation to production</h2>
           <div data-stagger className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {STEPS.map(([t, d], i) => (
               <div key={t} data-tilt className="glare rounded-3xl border border-white/10 bg-white/[0.06] p-7">

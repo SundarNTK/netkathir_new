@@ -7,13 +7,13 @@ import { SITE } from "@/lib/data";
 type Cta = { line: string; label: string; href: string };
 
 const CTAS: Record<string, Cta> = {
-  "/": { line: "Let's build your next intelligent solution.", label: "Get Started Now", href: "/contact#contact-form" },
-  "/services": { line: "Tell us what you want to automate.", label: "Talk to our engineers", href: "/contact#contact-form" },
-  "/products": { line: "See Garage Bill and HRMS in action.", label: "Request a demo", href: "/contact#contact-form" },
-  "/projects": { line: "Your project could be next.", label: "Start a project", href: "/contact#contact-form" },
+  "/": { line: "Let's build your next intelligent solution", label: "Get Started Now", href: "/contact#contact-form" },
+  "/services": { line: "Tell us what you want to automate", label: "Talk to our engineers", href: "/contact#contact-form" },
+  "/products": { line: "See Garage Bill and HRMS in action", label: "Request a demo", href: "/contact#contact-form" },
+  "/projects": { line: "Your project could be next", label: "Start a project", href: "/contact#contact-form" },
   "/blogs": { line: "Have a topic you want us to cover?", label: "Suggest a topic", href: "/contact#contact-form" },
-  "/about": { line: "Work with the team behind Netkathir.", label: "Get in touch", href: "/contact#contact-form" },
-  "/contact": { line: "We would love to hear from you.", label: SITE.email, href: `mailto:${SITE.email}` },
+  "/about": { line: "Work with the team behind Netkathir", label: "Get in touch", href: "/contact#contact-form" },
+  "/contact": { line: "We would love to hear from you", label: SITE.email, href: `mailto:${SITE.email}` },
 };
 
 /** The footer's headline and button change with the page you are on. */

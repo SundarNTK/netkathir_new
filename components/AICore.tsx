@@ -1010,10 +1010,12 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
       const S = K.S.set(side * 0.98, 2.55 + (a === 1 ? 0.04 * waveW : 0), 0); // a little shrug as it waves
       let wrist: THREE.Vector3;
       if (a === 0) {
-        wrist = K.t.set(1.0, 1.95 + bob, 0.92).lerp(K.r.set(1.3, 1.55, 0.2), 1 - armIn);
-        K.pole.set(0.5, -0.9, -0.35);
+        // rests hanging at the side (nearly straight, elbow a touch back), then lifts the AI out in front
+        wrist = K.t.set(1.0, 1.95 + bob, 0.92).lerp(K.r.set(1.1 + Math.sin(t * 1.1) * 0.015, 1.37 + Math.sin(t * 1.3) * 0.015, 0.1), 1 - armIn);
+        K.pole.set(0.5, -0.9, -0.35).lerp(K.v2.set(0.25, 0, -1), 1 - armIn);
       } else {
-        const rest = K.r.set(-1.42 + Math.sin(t * 1.1) * 0.03, 1.66 + Math.sin(t * 1.3) * 0.03, 0.22);
+        // arm down by the side: nearly straight, a slight bend at the elbow
+        const rest = K.r.set(-1.1 - Math.sin(t * 1.1) * 0.015, 1.37 + Math.sin(t * 1.3) * 0.015, 0.1);
         // a real wave: the elbow stays put out to the side and the forearm swings from it like a pendulum
         // elbow a little below the shoulder and forward, as a person waves
         const elbow = K.v1.set(-0.7, -0.5, 0.5).normalize().multiplyScalar(0.62).add(S);
@@ -1021,7 +1023,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
         const up = K.u.set(Math.sin(th), Math.cos(th), 0.18).normalize().multiplyScalar(0.615).add(elbow);
         wrist = K.t.copy(rest).lerp(up, wave);
         // aiming the elbow at that point makes the IK keep it exactly there while the forearm swings
-        K.pole.set(-0.6, -0.9, -0.1).lerp(K.v2.copy(elbow).sub(S), waveW);
+        K.pole.set(-0.25, 0, -1).lerp(K.v2.copy(elbow).sub(S), waveW);
       }
       solveArm(S, wrist, K.pole, 0.62, 0.62, K.E, K.W, K.a, K.b);
       const upA = (a === 0 ? upP : upR).current;
@@ -1031,14 +1033,15 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
       fo.position.copy(K.E);
       // forearm frame built from the arm direction + where the palm should face (so a raised hand never flips round)
       K.y.copy(K.E).sub(K.W).normalize(); // local +y runs from the wrist back to the elbow
-      if (a === 0) K.z.set(0, 1, 0.35).normalize(); // palm up
-      else K.z.set(0, -0.25, 1).lerp(K.v2.set(0.15, 0, 1), waveW).normalize(); // palm towards the viewer
+      // palms face in towards the legs at rest; up under the AI; towards the viewer while waving
+      if (a === 0) K.z.set(-1, 0, 0.25).lerp(K.v2.set(0, 1, 0.35), armIn).normalize();
+      else K.z.set(1, 0, 0.25).lerp(K.v2.set(0.15, 0, 1), waveW).normalize();
       K.x.crossVectors(K.y, K.z).normalize();
       K.z.crossVectors(K.x, K.y).normalize();
       K.m.makeBasis(K.x, K.y, K.z);
       fo.quaternion.setFromRotationMatrix(K.m);
       // fingers: relaxed curl at rest, open for the wave, cupped under the AI
-      const curl = a === 0 ? THREE.MathUtils.lerp(0.9, 0.45, armIn) : THREE.MathUtils.lerp(0.95, 0.12, waveW);
+      const curl = a === 0 ? THREE.MathUtils.lerp(0.5, 0.45, armIn) : THREE.MathUtils.lerp(0.5, 0.12, waveW); // relaxed, not a fist
       fingers.current[a].forEach((f, k) => {
         if (!f) return;
         // waving fingers stay loose: a light flutter that trails the swing
