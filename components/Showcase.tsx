@@ -303,13 +303,13 @@ export function Collage({ tag, lines, text, cta, href, main, floats, sticker }: 
    other while a card floats in the middle.
    ────────────────────────────────────────────────────────────── */
 export function LetterWall({ rows, title, sub, stamp }: { rows: string[]; title: string; sub: string; stamp: string }) {
-  const ext = Array.from({ length: 9 }, (_, i) => `${i + 1}px ${i + 1}px 0 #0b3a1f`).join(",");
+  const ext = Array.from({ length: 6 }, (_, i) => `${i + 1}px ${i + 1}px 0 #0b3a1f`).join(",");
   return (
-    <section data-nolift className="relative my-8 overflow-hidden bg-[#06190e] py-10">
+    <section data-nolift className="relative my-8 overflow-hidden bg-[#06190e] py-7">
       <div aria-hidden className="absolute inset-0 opacity-70" style={{ backgroundImage: "radial-gradient(rgba(134,239,172,.2) 1.2px, transparent 1.4px)", backgroundSize: "28px 28px" }} />
       <div className="relative space-y-1">
         {rows.map((r, i) => (
-          <div key={r + i} data-scrub-x={i % 2 ? "1" : "-1"} className="flex justify-center gap-[0.35em] whitespace-nowrap font-display text-[clamp(5rem,15vw,13rem)] font-bold uppercase leading-[0.82]" style={{ color: i % 2 ? "#22c55e" : "#eab308", textShadow: ext }}>
+          <div key={r + i} data-scrub-x={i % 2 ? "1" : "-1"} className="flex justify-center gap-[0.35em] whitespace-nowrap font-display text-[clamp(3.6rem,10.5vw,9rem)] font-bold uppercase leading-[0.84]" style={{ color: i % 2 ? "#22c55e" : "#eab308", textShadow: ext }}>
             {Array.from({ length: 3 }).map((_, k) => (
               <span key={k}>{r}</span>
             ))}
@@ -317,9 +317,9 @@ export function LetterWall({ rows, title, sub, stamp }: { rows: string[]; title:
         ))}
       </div>
       <div className="pointer-events-none absolute inset-0 grid place-items-center px-4">
-        <div data-reveal className="pointer-events-auto w-full max-w-md rounded-sm bg-[#efefea] p-8 text-[#06190e] shadow-[0_40px_90px_-30px_rgba(0,0,0,0.9)] sm:p-10">
+        <div data-reveal className="pointer-events-auto w-full max-w-md rounded-sm bg-[#efefea] p-6 text-[#06190e] shadow-[0_40px_90px_-30px_rgba(0,0,0,0.9)] sm:p-8">
           <p className="font-mono text-[0.7rem] uppercase tracking-[0.3em] text-[#15803d]">{stamp}</p>
-          <h3 className="mt-4 font-display text-3xl leading-[1.02] sm:text-4xl">{title}</h3>
+          <h3 className="mt-3 font-display text-2xl leading-[1.05] sm:text-3xl">{title}</h3>
           <p className="mt-3 text-sm text-[#3f5a4a]">{sub}</p>
           <Link href="/contact" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#06190e] px-5 py-2.5 text-sm font-bold text-[#fde68a]">Start a project <span aria-hidden>→</span></Link>
         </div>
