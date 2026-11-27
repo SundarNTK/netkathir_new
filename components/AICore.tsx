@@ -439,7 +439,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
   const pinAt = useRef<number | null>(null);
   const faceState = useRef({ expr: "" as Expr | "", blink: -1, t: -1 });
   const K = useMemo(
-    () => ({ v1: new THREE.Vector3(), v2: new THREE.Vector3(), q: new THREE.Quaternion(), x: new THREE.Vector3(), y: new THREE.Vector3(), z: new THREE.Vector3(), m: new THREE.Matrix4(), S: new THREE.Vector3(), E: new THREE.Vector3(), W: new THREE.Vector3(), a: new THREE.Vector3(), b: new THREE.Vector3(), pole: new THREE.Vector3(), t: new THREE.Vector3(), r: new THREE.Vector3(), u: new THREE.Vector3(), bp: new THREE.Vector3(), q1: new THREE.Quaternion(), q2: new THREE.Quaternion(), q3: new THREE.Quaternion(), front: new THREE.Vector3(), ndc: new THREE.Vector2(), ray: new THREE.Raycaster() }),
+    () => ({ v1: new THREE.Vector3(), v2: new THREE.Vector3(), q: new THREE.Quaternion(), x: new THREE.Vector3(), y: new THREE.Vector3(), z: new THREE.Vector3(), m: new THREE.Matrix4(), S: new THREE.Vector3(), E: new THREE.Vector3(), W: new THREE.Vector3(), a: new THREE.Vector3(), b: new THREE.Vector3(), pole: new THREE.Vector3(), t: new THREE.Vector3(), r: new THREE.Vector3(), u: new THREE.Vector3(), bp: new THREE.Vector3(), q1: new THREE.Quaternion(), q2: new THREE.Quaternion(), q3: new THREE.Quaternion(), front: new THREE.Vector3(), ndc: new THREE.Vector2(), ray: new THREE.Raycaster(), hw: new THREE.Vector3() }),
     []
   );
   const RX = mobile ? 0 : -1.0; // where the robot stands in the stage
@@ -592,9 +592,9 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
         const body0 = () => {
           c.beginPath();
           c.roundRect(x, y, w, h, 150);
-          c.moveTo(640, y + h - 4);
-          c.quadraticCurveTo(700, y + h + 90, 800, y + h + 150);
-          c.quadraticCurveTo(740, y + h + 70, 760, y + h - 4);
+          c.moveTo(360, y + h - 4);
+          c.quadraticCurveTo(300, y + h + 90, 200, y + h + 150);
+          c.quadraticCurveTo(260, y + h + 70, 240, y + h - 4);
           c.closePath();
         };
         c.save();
@@ -761,6 +761,7 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
         K.pole.set(0.25, 0, -1).lerp(K.v2.copy(elbow).sub(S), waveW);
       }
       solveArm(S, wrist, K.pole, L.upperArm, L.foreArm, K.E, K.W, K.a, K.b);
+      if (!isG) K.hw.copy(K.W); // the waving hand: the speech bubble hangs next to it
       const upA = (a === 0 ? upP : upR).current;
       const fo = (a === 0 ? foP : foR).current;
       upA.position.copy(S);
@@ -806,7 +807,12 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
       const k = Math.max(0.001, back(clamp01((E - 1.75) / 0.45)) * (1 - sg(3.85, 4.25)));
       bubble.current.scale.setScalar(k);
       bubble.current.visible = k > 0.01;
-      bubble.current.position.set(2.55, L.head + 1.35 + Math.sin(t * 2.4) * 0.04, 0.6);
+      // the bubble's tail tip (at its lower left) sits just above the waving hand; it eases along with the wave
+      const bx = K.hw.x + 0.12 + 0.54 * k;
+      const by = K.hw.y + 0.5 + 0.51 * k + Math.sin(t * 2.4) * 0.04;
+      const bz = K.hw.z + 0.5;
+      if (k < 0.05) bubble.current.position.set(bx, by, bz);
+      else bubble.current.position.set(THREE.MathUtils.damp(bubble.current.position.x, bx, 6, d), THREE.MathUtils.damp(bubble.current.position.y, by, 6, d), bz);
       robot.current.getWorldQuaternion(K.q);
       bubble.current.quaternion.copy(K.q.invert().multiply(s.camera.quaternion));
       bubble.current.rotateZ(-0.045 * env * Math.sin(wph - 1.2));
