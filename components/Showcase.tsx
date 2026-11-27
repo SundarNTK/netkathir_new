@@ -22,61 +22,94 @@ export function ServiceReveal({ areas }: { areas: Area[] }) {
     if (!root) return;
     const mm = gsap.matchMedia();
     mm.add("(min-width: 768px) and (prefers-reduced-motion: no-preference)", () => {
-      const panel = root.querySelector<HTMLElement>("[data-sr-panel]")!;
-      const groups = Array.from(root.querySelectorAll<HTMLElement>("[data-sr-g]"));
-      const tabs = Array.from(root.querySelectorAll<HTMLElement>("[data-sr-i]"));
-      const fills = Array.from(root.querySelectorAll<HTMLElement>("[data-sr-fill]"));
-      const imgs = Array.from(root.querySelectorAll<HTMLElement>("[data-sr-img]"));
-      const chips = Array.from(root.querySelectorAll<HTMLElement>("[data-sr-chip]"));
-      const head = root.querySelector<HTMLElement>("[data-sr-head]")!;
+      const q = (sel: string) => Array.from(root.querySelectorAll<HTMLElement>(sel));
+      const one = (sel: string) => root.querySelector<HTMLElement>(sel)!;
+      const panel = one("[data-sr-panel]");
+      const groups = q("[data-sr-g]");
+      const tabs = q("[data-sr-i]");
+      const fills = q("[data-sr-fill]");
+      const imgs = q("[data-sr-img]");
+      const chips = q("[data-sr-chip]");
+      const wipes = q("[data-sr-wipe]");
+      const orbs = q("[data-sr-orb]");
+      const rows = q("[data-sr-row]");
+      const head = one("[data-sr-head]");
+      const h1 = one("[data-sr-h1]");
+      const h2 = one("[data-sr-h2]");
+      const kicker = one("[data-sr-kick]");
       const n = groups.length;
-      const E = 0.16; // expand phase
-      const seg = (1 - E) / n;
+      const E = 0.17; // opening: the small tile grows into the full panel
+      const F = 0.05; // closing: the panel settles away
+      const seg = (1 - E - F) / n;
+      const rgba = (hex: string, a: number) => {
+        const h = hex.replace("#", "");
+        return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`;
+      };
+      const ORB_X = [[0, 70, 25, 85], [0, -60, -20, -75]];
+      const ORB_Y = [[0, 35, 75, 15], [0, -40, -10, -60]];
+      void head;
+
+      gsap.set(panel, { transformPerspective: 1500, transformOrigin: "50% 70%" });
       gsap.set(groups, { autoAlpha: 0 });
-      gsap.set(imgs, { clipPath: "inset(100% 0% 0% 0%)", scale: 1.18 });
+      gsap.set(imgs, { clipPath: "inset(100% 0% 0% 0%)", scale: 1.3 });
       gsap.set(chips, { autoAlpha: 0, y: 40, scale: 0.9 });
       gsap.set(fills, { scaleX: 0 });
+      gsap.set(wipes, { clipPath: "circle(0% at 78% 55%)" });
+      gsap.set(orbs[0], { "--orb": rgba(areas[0].accent, 0.34) });
+      gsap.set(orbs[1], { "--orb": rgba(areas[0].accent, 0.22) });
       groups.forEach((g) => {
-        gsap.set(g.querySelectorAll("[data-sr-n]"), { yPercent: 45, autoAlpha: 0, rotate: 4 });
         gsap.set(g.querySelectorAll("[data-sr-a]"), { y: 40, autoAlpha: 0 });
         gsap.set(g.querySelectorAll("[data-sr-x]"), { x: -34, autoAlpha: 0 });
         gsap.set(g.querySelectorAll("[data-sr-t]"), { scale: 0.7, autoAlpha: 0 });
       });
 
-      const tl = gsap.timeline({ scrollTrigger: { trigger: root, start: "top top", end: `+=${n * 1500 + 700}`, pin: true, scrub: 0.7, anticipatePin: 1 } });
+      const tl = gsap.timeline({ scrollTrigger: { trigger: root, start: "top top", end: `+=${n * 1700 + 900}`, pin: true, scrub: 0.8, anticipatePin: 1 } });
       tl.to({}, { duration: 1 }, 0); // fixes total length at 1
-      tl.fromTo(panel, { clipPath: "inset(16% 26% 16% 26% round 3rem)", scale: 0.92 }, { clipPath: "inset(0% 0% 0% 0% round 1.75rem)", scale: 1, ease: "none", duration: E }, 0);
-      tl.fromTo(head, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -60, ease: "none", duration: E * 0.7 }, 0);
+
+      // opening: the headline splits apart, the giant outlined words slide, and the tile swings up into the panel
+      tl.to(kicker, { autoAlpha: 0, y: -30, duration: E * 0.5, ease: "none" }, 0);
+      tl.to(h1, { xPercent: -32, scale: 1.12, autoAlpha: 0, ease: "power2.in", duration: E * 0.85 }, 0.005);
+      tl.to(h2, { xPercent: 32, scale: 1.12, autoAlpha: 0, ease: "power2.in", duration: E * 0.85 }, 0.005);
+      tl.fromTo(rows[0], { xPercent: 6 }, { xPercent: -30, ease: "none", duration: E }, 0);
+      tl.fromTo(rows[1], { xPercent: -30 }, { xPercent: 6, ease: "none", duration: E }, 0);
+      tl.to(rows, { autoAlpha: 0, duration: E * 0.5, ease: "none" }, E * 0.5);
+      tl.fromTo(panel, { clipPath: "inset(36% 30% 8% 30% round 3rem)", scale: 0.9, rotateX: 14 }, { clipPath: "inset(0% 0% 0% 0% round 1.75rem)", scale: 1, rotateX: 0, ease: "power2.inOut", duration: E }, 0);
+
       groups.forEach((g, i) => {
         const s = E + i * seg;
-        const num = g.querySelectorAll("[data-sr-n]");
         const a = g.querySelectorAll("[data-sr-a]");
         const xs = g.querySelectorAll("[data-sr-x]");
         const ts = g.querySelectorAll("[data-sr-t]");
-        // colours of the panel follow the step
-        tl.to(panel, { backgroundColor: areas[i].bg, "--sr-ink": areas[i].ink, duration: 0.03, ease: "none" }, s);
-        // picture wipes up over the previous one, then slowly settles
-        tl.to(imgs[i], { clipPath: "inset(0% 0% 0% 0%)", duration: 0.05, ease: "power2.inOut" }, s);
-        tl.to(imgs[i], { scale: 1, duration: seg, ease: "none" }, s);
+        tl.to(panel, { "--sr-ink": areas[i].ink, duration: 0.03, ease: "none" }, s);
+        // the next colour ripples out from the picture and floods the panel
+        if (i > 0) tl.to(wipes[i - 1], { clipPath: "circle(150% at 78% 55%)", duration: 0.075, ease: "power2.inOut" }, s - 0.012);
+        // two soft lights drift to new corners and take the step's accent colour
+        tl.to(orbs[0], { "--orb": rgba(areas[i].accent, 0.34), xPercent: ORB_X[0][i], yPercent: ORB_Y[0][i], duration: 0.09, ease: "power2.inOut" }, s - 0.01);
+        tl.to(orbs[1], { "--orb": rgba(areas[i].accent, 0.22), xPercent: ORB_X[1][i], yPercent: ORB_Y[1][i], duration: 0.09, ease: "power2.inOut" }, s - 0.01);
+        // picture wipes up over the previous one, then drifts and slowly settles
+        tl.to(imgs[i], { clipPath: "inset(0% 0% 0% 0%)", duration: 0.055, ease: "power2.inOut" }, s);
+        tl.to(imgs[i], { scale: 1.12, duration: seg, ease: "none" }, s);
+        tl.fromTo(imgs[i], { yPercent: 5 }, { yPercent: -5, duration: seg, ease: "none" }, s);
         tl.to(chips[i], { autoAlpha: 1, y: 0, scale: 1, duration: 0.05, ease: "back.out(1.6)" }, s + 0.03);
-        // text arrives piece by piece
+        // text arrives piece by piece; the giant ghost number slides through behind it
         tl.to(g, { autoAlpha: 1, duration: 0.01 }, s);
-        tl.to(num, { yPercent: 0, autoAlpha: 1, rotate: 0, duration: 0.06, ease: "power3.out" }, s + 0.005);
         tl.to(a, { y: 0, autoAlpha: 1, stagger: 0.012, duration: 0.05, ease: "power3.out" }, s + 0.012);
         tl.to(xs, { x: 0, autoAlpha: 1, stagger: 0.01, duration: 0.05, ease: "power3.out" }, s + 0.03);
         tl.to(ts, { scale: 1, autoAlpha: 1, stagger: 0.008, duration: 0.04, ease: "back.out(2)" }, s + 0.06);
-        // progress line of this step fills while it is on screen
         tl.to(fills[i], { scaleX: 1, duration: seg, ease: "none" }, s);
         if (i < n - 1) {
           const o = s + seg - 0.045;
           tl.to(xs, { x: 30, autoAlpha: 0, stagger: 0.004, duration: 0.03, ease: "power2.in" }, o);
           tl.to(a, { y: -30, autoAlpha: 0, stagger: 0.004, duration: 0.035, ease: "power2.in" }, o);
-          tl.to(num, { yPercent: -45, autoAlpha: 0, duration: 0.035, ease: "power2.in" }, o);
           tl.to(ts, { scale: 0.7, autoAlpha: 0, duration: 0.03 }, o);
           tl.to(chips[i], { autoAlpha: 0, y: -30, duration: 0.03 }, o);
           tl.to(g, { autoAlpha: 0, duration: 0.005 }, s + seg - 0.006);
         }
       });
+
+      // closing: the panel eases back into a rounded card before the page carries on
+      tl.to(panel, { scale: 0.94, clipPath: "inset(3% 5% 3% 5% round 3rem)", ease: "power2.in", duration: F }, 1 - F);
+
       // clicking a tab scrolls to that step (the timeline is scroll-driven, so we aim at its progress)
       goTo.current = (i: number) => {
         const st = tl.scrollTrigger;
@@ -84,9 +117,12 @@ export function ServiceReveal({ areas }: { areas: Area[] }) {
         const prog = E + i * seg + seg * 0.4;
         window.scrollTo({ top: st.start + (st.end - st.start) * prog, behavior: "smooth" });
       };
+      let last = -2;
       tl.eventCallback("onUpdate", () => {
         const p = tl.progress();
         const k = p < E ? -1 : Math.min(n - 1, Math.floor((p - E) / seg));
+        if (k === last) return;
+        last = k;
         tabs.forEach((el, j) => el.setAttribute("data-on", j === k ? "1" : "0"));
       });
     });
@@ -97,11 +133,25 @@ export function ServiceReveal({ areas }: { areas: Area[] }) {
     <section ref={sec} data-nolift className="relative bg-white">
       {/* desktop: pinned expanding panel */}
       <div className="relative hidden h-screen items-center justify-center overflow-hidden px-3 md:flex">
-        <div data-sr-head className="absolute inset-x-0 top-[14vh] z-10 text-center">
-          <p className="mb-3 font-mono text-xs uppercase tracking-[0.3em] text-[#15803d]">What we offer</p>
-          <h2 className="font-display text-[clamp(2.4rem,5.6vw,5rem)] leading-[1] text-[#0a2417]">Twenty capabilities.<br />Four disciplines</h2>
+        {/* giant outlined words that slide past behind the small tile */}
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[6vh] z-0 flex flex-col gap-3 overflow-hidden">
+          <div data-sr-row className="whitespace-nowrap font-display text-[clamp(6rem,15vw,14rem)] leading-[0.9] text-transparent [-webkit-text-stroke:2px_rgba(21,128,61,0.2)]">AI &amp; GenAI · Enterprise · Cloud · DevOps · Transformation · AI &amp; GenAI · Enterprise</div>
+          <div data-sr-row className="whitespace-nowrap font-display text-[clamp(6rem,15vw,14rem)] leading-[0.9] text-[rgba(21,128,61,0.1)]">Strategy · Build · Automate · Scale · Secure · Support · Strategy · Build · Automate</div>
         </div>
-        <div data-sr-panel className="relative mt-16 h-[calc(100vh-7rem)] w-full max-w-[84rem] overflow-hidden" style={{ backgroundColor: areas[0].bg, clipPath: "inset(16% 26% 16% 26% round 3rem)", ["--sr-ink" as string]: areas[0].ink, color: "var(--sr-ink)" }}>
+        <div data-sr-head className="absolute inset-x-0 top-[12vh] z-10 text-center">
+          <p data-sr-kick className="mb-3 font-mono text-xs uppercase tracking-[0.3em] text-[#15803d]">What we offer</p>
+          <h2 className="font-display text-[clamp(2.4rem,5.6vw,5rem)] leading-[1] text-[#0a2417]">
+            <span data-sr-h1 className="block">Twenty capabilities.</span>
+            <span data-sr-h2 className="block">Four disciplines</span>
+          </h2>
+        </div>
+        <div data-sr-panel className="relative mt-16 h-[calc(100vh-7rem)] w-full max-w-[84rem] overflow-hidden" style={{ backgroundColor: areas[0].bg, clipPath: "inset(36% 30% 8% 30% round 3rem)", ["--sr-ink" as string]: areas[0].ink, color: "var(--sr-ink)" }}>
+          {/* colour ripples (one per step after the first) and two drifting lights */}
+          {areas.slice(1).map((a) => (
+            <div key={a.name} data-sr-wipe aria-hidden className="absolute inset-0" style={{ background: a.bg }} />
+          ))}
+          <div data-sr-orb aria-hidden className="pointer-events-none absolute -left-[10%] -top-[28%] h-[34rem] w-[34rem] rounded-full" style={{ background: "radial-gradient(circle, var(--orb), transparent 66%)" }} />
+          <div data-sr-orb aria-hidden className="pointer-events-none absolute -bottom-[34%] left-[34%] h-[30rem] w-[30rem] rounded-full" style={{ background: "radial-gradient(circle, var(--orb), transparent 66%)" }} />
           {/* right: pictures wipe over each other */}
           <div className="absolute inset-y-0 right-0 w-[40%] overflow-hidden">
             {areas.map((a) => (
@@ -134,9 +184,8 @@ export function ServiceReveal({ areas }: { areas: Area[] }) {
 
           {/* content */}
           <div className="absolute inset-y-0 left-0 w-[60%]">
-            {areas.map((a, i) => (
+            {areas.map((a) => (
               <div key={a.name} data-sr-g className="absolute inset-0 flex flex-col justify-center px-8 pt-10 lg:px-12" style={{ color: a.ink }}>
-                <span data-sr-n className="pointer-events-none absolute right-6 top-24 font-display text-[6rem] leading-none opacity-[0.09] lg:text-[8rem]">0{i + 1}</span>
                 <p data-sr-a className="relative font-mono text-xs uppercase tracking-[0.3em]" style={{ color: a.accent }}>{a.items.length} services</p>
                 <h3 data-sr-a className="relative mt-3 font-display text-[clamp(2rem,3.9vw,3.6rem)] leading-[0.98]">{a.name}</h3>
                 <p data-sr-a className="relative mt-3 max-w-md text-[0.95rem] opacity-75">{a.blurb}</p>

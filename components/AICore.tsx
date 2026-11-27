@@ -1043,9 +1043,16 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
                           </group>
                         </group>
                       ))}
-                      <group position={[0.155, a === 0 ? -0.08 : -0.12, 0.04]} rotation={a === 0 ? [0.3, 0, 1.05] : [0.1, 0, 0.55]}>
+                      {/* thumb: waving hand = one short digit up and in; globe hand = a two-jointed thumb that opens out from the palm's edge and curves back toward the fingers */}
+                      <group position={a === 0 ? [0.155, -0.08, 0.04] : [-0.13, -0.075, 0.035]} rotation={a === 0 ? [0.3, 0, 1.05] : [0.1, 0, -0.62]}>
                         <mesh geometry={G.sph} material={M.black} scale={0.032} />
                         <mesh geometry={G.cap(0.04, 0.085)} material={M.shell} position={[0, -0.07, 0]} />
+                        {a === 1 && (
+                          <group position={[0, -0.15, 0]} rotation={[0, 0, 0.5]}>
+                            <mesh geometry={G.sph} material={M.black} scale={0.028} />
+                            <mesh geometry={G.cap(0.036, 0.06)} material={M.shell} position={[0, -0.055, 0]} />
+                          </group>
+                        )}
                       </group>
                     </group>
                   </group>
