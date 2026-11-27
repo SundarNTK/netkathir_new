@@ -22,7 +22,7 @@ const STAGES: Record<string, Stage> = {
   "/projects": { x: 3.4, y: 0.1, s: 0.85, pal: ["#a16207", "#16a34a", "#84cc16"] },
   "/blogs": { x: 3.4, y: 0.1, s: 0.8, pal: ["#166534", "#4ade80", "#eab308"] },
   "/about": { x: 3.3, y: 0.35, s: 0.62, pal: ["#14532d", "#22c55e", "#facc15"] },
-  "/contact": { x: 2.9, y: 0.55, s: 0.7, pal: ["#15803d", "#16a34a", "#eab308"] },
+  "/contact": { x: 2.55, y: 0.55, s: 0.7, pal: ["#15803d", "#16a34a", "#eab308"] },
 };
 
 const VARIANT: Record<string, "core" | "services" | "none" | "chip" | "globe" | "devices" | "work" | "articles" | "mail"> = {
@@ -359,7 +359,7 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
     }
     const ty =
       mobile && slotted ? mty : core ? (mobile ? mty : stage.y + out * 4.8) : (mobile ? 1.75 : stage.y) + Math.min(p, 2.5) * 4.8;
-    const ts = core ? stage.s * (mobile ? 0.5 : 1) * (1 - Math.min(out, 1) * 0.2) : stage.s * (mobile ? 0.46 : 1) * (1 - Math.min(pc, 2) * 0.16);
+    const ts = core ? stage.s * (mobile ? 0.5 : 1) * (1 - Math.min(out, 1) * 0.2) : stage.s * (mobile ? (variant === "mail" ? 0.56 : 0.46) : 1) * (1 - Math.min(pc, 2) * 0.16);
     const g = group.current;
     if (snap.current) {
       g.position.set(tx, ty, -pc * 0.9);
@@ -397,7 +397,7 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
 
   return (
     <>
-      {variant !== "core" && <Dust shared={shared} count={mobile ? 250 : 650} />}
+      {variant !== "core" && variant !== "mail" && <Dust shared={shared} count={mobile ? 250 : 650} />}
       <group ref={group}>
         <Presence active={variant === "core"}>
           <AICore palette={shared} mobile={mobile} />
@@ -418,9 +418,9 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
           <Articles palette={shared} />
         </Presence>
         <Presence active={variant === "mail"}>
-          <ContactScene palette={shared} />
+          <ContactScene palette={shared} mobile={mobile} />
         </Presence>
-        <Presence active={variant !== "none" && variant !== "core" && variant !== "services"}>
+        <Presence active={variant !== "none" && variant !== "core" && variant !== "services" && variant !== "mail"}>
           <group ref={spin} scale={variant === "core" ? 0.8 : variant === "globe" ? 0.5 : 1}>
             <Network shared={shared} count={mobile ? 30 : 46} />
             <Rings shared={shared} />

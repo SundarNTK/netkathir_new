@@ -108,10 +108,15 @@ export default function Home() {
           {logos.map((c, i) => (
             <div
               key={`${c.name}-${i}`}
-              className="mx-3 flex h-24 w-48 shrink-0 items-center justify-center rounded-2xl bg-white px-4 shadow-[0_16px_40px_-18px_rgba(22,101,52,0.5)] border border-ink/5"
+              className="mx-3 flex h-28 min-w-[11rem] shrink-0 items-center justify-center rounded-2xl bg-white px-6 shadow-[0_16px_40px_-18px_rgba(22,101,52,0.5)] border border-ink/5"
             >
+              {/* trimmed copies (no built-in empty margins), sized by height so wide logos get a wider card */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={c.logo} alt={c.name} className="max-h-14 w-full object-contain" />
+              <img
+                src={c.logo.replace(/\/clients\/([^/]+)\.\w+$/, "/clients/trim/$1.png")}
+                alt={c.name}
+                className="h-[4.5rem] w-auto max-w-[15rem] object-contain"
+              />
             </div>
           ))}
         </div>

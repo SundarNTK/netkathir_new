@@ -81,16 +81,6 @@ export default function ScrollBackdrop() {
           }}
         />
       ))}
-      <div
-        data-g
-        className="absolute -inset-x-0 -top-[20%] h-[160%] opacity-[0.5] will-change-transform"
-        style={{
-          backgroundImage: "radial-gradient(rgba(20,83,45,.16) 1.2px, transparent 1.4px)",
-          backgroundSize: "44px 44px",
-          maskImage: "radial-gradient(ellipse at 50% 40%, #000 0%, transparent 72%)",
-          WebkitMaskImage: "radial-gradient(ellipse at 50% 40%, #000 0%, transparent 72%)",
-        }}
-      />
       <div data-r className="absolute left-[6%] top-[18%] h-[26rem] w-[26rem] rounded-full border border-[#16a34a]/25 will-change-transform" style={{ borderStyle: "dashed" }} />
       <div data-r className="absolute right-[5%] top-[52%] h-[34rem] w-[34rem] rounded-full border border-[#eab308]/30 will-change-transform" />
       <div data-r className="absolute left-[38%] top-[78%] h-[20rem] w-[20rem] rounded-full border-2 border-[#14532d]/10 will-change-transform" style={{ borderStyle: "dotted" }} />

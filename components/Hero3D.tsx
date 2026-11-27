@@ -973,141 +973,645 @@ export function Mail({ palette }: { palette: RobotPalette }) {
 }
 
 
-/* ------------------------- contact: a phone with live channels ------------------------- */
+/* ------------------------- contact: airmail envelope + paper plane ------------------------- */
 
-function channelTexture(glyph: string, text: string, accent: string) {
-  return canvasTex(560, 150, (c) => {
-    c.fillStyle = "rgba(255,255,255,0.97)";
+/** the envelope cover: cream paper, airmail border, postmark, a stamp with the Netkathir emblem, and the address */
+function drawEnvelopeFace(c: CanvasRenderingContext2D, emblem: HTMLImageElement | null) {
+  const g = c.createLinearGradient(0, 0, 0, 640);
+  g.addColorStop(0, "#fffdf6");
+  g.addColorStop(1, "#f3efe2");
+  c.fillStyle = g;
+  c.fillRect(0, 0, 1024, 640);
+  // airmail border: diagonal green / gold stripes
+  c.save();
+  c.beginPath();
+  c.rect(0, 0, 1024, 640);
+  c.rect(34, 34, 956, 572);
+  c.clip("evenodd");
+  for (let i = -20; i < 60; i++) {
+    c.fillStyle = i % 2 ? "#15803d" : "#eab308";
     c.beginPath();
-    c.roundRect(6, 6, 548, 138, 69);
+    c.moveTo(i * 44, 0);
+    c.lineTo(i * 44 + 26, 0);
+    c.lineTo(i * 44 + 26 - 640, 640);
+    c.lineTo(i * 44 - 640, 640);
     c.fill();
-    c.strokeStyle = "rgba(20,83,45,0.18)";
-    c.lineWidth = 3;
+  }
+  c.restore();
+  // stamp (below the flap line) with the Netkathir emblem
+  const sx = 820, sy = 236;
+  c.fillStyle = "#ffffff";
+  c.fillRect(sx, sy, 128, 152);
+  c.strokeStyle = "#15803d";
+  c.setLineDash([6, 6]);
+  c.lineWidth = 3;
+  c.strokeRect(sx + 8, sy + 8, 112, 136);
+  c.setLineDash([]);
+  if (emblem && emblem.naturalWidth) {
+    const w = 96;
+    const h = (w * emblem.naturalHeight) / emblem.naturalWidth;
+    c.drawImage(emblem, sx + 64 - w / 2, sy + 76 - h / 2, w, h);
+  } else {
+    c.fillStyle = "#15803d";
+    c.fillRect(sx + 20, sy + 20, 88, 112);
+  }
+  // postmark rings + wavy cancel lines
+  c.strokeStyle = "rgba(20,83,45,0.35)";
+  c.lineWidth = 3;
+  [44, 58].forEach((r) => {
+    c.beginPath();
+    c.arc(772, 318, r, 0, 7);
     c.stroke();
-    c.fillStyle = accent;
+  });
+  for (let k = 0; k < 3; k++) {
     c.beginPath();
-    c.arc(75, 75, 46, 0, 7);
-    c.fill();
-    c.fillStyle = "#fff";
-    c.font = "700 44px Arial";
-    c.textAlign = "center";
-    c.textBaseline = "middle";
-    c.fillText(glyph, 75, 78);
-    c.fillStyle = "#0f3d22";
-    c.font = "700 46px Arial";
-    c.textAlign = "left";
-    c.fillText(text, 142, 78);
+    for (let x = 640; x <= 720; x += 4) {
+      const y = 300 + k * 16 + Math.sin(x / 9) * 4;
+      if (x === 640) c.moveTo(x, y);
+      else c.lineTo(x, y);
+    }
+    c.stroke();
+  }
+  // address
+  c.textAlign = "left";
+  c.textBaseline = "alphabetic";
+  c.fillStyle = "#8a6414";
+  c.font = "600 26px Arial";
+  c.fillText("TO", 120, 372);
+  c.fillStyle = "#0f3d22";
+  c.font = "800 52px Arial";
+  c.fillText("Netkathir Technologies", 120, 432);
+  c.fillStyle = "#3f6b52";
+  c.font = "500 32px Arial";
+  c.fillText("Puducherry  ·  Dubai", 120, 482);
+  c.strokeStyle = "rgba(15,61,34,0.18)";
+  c.lineWidth = 3;
+  [520, 560].forEach((y) => {
+    c.beginPath();
+    c.moveTo(120, y);
+    c.lineTo(640, y);
+    c.stroke();
   });
 }
 
-const CHANNELS = [
-  { glyph: "@", text: "Email us", accent: "#16a34a", x: -2.05, y: 0.75, z: 0.5 },
-  { glyph: "+91", text: "Call us", accent: "#ca8a04", x: 1.75, y: 0.1, z: 0.7 },
-  { glyph: "W", text: "WhatsApp", accent: "#15803d", x: -1.9, y: -0.85, z: 0.9 },
+function envelopeTexture() {
+  return canvasTex(1024, 640, (c) => drawEnvelopeFace(c, null));
+}
+
+/** the wax seal face: green wax with the Netkathir emblem pressed into it */
+function drawSeal(c: CanvasRenderingContext2D, emblem: HTMLImageElement | null) {
+  c.clearRect(0, 0, 256, 256);
+  const g = c.createRadialGradient(108, 100, 10, 128, 128, 124);
+  g.addColorStop(0, "#22c55e");
+  g.addColorStop(0.7, "#15803d");
+  g.addColorStop(1, "#0f5a2c");
+  c.fillStyle = g;
+  c.beginPath();
+  // slightly irregular wax edge
+  for (let i = 0; i <= 40; i++) {
+    const a = (i / 40) * Math.PI * 2;
+    const r = 118 + Math.sin(i * 2.7) * 5;
+    c[i ? "lineTo" : "moveTo"](128 + Math.cos(a) * r, 128 + Math.sin(a) * r);
+  }
+  c.fill();
+  c.fillStyle = "#ffffff";
+  c.beginPath();
+  c.arc(128, 128, 82, 0, 7);
+  c.fill();
+  if (emblem && emblem.naturalWidth) {
+    const s0 = 132;
+    const h = (s0 * emblem.naturalHeight) / emblem.naturalWidth;
+    c.drawImage(emblem, 128 - s0 / 2, 128 - h / 2, s0, h);
+  }
+}
+
+/** the letter that slides out */
+function contactLetterTexture() {
+  return canvasTex(800, 560, (c) => {
+    c.fillStyle = "#ffffff";
+    c.fillRect(0, 0, 800, 560);
+    const hg = c.createLinearGradient(0, 0, 800, 0);
+    hg.addColorStop(0, "#14532d");
+    hg.addColorStop(1, "#16a34a");
+    c.fillStyle = hg;
+    c.fillRect(0, 0, 800, 12);
+    c.fillStyle = "#0f3d22";
+    c.font = "800 64px Arial";
+    c.fillText("Hello \u{1F44B}", 60, 120);
+    c.fillStyle = "#1f5135";
+    c.font = "600 40px Arial";
+    c.fillText("Let's build your next", 60, 200);
+    c.fillText("intelligent solution", 60, 252);
+    c.strokeStyle = "rgba(15,61,34,0.14)";
+    c.lineWidth = 4;
+    [320, 362, 404].forEach((y, i) => {
+      c.beginPath();
+      c.moveTo(60, y);
+      c.lineTo(i === 2 ? 460 : 740, y);
+      c.stroke();
+    });
+    c.fillStyle = "#8a6414";
+    c.font = "italic 600 36px Georgia, serif";
+    c.fillText("— Team Netkathir", 60, 490);
+  });
+}
+
+// WhatsApp mark (phone in a speech bubble) and a phone handset, on a 24x24 grid
+const WA_PATH =
+  "M12.04 2a9.9 9.9 0 00-8.46 15.04L2.2 22l5.08-1.33A9.9 9.9 0 1012.04 2zm0 18.13a8.2 8.2 0 01-4.18-1.14l-.3-.18-3.02.79.8-2.94-.2-.31a8.22 8.22 0 1112.9 1.37 8.16 8.16 0 01-6 2.41zm4.5-6.14c-.25-.12-1.46-.72-1.69-.8s-.39-.12-.55.12-.64.8-.78.96-.29.19-.54.06a6.74 6.74 0 01-3.37-2.94c-.25-.44.25-.41.72-1.36a.46.46 0 000-.43c-.06-.12-.55-1.33-.76-1.82s-.4-.41-.55-.42h-.47a.9.9 0 00-.65.3 2.74 2.74 0 00-.86 2.04 4.76 4.76 0 001 2.53 10.9 10.9 0 004.18 3.69c1.55.67 2.16.73 2.94.61a2.5 2.5 0 001.65-1.16 2.04 2.04 0 00.14-1.16c-.06-.1-.22-.16-.47-.28z";
+const PHONE_PATH =
+  "M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24 11.36 11.36 0 003.57.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z";
+const MAIL_PATH = "M3 5h18a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V6a1 1 0 011-1zm9 7.2L3.6 7v1.9l8.4 5.1 8.4-5.1V7z";
+/** draw a 24-grid vector icon centred at (cx, cy) with the given size */
+function drawIcon(c: CanvasRenderingContext2D, d: string, cx: number, cy: number, size: number, col = "#ffffff") {
+  c.save();
+  c.translate(cx - size / 2, cy - size / 2);
+  c.scale(size / 24, size / 24);
+  c.fillStyle = col;
+  c.fill(new Path2D(d));
+  c.restore();
+}
+
+/** a round contact badge with a label underneath */
+function badgeTexture(glyph: string, label: string, a: string, b: string) {
+  return canvasTex(256, 320, (c) => {
+    c.shadowColor = "rgba(10,60,30,0.3)";
+    c.shadowBlur = 18;
+    c.shadowOffsetY = 6;
+    const g = c.createLinearGradient(28, 20, 228, 220);
+    g.addColorStop(0, a);
+    g.addColorStop(1, b);
+    c.fillStyle = g;
+    c.beginPath();
+    c.arc(128, 120, 96, 0, 7);
+    c.fill();
+    c.shadowColor = "transparent";
+    c.strokeStyle = "rgba(255,255,255,0.8)";
+    c.lineWidth = 5;
+    c.beginPath();
+    c.arc(128, 120, 86, 0, 7);
+    c.stroke();
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    if (glyph === "wa") drawIcon(c, WA_PATH, 128, 120, 104);
+    else if (glyph === "phone") drawIcon(c, PHONE_PATH, 128, 122, 92);
+    else if (glyph === "mail") drawIcon(c, MAIL_PATH, 128, 120, 100);
+    else {
+      c.fillStyle = "#ffffff";
+      c.font = "800 92px Arial";
+      c.fillText(glyph, 128, 126);
+    }
+    c.fillStyle = "rgba(255,255,255,0.96)";
+    c.beginPath();
+    c.roundRect(38, 246, 180, 52, 26);
+    c.fill();
+    c.fillStyle = "#0f3d22";
+    c.font = "700 30px Arial";
+    c.fillText(label, 128, 274);
+  });
+}
+
+const BADGES = [
+  { glyph: "@", label: "Email", a: "#22c55e", b: "#14532d", ph: 0 },
+  { glyph: "phone", label: "Call", a: "#fbbf24", b: "#b45309", ph: 2.1 },
+  { glyph: "wa", label: "WhatsApp", a: "#3ddc6f", b: "#128c4a", ph: 4.2 },
 ];
 
-/** A phone showing a live conversation, three contact channels floating around it, a pin on top, on a glass pedestal. */
-export function ContactScene({ palette }: { palette: RobotPalette }) {
+// badges sit still in a balanced arc: Email left, Call below, WhatsApp right (scene units)
+const BADGE_POS: [number, number, number][] = [
+  [-2.05, -0.3, 0.55],
+  [0, -1.35, 0.8],
+  [2.05, -0.3, 0.55],
+];
+const PHASE = [0, 0.36, 0.66]; // when each channel takes its turn, as a fraction of the 12 s loop
+
+/** speech bubble / call card textures for the Call and WhatsApp moments */
+function chipCard(lines: [string, string], accent: string, icon: string, tail: "left" | "right" | "none", fill = "#ffffff", ink = "#0f3d22") {
+  return canvasTex(640, 220, (c) => {
+    c.shadowColor = "rgba(10,60,30,0.25)";
+    c.shadowBlur = 22;
+    c.shadowOffsetY = 8;
+    c.fillStyle = fill;
+    c.beginPath();
+    c.roundRect(16, 14, 608, 168, 46);
+    if (tail === "left") {
+      c.moveTo(70, 176);
+      c.lineTo(52, 210);
+      c.lineTo(110, 176);
+    } else if (tail === "right") {
+      c.moveTo(530, 176);
+      c.lineTo(590, 210);
+      c.lineTo(570, 176);
+    }
+    c.fill();
+    c.shadowColor = "transparent";
+    let x = 48;
+    if (icon) {
+      c.fillStyle = accent;
+      c.beginPath();
+      c.arc(96, 98, 48, 0, 7);
+      c.fill();
+      if (icon === "phone") drawIcon(c, PHONE_PATH, 96, 98, 52);
+      else if (icon === "wa") drawIcon(c, WA_PATH, 96, 98, 58);
+      x = 168;
+    }
+    c.textAlign = "left";
+    c.textBaseline = "alphabetic";
+    c.fillStyle = ink;
+    // shrink the headline if it would run into the edge of the card
+    let fs = 42;
+    c.font = `800 ${fs}px Arial, 'Segoe UI Emoji'`;
+    while (c.measureText(lines[0]).width > 600 - x && fs > 26) {
+      fs -= 2;
+      c.font = `800 ${fs}px Arial, 'Segoe UI Emoji'`;
+    }
+    c.fillText(lines[0], x, lines[1] ? 92 : 112);
+    if (lines[1]) {
+      c.fillStyle = "#3f6b52";
+      c.font = "600 32px Arial, 'Segoe UI Emoji'";
+      c.fillText(lines[1], x, 142);
+    }
+  });
+}
+const TRAIL = 46;
+const sstep = (a: number, b: number, x: number) => {
+  const k = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return k * k * (3 - 2 * k);
+};
+
+/** An airmail envelope that opens to let a letter rise out, a paper plane looping around it, contact badges in orbit. */
+export function ContactScene({ palette, mobile = false }: { palette: RobotPalette; mobile?: boolean }) {
+  const mx = mobile ? 0.72 : 1; // pull the badges and cards in towards the centre on phones
   const root = useRef<THREE.Group>(null!);
-  const phone = useRef<THREE.Group>(null!);
-  const chips = useRef<THREE.Group[]>([]);
-  const pin = useRef<THREE.Group>(null!);
-  const ring = useRef<THREE.Mesh>(null!);
-  const typing = useRef<THREE.Mesh[]>([]);
+  const env = useRef<THREE.Group>(null!);
+  const flap = useRef<THREE.Group>(null!);
+  const letter = useRef<THREE.Group>(null!);
+  const plane = useRef<THREE.Group>(null!);
+  const badges = useRef<THREE.Group[]>([]);
+  const faces = useRef<THREE.Mesh[]>([]);
+  const ripples = useRef<THREE.Mesh[]>([]);
+  const packets = useRef<THREE.Group[]>([]);
+  const callCard = useRef<THREE.Mesh>(null!);
+  const chatA = useRef<THREE.Mesh>(null!);
+  const chatB = useRef<THREE.Mesh>(null!);
+  const dots = useRef<THREE.Group>(null!);
+  const cards = useMemo(
+    () => ({
+      call: chipCard(["Calling Netkathir…", "0413 2981038"], "#d97706", "phone", "left"),
+      mine: chipCard(["Hi Netkathir 👋", "I need an AI chatbot"], "#16a34a", "", "right", "#dcfce7"),
+      reply: chipCard(["Hello! 😊", "How can we help you?"], "#16a34a", "", "left"),
+    }),
+    []
+  );
+  const dotGlow = useMemo(
+    () =>
+      canvasTex(128, 128, (c) => {
+        const g = c.createRadialGradient(64, 64, 2, 64, 64, 64);
+        g.addColorStop(0, "rgba(255,255,255,1)");
+        g.addColorStop(0.25, "rgba(255,255,255,0.75)");
+        g.addColorStop(1, "rgba(255,255,255,0)");
+        c.fillStyle = g;
+        c.fillRect(0, 0, 128, 128);
+      }),
+    []
+  );
+  const halo = useRef<THREE.Mesh>(null!);
   const mouse = useMouse();
-  const chat = useMemo(() => chatTexture(), []);
-  const tex = useMemo(() => CHANNELS.map((c) => channelTexture(c.glyph, c.text, c.accent)), []);
+  const envTex = useMemo(() => envelopeTexture(), []);
+  const sealTex = useMemo(() => canvasTex(256, 256, (c) => drawSeal(c, null)), []);
+  useEffect(() => {
+    const emblem = new Image();
+    emblem.onload = () => {
+      drawEnvelopeFace((envTex.image as HTMLCanvasElement).getContext("2d")!, emblem);
+      envTex.needsUpdate = true;
+      drawSeal((sealTex.image as HTMLCanvasElement).getContext("2d")!, emblem);
+      sealTex.needsUpdate = true;
+    };
+    emblem.src = "/images/brand/netkathir-emblem.png";
+  }, [envTex, sealTex]);
+  const letTex = useMemo(() => contactLetterTexture(), []);
+  const badgeTex = useMemo(() => BADGES.map((b) => badgeTexture(b.glyph, b.label, b.a, b.b)), []);
+  const glow = useMemo(
+    () =>
+      canvasTex(256, 256, (c) => {
+        const g = c.createRadialGradient(128, 128, 8, 128, 128, 128);
+        g.addColorStop(0, "rgba(250,214,120,0.55)");
+        g.addColorStop(0.5, "rgba(74,222,128,0.18)");
+        g.addColorStop(1, "rgba(74,222,128,0)");
+        c.fillStyle = g;
+        c.fillRect(0, 0, 256, 256);
+      }),
+    []
+  );
+  const shadowTex = useMemo(
+    () =>
+      canvasTex(256, 128, (c) => {
+        const g = c.createRadialGradient(128, 64, 4, 128, 64, 120);
+        g.addColorStop(0, "rgba(6,60,30,0.35)");
+        g.addColorStop(1, "rgba(6,60,30,0)");
+        c.fillStyle = g;
+        c.save();
+        c.scale(1, 0.5);
+        c.fillRect(0, 0, 256, 256);
+        c.restore();
+      }),
+    []
+  );
+  // folded paper plane: two wings and a keel (nose points +z)
+  const planeGeo = useMemo(() => {
+    const N = [0, 0, 0.5], L = [-0.36, 0.03, -0.36], R = [0.36, 0.03, -0.36], C = [0, 0, -0.36], K = [0, -0.13, -0.32];
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute([...N, ...L, ...C, ...N, ...C, ...R, ...N, ...C, ...K], 3));
+    g.computeVertexNormals();
+    return g;
+  }, []);
+  const flapGeo = useMemo(() => {
+    const s = new THREE.Shape();
+    s.moveTo(-1.1, 0);
+    s.lineTo(1.1, 0);
+    s.lineTo(0.1, -0.4);
+    s.quadraticCurveTo(0, -0.45, -0.1, -0.4);
+    s.closePath();
+    return new THREE.ShapeGeometry(s, 8);
+  }, []);
+  const trail = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(TRAIL * 3), 3));
+    // fades from bright green at the plane to the page tint at the tail, like a contrail
+    const col = new Float32Array(TRAIL * 3);
+    const a = new THREE.Color("#16a34a");
+    const b = new THREE.Color("#eefbf2");
+    const c = new THREE.Color();
+    for (let i = 0; i < TRAIL; i++) {
+      c.copy(a).lerp(b, Math.pow(i / (TRAIL - 1), 0.8));
+      col.set([c.r, c.g, c.b], i * 3);
+    }
+    g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
+    return g;
+  }, []);
+  const hist = useRef<THREE.Vector3[]>([]);
+  const tmp = useMemo(() => new THREE.Vector3(), []);
+
+  const path = (t: number, out: THREE.Vector3) => {
+    const w = t * 0.62;
+    return out.set(Math.cos(w) * 2.55, 0.35 + Math.sin(w * 2) * 0.45, Math.sin(w) * 1.25 + 0.2);
+  };
 
   const live = useLive();
   useFrame((_, dt) => {
     if (!live.current) return;
     const t = palette.uTime.value;
     const d = Math.min(dt, 0.25);
-    root.current.rotation.y = THREE.MathUtils.damp(root.current.rotation.y, -0.35 + mouse.current.x * 0.4, 4, d);
-    root.current.rotation.x = THREE.MathUtils.damp(root.current.rotation.x, 0.05 - mouse.current.y * 0.1, 4, d);
-    phone.current.position.y = 0.2 + Math.sin(t * 1.1) * 0.05;
-    chips.current.forEach((g, i) => {
+    root.current.rotation.y = THREE.MathUtils.damp(root.current.rotation.y, mouse.current.x * 0.35, 4, d);
+    root.current.rotation.x = THREE.MathUtils.damp(root.current.rotation.x, 0.06 - mouse.current.y * 0.1, 4, d);
+    env.current.position.y = Math.sin(t * 1.1) * 0.06;
+    const p = (t % 12) / 12;
+    // the email lands in the envelope with a small bounce
+    const ba = (p - 0.12) / 0.035;
+    env.current.scale.setScalar(1 + (ba > 0 && ba < 1 ? 0.05 * Math.sin(ba * Math.PI) : 0));
+    env.current.rotation.z = Math.sin(t * 0.7) * 0.03;
+    env.current.rotation.y = Math.sin(t * 0.45) * 0.12;
+
+    // 12 s loop, one channel at a time:
+    //  Email: a message flies into the envelope, it opens and the reply letter rises
+    //  Call: the phone badge rings and a "Calling Netkathir…" card pops beside it
+    //  WhatsApp: a chat plays out above its badge (your message, typing, our reply)
+    const open = sstep(0.12, 0.17, p) * (1 - sstep(0.29, 0.34, p));
+    const rise = sstep(0.15, 0.21, p) * (1 - sstep(0.26, 0.32, p));
+    // the flap swings up and folds back a little past upright, so the letter comes out in front of it
+    flap.current.rotation.x = -open * (Math.PI + 0.36);
+    letter.current.position.y = -0.05 + rise * 1.05;
+    letter.current.rotation.z = Math.sin(t * 1.3) * 0.02 * rise;
+
+    // paper plane on a looping orbit, nose along its path, banking into the turns
+    path(t, plane.current.position);
+    plane.current.lookAt(path(t + 0.06, tmp));
+    plane.current.rotateZ(-Math.sin(t * 0.62) * 0.5);
+    const h = hist.current;
+    h.unshift(plane.current.position.clone());
+    if (h.length > TRAIL) h.length = TRAIL;
+    const arr = trail.attributes.position.array as Float32Array;
+    for (let i = 0; i < TRAIL; i++) {
+      const v = h[Math.min(i * 2, h.length - 1)] ?? plane.current.position;
+      arr[i * 3] = v.x;
+      arr[i * 3 + 1] = v.y;
+      arr[i * 3 + 2] = v.z;
+    }
+    trail.attributes.position.needsUpdate = true;
+
+    const pop = (x: number) => {
+      if (x <= 0) return 0.001;
+      const k = Math.min(x, 1) - 1;
+      return Math.max(0.001, 1 + 2.2 * k * k * k + 1.2 * k * k);
+    };
+    const active = [
+      sstep(0, 0.02, p) * (1 - sstep(0.07, 0.1, p)), // email sends
+      sstep(0.36, 0.38, p) * (1 - sstep(0.58, 0.62, p)), // phone rings
+      sstep(0.66, 0.69, p) * (1 - sstep(0.92, 0.96, p)), // chat open
+    ];
+    badges.current.forEach((g, i) => {
       if (!g) return;
-      g.position.y = CHANNELS[i].y + Math.sin(t * 1.2 + i * 2.1) * 0.08;
-      g.rotation.y = -root.current.rotation.y * 0.8 + Math.sin(t * 0.6 + i) * 0.05;
+      const [bx, by, bz] = BADGE_POS[i];
+      g.position.set(bx * mx, by + Math.sin(t * 1.2 + BADGES[i].ph) * 0.06, bz);
+      g.rotation.y = -root.current.rotation.y;
+      const k = active[i];
+      g.scale.setScalar((mobile ? 1.15 : 0.92) + 0.16 * k);
+      const f = faces.current[i];
+      // the phone shakes in short bursts, like a real ring
+      if (f) f.rotation.z = i === 1 ? Math.sin(t * 42) * 0.22 * k * (Math.sin(t * 5) > 0 ? 1 : 0.15) : 0;
+      // ripples: one for the email and chat, repeating waves while the phone rings
+      const rp = ripples.current[i];
+      if (rp) {
+        const r = i === 1 ? (k > 0.05 ? ((p - 0.36) / 0.06) % 1 : -1) : (p - PHASE[i]) / 0.1;
+        rp.visible = r > 0 && r < 1;
+        rp.scale.setScalar(1 + r * 1.4);
+        (rp.material as THREE.MeshBasicMaterial).opacity = (1 - r) * 0.7;
+      }
     });
-    pin.current.position.y = 1.95 + Math.sin(t * 1.5) * 0.06;
-    pin.current.rotation.y = t * 0.8;
-    ring.current.rotation.z = t * 0.4;
-    typing.current.forEach((m, i) => {
-      if (m) m.scale.setScalar(0.55 + 0.45 * Math.max(0, Math.sin(t * 5 - i * 0.9)));
-    });
+
+    // email: a glowing message arcs from the Email badge into the envelope
+    const pk = packets.current[0];
+    if (pk) {
+      const u = (p - 0.03) / 0.09;
+      pk.visible = u > 0 && u < 1;
+      if (pk.visible) {
+        const e = u * u * (3 - 2 * u);
+        const sx = BADGE_POS[0][0] * mx, sy = BADGE_POS[0][1] + 0.1, sz = BADGE_POS[0][2] + 0.05;
+        const ex = 0, ey = env.current.position.y, ez = 0.15;
+        const cx = sx * 0.45, cy = Math.max(sy, ey) + 0.75, cz = 0.9;
+        const w = 1 - e;
+        pk.position.set(w * w * sx + 2 * w * e * cx + e * e * ex, w * w * sy + 2 * w * e * cy + e * e * ey, w * w * sz + 2 * w * e * cz + e * e * ez);
+        pk.scale.setScalar(1 - 0.45 * e);
+        pk.rotation.y = -root.current.rotation.y;
+      }
+    }
+
+    // call: the "Calling Netkathir…" card pops out beside the ringing phone
+    const callOut = 1 - sstep(0.58, 0.62, p);
+    callCard.current.scale.setScalar(Math.max(0.001, pop((p - 0.38) / 0.05) * callOut));
+    callCard.current.visible = p > 0.38 && callOut > 0.01;
+    callCard.current.rotation.y = -root.current.rotation.y;
+
+    // whatsapp: your message, typing dots, then our reply
+    const chatOut = 1 - sstep(0.92, 0.96, p);
+    chatA.current.scale.setScalar(Math.max(0.001, pop((p - 0.69) / 0.05) * chatOut));
+    chatA.current.visible = p > 0.69 && chatOut > 0.01;
+    chatA.current.rotation.y = -root.current.rotation.y;
+    dots.current.visible = p > 0.73 && p < 0.79;
+    dots.current.rotation.y = -root.current.rotation.y;
+    dots.current.children.forEach((m, j) => m.scale.setScalar(0.6 + 0.4 * Math.max(0, Math.sin(t * 9 - j * 0.9))));
+    chatB.current.scale.setScalar(Math.max(0.001, pop((p - 0.79) / 0.05) * chatOut));
+    chatB.current.visible = p > 0.79 && chatOut > 0.01;
+    chatB.current.rotation.y = -root.current.rotation.y;
+    halo.current.scale.setScalar(4.2 + Math.sin(t * 1.4) * 0.15);
   });
 
   return (
-    <group ref={root}>
-      {/* pedestal */}
-      <mesh position={[0, -1.7, 0]}>
-        <cylinderGeometry args={[1.55, 1.62, 0.14, 64]} />
-        <meshPhysicalMaterial color="#0d2a1a" metalness={0.85} roughness={0.2} clearcoat={1} envMapIntensity={1.4} />
-      </mesh>
-      <mesh ref={ring} position={[0, -1.62, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[1.3, 1.34, 64, 1, 0, Math.PI * 1.7]} />
-        <meshBasicMaterial color="#4ade80" toneMapped={false} side={THREE.DoubleSide} />
+    <group ref={root} scale={1.6}>
+      <mesh ref={halo} position={[0, 0.2, -0.8]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial map={glow} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
       </mesh>
 
-      {/* phone */}
-      <group ref={phone} position={[0, 0.2, 0]} rotation={[0, 0.1, 0]}>
-        <RoundedBox args={[1.3, 2.62, 0.13]} radius={0.17} smoothness={6}>
-          <meshPhysicalMaterial color="#10201a" metalness={0.9} roughness={0.25} clearcoat={1} envMapIntensity={1.4} />
-        </RoundedBox>
-        <mesh position={[0, 0, 0.068]}>
-          <planeGeometry args={[1.16, 2.48]} />
-          <meshBasicMaterial map={chat} toneMapped={false} />
+      {/* soft shadow under the floating envelope */}
+      <mesh position={[0, -1.25, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[2.6, 1.1]} />
+        <meshBasicMaterial map={shadowTex} transparent depthWrite={false} toneMapped={false} />
+      </mesh>
+
+      <group ref={env} position={[0, 0, 0]}>
+        {/* the letter sits in the pocket (behind its front face) and rises out in front of the folded-back flap */}
+        <group ref={letter} position={[0, -0.05, 0.042]}>
+          <mesh>
+            <planeGeometry args={[1.95, 1.22]} />
+            <meshBasicMaterial map={letTex} side={THREE.DoubleSide} toneMapped={false} />
+          </mesh>
+        </group>
+        {/* envelope body: the flap side faces us, plain paper at the back */}
+        <mesh position={[0, 0, 0.055]}>
+          <planeGeometry args={[2.2, 1.375]} />
+          <meshBasicMaterial map={envTex} toneMapped={false} />
         </mesh>
-        {/* typing indicator */}
-        <group position={[-0.3, -1.0, 0.075]}>
-          {[0, 1, 2].map((i) => (
-            <mesh
-              key={i}
-              position={[i * 0.12, 0, 0]}
-              ref={(m) => {
-                if (m) typing.current[i] = m;
-              }}
-            >
-              <circleGeometry args={[0.04, 16]} />
-              <meshBasicMaterial color="#4ade80" toneMapped={false} />
-            </mesh>
-          ))}
+        <mesh position={[0, 0, -0.055]} rotation={[0, Math.PI, 0]}>
+          <planeGeometry args={[2.2, 1.375]} />
+          <meshBasicMaterial color="#efe9d8" toneMapped={false} />
+        </mesh>
+        {/* paper edges */}
+        {[-1, 1].map((sd) => (
+          <mesh key={`v${sd}`} position={[sd * 1.1, 0, 0]}>
+            <boxGeometry args={[0.012, 1.375, 0.11]} />
+            <meshStandardMaterial color="#e8e2cf" roughness={0.8} />
+          </mesh>
+        ))}
+        <mesh position={[0, -0.6875, 0]}>
+          <boxGeometry args={[2.2, 0.012, 0.11]} />
+          <meshStandardMaterial color="#e8e2cf" roughness={0.8} />
+        </mesh>
+        {/* flap: hinged on the top edge of the face we see; it folds up and back, behind the rising letter */}
+        <group ref={flap} position={[0, 0.6875, 0.06]}>
+          <mesh geometry={flapGeo}>
+            <meshBasicMaterial color="#f5efe0" side={THREE.FrontSide} toneMapped={false} />
+          </mesh>
+          {/* inside of the flap, seen once it is open */}
+          <mesh geometry={flapGeo} position={[0, 0, -0.002]}>
+            <meshBasicMaterial color="#fbf8ee" side={THREE.BackSide} toneMapped={false} />
+          </mesh>
+          {/* fold shadow along the flap edges */}
+          <mesh geometry={flapGeo} position={[0, -0.012, -0.001]} scale={[1.01, 1.02, 1]}>
+            <meshBasicMaterial color="#d9d0b8" side={THREE.FrontSide} toneMapped={false} transparent opacity={0.6} />
+          </mesh>
+          {/* wax seal with the Netkathir emblem on the flap tip */}
+          <mesh position={[0, -0.36, 0.02]}>
+            <circleGeometry args={[0.15, 40]} />
+            <meshBasicMaterial map={sealTex} transparent toneMapped={false} />
+          </mesh>
         </group>
       </group>
 
-      {/* contact channels */}
-      {CHANNELS.map((c, i) => (
+      {/* paper plane + dotted trail */}
+      <group ref={plane} scale={0.62}>
+        <mesh geometry={planeGeo}>
+          <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} toneMapped={false} />
+        </mesh>
+        <mesh position={[0, 0.005, -0.3]}>
+          <boxGeometry args={[0.7, 0.006, 0.05]} />
+          <meshBasicMaterial color="#22c55e" toneMapped={false} />
+        </mesh>
+      </group>
+      <points geometry={trail} frustumCulled={false}>
+        <pointsMaterial vertexColors size={0.05} sizeAttenuation transparent opacity={0.9} depthWrite={false} />
+      </points>
+
+      {/* contact channels: each one sends its message into the envelope in turn */}
+      {BADGES.map((b, i) => (
         <group
-          key={c.text}
-          position={[c.x, c.y, c.z]}
+          key={b.label}
           ref={(g) => {
-            if (g) chips.current[i] = g;
+            if (g) badges.current[i] = g;
           }}
         >
+          <mesh
+            ref={(m) => {
+              if (m) ripples.current[i] = m;
+            }}
+            position={[0, 0.094, -0.01]}
+            visible={false}
+          >
+            <ringGeometry args={[0.2, 0.23, 48]} />
+            <meshBasicMaterial color={b.a} transparent opacity={0} depthWrite={false} toneMapped={false} />
+          </mesh>
+          <mesh
+            ref={(m) => {
+              if (m) faces.current[i] = m;
+            }}
+          >
+            <planeGeometry args={[0.6, 0.75]} />
+            <meshBasicMaterial map={badgeTex[i]} transparent depthWrite={false} toneMapped={false} />
+          </mesh>
+        </group>
+      ))}
+      {BADGES.slice(0, 1).map((b, i) => (
+        <group
+          key={`pk${b.label}`}
+          ref={(g) => {
+            if (g) packets.current[i] = g;
+          }}
+          visible={false}
+        >
           <mesh>
-            <planeGeometry args={[1.5, 0.402]} />
-            <meshBasicMaterial map={tex[i]} transparent toneMapped={false} />
+            <planeGeometry args={[0.5, 0.5]} />
+            <meshBasicMaterial map={dotGlow} color={b.a} transparent opacity={0.95} depthWrite={false} toneMapped={false} />
+          </mesh>
+          <mesh position={[0, 0, 0.01]}>
+            <circleGeometry args={[0.055, 24]} />
+            <meshBasicMaterial color="#ffffff" toneMapped={false} />
           </mesh>
         </group>
       ))}
 
-      {/* location pin */}
-      <group ref={pin} position={[1.5, 1.95, 0.2]}>
-        <mesh position={[0, 0.22, 0]}>
-          <sphereGeometry args={[0.26, 40, 40]} />
-          <meshPhysicalMaterial color="#16a34a" roughness={0.15} metalness={0.2} clearcoat={1} envMapIntensity={1.4} />
-        </mesh>
-        <mesh position={[0, -0.12, 0]} rotation={[Math.PI, 0, 0]}>
-          <coneGeometry args={[0.21, 0.44, 40]} />
-          <meshPhysicalMaterial color="#16a34a" roughness={0.15} metalness={0.2} clearcoat={1} envMapIntensity={1.4} />
-        </mesh>
-        <mesh position={[0, 0.22, 0.17]}>
-          <sphereGeometry args={[0.1, 24, 24]} />
-          <meshBasicMaterial color="#fde047" toneMapped={false} />
-        </mesh>
+      {/* call card beside the phone */}
+      <mesh ref={callCard} position={[BADGE_POS[1][0] * mx + (mobile ? 0.95 : 1.25), BADGE_POS[1][1] + 0.3, BADGE_POS[1][2] + 0.1]} scale={0.001} visible={false}>
+        <planeGeometry args={[1.6, 0.55]} />
+        <meshBasicMaterial map={cards.call} transparent depthWrite={false} toneMapped={false} />
+      </mesh>
+      {/* chat above the WhatsApp badge */}
+      <mesh ref={chatA} position={[BADGE_POS[2][0] * mx - (mobile ? 0.55 : 0.15), BADGE_POS[2][1] + 1.35, BADGE_POS[2][2] + 0.1]} scale={0.001} visible={false}>
+        <planeGeometry args={[1.6, 0.55]} />
+        <meshBasicMaterial map={cards.mine} transparent depthWrite={false} toneMapped={false} />
+      </mesh>
+      <group ref={dots} position={[BADGE_POS[2][0] * mx - (mobile ? 0.95 : 0.55), BADGE_POS[2][1] + 0.78, BADGE_POS[2][2] + 0.1]} visible={false}>
+        {[0, 1, 2].map((k) => (
+          <mesh key={k} position={[k * 0.11, 0, 0]}>
+            <circleGeometry args={[0.04, 16]} />
+            <meshBasicMaterial color="#16a34a" toneMapped={false} />
+          </mesh>
+        ))}
       </group>
+      <mesh ref={chatB} position={[BADGE_POS[2][0] * mx - (mobile ? 0.75 : 0.35), BADGE_POS[2][1] + 0.78, BADGE_POS[2][2] + 0.1]} scale={0.001} visible={false}>
+        <planeGeometry args={[1.6, 0.55]} />
+        <meshBasicMaterial map={cards.reply} transparent depthWrite={false} toneMapped={false} />
+      </mesh>
     </group>
   );
 }

@@ -166,7 +166,7 @@ export default function Intro() {
       for (let i = 1; i < YEARS.length; i++) {
         const from = String(YEARS[i - 1]);
         const to = String(YEARS[i]);
-        const gap = 0.7 + Math.max(0, i - 8) * 0.12;
+        const gap = 0.3 + Math.max(0, i - 8) * 0.06; // quick page-turns; 9 sheets in rotation (9 x 0.3 s = 2.7 s) so each 2.6 s flight clears before its sheet is reused
         const item = sheets[i % sheets.length];
         const paper = item.querySelector(".nk-paper") as HTMLElement;
         const word = paper.querySelector(".nk-word") as HTMLElement;
@@ -444,7 +444,7 @@ export default function Intro() {
               2015
             </span>
             <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-b-[1.3rem]"><span className="i-shine absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/80 to-transparent" /></span>
-            {[0, 1, 2, 3, 4, 5].map((n) => (
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
               <div key={n} ref={(el) => { sheetEls.current[n] = el; }} className="pointer-events-none absolute inset-0 z-10 opacity-0">
                 <div className="nk-paper absolute inset-0 will-change-transform">
                   <div className="nk-sheet absolute inset-0 flex items-center justify-center rounded-b-[1.3rem] bg-white shadow-[0_14px_30px_-8px_rgba(20,83,45,0.35)]">
