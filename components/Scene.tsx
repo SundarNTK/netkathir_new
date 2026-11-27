@@ -63,7 +63,6 @@ function Studio({ shared }: { shared: Shared }) {
         <Lightformer form="rect" intensity={3.2} position={[0, 5, 4]} scale={[10, 3, 1]} color="#ffffff" />
         <Lightformer form="rect" intensity={2} position={[-5, 1, 2]} rotation-y={Math.PI / 2} scale={[6, 3, 1]} color="#a5b4fc" />
         <Lightformer form="rect" intensity={2} position={[5, 0, 2]} rotation-y={-Math.PI / 2} scale={[6, 3, 1]} color="#bbf7d0" />
-        <Lightformer form="ring" intensity={1.5} position={[0, -3, 3]} scale={5} color="#f9a8d4" />
       </Environment>
     </>
   );

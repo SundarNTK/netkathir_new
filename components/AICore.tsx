@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/immutability, react-hooks/purity -- imperative three.js animation: values are mutated per frame by design */
+/* eslint-disable react-hooks/immutability -- imperative three.js animation: values are mutated per frame by design */
 "use client";
 
 import { useFrame } from "@react-three/fiber";
@@ -7,609 +7,366 @@ import * as THREE from "three";
 import { RoundedBoxGeometry } from "three-stdlib";
 import { useLive } from "@/lib/live";
 import { traceImageToShapes } from "@/lib/traceShape";
+import { WORLD_DOTS } from "@/lib/worldDots";
 import type { RobotPalette } from "./Hero3D";
+import { Backdrop, HoloPanels } from "./RobotStage";
 
-/* ============================ living holographic interfaces ============================ */
+/* ===================================== helpers ===================================== */
 
-const TITLES = ["GARAGE BILL", "NETKATHIR · SERVICES", "HRMS", "NETKATHIR · 2015 — 2026", "OUR CLIENTS", "GLOBAL PRESENCE"];
-const PW = 512;
-const PH = 340;
 const ease = (x: number) => x * x * (3 - 2 * x);
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
-
-function seeded(seed: number) {
-  let s = seed;
-  return () => ((s = (s * 16807) % 2147483647) / 2147483647);
-}
-
-/** One full "page" of an interface, animated by time `t` (charts breathe, radar sweeps, toggles flip, binary scrolls...). */
-function drawPage(c: CanvasRenderingContext2D, kind: number, variant: number, t: number) {
-  // frosted-glass window: pale blue glass, soft border, traffic-light dots, title bar
-  const g = c.createLinearGradient(0, 0, PW, PH);
-  g.addColorStop(0, "rgba(246,250,255,0.76)");
-  g.addColorStop(1, "rgba(205,226,248,0.68)");
-  c.fillStyle = g;
-  c.beginPath();
-  c.roundRect(0, 0, PW, PH, 26);
-  c.fill();
-  const sheen = c.createLinearGradient(0, 0, PW * 0.7, PH * 0.6);
-  sheen.addColorStop(0, "rgba(255,255,255,0.55)");
-  sheen.addColorStop(0.5, "rgba(255,255,255,0)");
-  c.fillStyle = sheen;
-  c.fill();
-  const accent = variant ? "6,182,212" : "37,99,235";
-  c.strokeStyle = "rgba(255,255,255,0.95)";
-  c.lineWidth = 3;
-  c.beginPath();
-  c.roundRect(2, 2, PW - 4, PH - 4, 24);
-  c.stroke();
-  c.strokeStyle = `rgba(${accent},0.35)`;
-  c.lineWidth = 1.5;
-  c.beginPath();
-  c.roundRect(5, 5, PW - 10, PH - 10, 22);
-  c.stroke();
-  ["#ff6b6b", "#fbbf24", "#34d399"].forEach((col, i) => {
-    c.fillStyle = col;
-    c.beginPath();
-    c.arc(30 + i * 18, 30, 5.5, 0, 7);
-    c.fill();
-  });
-  c.fillStyle = "#12306b";
-  c.font = "700 20px Arial";
-  c.textAlign = "left";
-  c.fillText(TITLES[kind], 100, 37);
-  c.fillStyle = `rgba(${accent},${0.55 + 0.45 * Math.sin(t * 4)})`;
-  c.beginPath();
-  c.arc(482, 30, 6, 0, 7);
-  c.fill();
-  c.strokeStyle = "rgba(37,99,235,0.2)";
-  c.lineWidth = 1.5;
-  c.beginPath();
-  c.moveTo(22, 56);
-  c.lineTo(490, 56);
-  c.stroke();
-
-  c.textBaseline = "alphabetic";
-  const pill = (x: number, y: number, w: number, label: string, col: string, ink = "#ffffff") => {
-    c.fillStyle = col;
-    c.beginPath();
-    c.roundRect(x, y, w, 24, 12);
-    c.fill();
-    c.fillStyle = ink;
-    c.font = "700 14px Arial";
-    c.textAlign = "center";
-    c.fillText(label, x + w / 2, y + 17);
-    c.textAlign = "left";
-  };
-  if (kind === 0) {
-    // Garage Bill: live invoices
-    const rows = [["INV-1042", "Toyota Innova", "₹8,450"], ["INV-1043", "Honda City", "₹3,200"], ["INV-1044", "Hyundai i20", "₹12,780"], ["INV-1045", "Maruti Swift", "₹5,640"]];
-    const paid = Math.floor(t * 0.7 + variant) % 5;
-    rows.forEach(([id, car, amt], i) => {
-      const y = 70 + i * 48;
-      c.fillStyle = "rgba(255,255,255,0.72)";
-      c.beginPath();
-      c.roundRect(20, y, 472, 40, 10);
-      c.fill();
-      c.fillStyle = "#1d4ed8";
-      c.font = "600 15px monospace";
-      c.fillText(id, 32, y + 25);
-      c.fillStyle = "#1e3a5f";
-      c.font = "600 18px Arial";
-      c.fillText(car, 130, y + 26);
-      c.font = "700 18px Arial";
-      c.textAlign = "right";
-      c.fillText(amt, 388, y + 26);
-      c.textAlign = "left";
-      const ok = i < paid;
-      pill(400, y + 8, 80, ok ? "Paid" : "Pending", ok ? "#3b82f6" : "#f59e0b");
-    });
-    c.fillStyle = "rgba(29,78,216,0.8)";
-    c.font = "600 15px Arial";
-    c.fillText("Today", 24, 292);
-    c.fillStyle = "#12306b";
-    c.font = "700 30px Arial";
-    c.fillText("₹" + (42300 + Math.floor(Math.sin(t) * 40 + 40) * 10).toLocaleString("en-IN"), 24, 322);
-    c.fillStyle = "rgba(29,78,216,0.8)";
-    c.font = "600 15px Arial";
-    c.fillText("Job cards open: 12", 300, 322);
-  } else if (kind === 1) {
-    // Our services: four disciplines
-    const areas = [["AI & GenAI", 7, "#3b82f6"], ["Enterprise Software", 6, "#f59e0b"], ["Cloud & DevOps", 2, "#38bdf8"], ["Digital Transformation", 4, "#22d3ee"]] as const;
-    areas.forEach(([name, cnt, col], i) => {
-      const y = 70 + i * 62;
-      const on = Math.floor(t * 0.6 + variant) % 4 === i;
-      c.fillStyle = on ? "rgba(245,158,11,0.16)" : "rgba(255,255,255,0.72)";
-      c.beginPath();
-      c.roundRect(20, y, 472, 54, 12);
-      c.fill();
-      c.fillStyle = col;
-      c.beginPath();
-      c.roundRect(32, y + 12, 30, 30, 8);
-      c.fill();
-      c.fillStyle = "#ffffff";
-      c.font = "800 16px Arial";
-      c.textAlign = "center";
-      c.fillText("0" + (i + 1), 47, y + 33);
-      c.textAlign = "left";
-      c.fillStyle = "#1e3a5f";
-      c.font = "700 21px Arial";
-      c.fillText(name, 78, y + 34);
-      c.fillStyle = on ? "#22d3ee" : "rgba(30,58,95,0.65)";
-      c.font = "600 16px Arial";
-      c.textAlign = "right";
-      c.fillText(cnt + " services", 474, y + 33);
-      c.textAlign = "left";
-    });
-    c.fillStyle = "rgba(29,78,216,0.85)";
-    c.font = "600 15px Arial";
-    c.fillText("20 capabilities · one team", 24, 328);
-  } else if (kind === 2) {
-    // HRMS: attendance + leave requests
-    const present = 46 + Math.round(Math.sin(t * 0.8 + variant) * 2);
-    c.lineWidth = 16;
-    c.strokeStyle = "rgba(59,130,246,0.2)";
-    c.beginPath();
-    c.arc(100, 170, 56, 0, 7);
-    c.stroke();
-    c.strokeStyle = "#3b82f6";
-    c.lineCap = "round";
-    c.beginPath();
-    c.arc(100, 170, 56, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (present / 50));
-    c.stroke();
-    c.lineCap = "butt";
-    c.fillStyle = "#12306b";
-    c.font = "700 34px Arial";
-    c.textAlign = "center";
-    c.fillText(String(present), 100, 182);
-    c.font = "14px Arial";
-    c.fillStyle = "rgba(30,58,95,0.75)";
-    c.fillText("of 50 present", 100, 252);
-    c.textAlign = "left";
-    c.fillStyle = "rgba(29,78,216,0.85)";
-    c.font = "600 15px Arial";
-    c.fillText("Leave requests", 200, 82);
-    [["Anitha", "2 days"], ["Karthik", "1 day"], ["Meena", "3 days"]].forEach(([n, d], i) => {
-      const y = 96 + i * 50;
-      c.fillStyle = "rgba(255,255,255,0.72)";
-      c.beginPath();
-      c.roundRect(200, y, 292, 42, 10);
-      c.fill();
-      c.fillStyle = "#f59e0b";
-      c.beginPath();
-      c.arc(222, y + 21, 12, 0, 7);
-      c.fill();
-      c.fillStyle = "#1e3a5f";
-      c.font = "600 17px Arial";
-      c.fillText(n, 244, y + 20);
-      c.font = "13px Arial";
-      c.fillStyle = "rgba(30,58,95,0.6)";
-      c.fillText(d, 244, y + 36);
-      const ok = Math.floor(t * 0.6 + i + variant) % 3 !== 0;
-      pill(406, y + 9, 76, ok ? "Approved" : "Review", ok ? "#3b82f6" : "#22d3ee");
-    });
-    c.fillStyle = "rgba(29,78,216,0.75)";
-    c.font = "15px Arial";
-    c.fillText("Payroll · Leave · Attendance · Hiring", 24, 322);
-  } else if (kind === 3) {
-    // company facts
-    const stats = [["11+", "Years of excellence"], ["50+", "Team members"], ["6", "Countries"], ["ISO", "27001 certified"]];
-    stats.forEach(([big, label], i) => {
-      const x = 24 + (i % 2) * 238;
-      const y = 76 + Math.floor(i / 2) * 118;
-      const pulse = 0.5 + 0.5 * Math.sin(t * 1.4 + i * 1.1 + variant);
-      c.fillStyle = "rgba(255,255,255,0.72)";
-      c.beginPath();
-      c.roundRect(x, y, 226, 106, 14);
-      c.fill();
-      c.fillStyle = i % 2 ? "#22d3ee" : "#3b82f6";
-      c.font = "800 46px Arial";
-      c.fillText(big, x + 18, y + 56);
-      c.fillStyle = "rgba(30,58,95,0.8)";
-      c.font = "600 16px Arial";
-      c.fillText(label, x + 18, y + 84);
-      c.fillStyle = `rgba(59,130,246,${0.25 + 0.5 * pulse})`;
-      c.beginPath();
-      c.arc(x + 200, y + 22, 6, 0, 7);
-      c.fill();
-    });
-    c.fillStyle = "rgba(29,78,216,0.8)";
-    c.font = "600 15px Arial";
-    c.fillText("Since 2015 · Puducherry, India", 24, 326);
-  } else if (kind === 4) {
-    // real client projects
-    const cl = [["HEB", "Retail platform"], ["MedConnect AI", "Healthcare AI"], ["WhyScience", "Education"], ["APPGM", "Web portal"]];
-    cl.forEach(([n, d], i) => {
-      const y = 72 + i * 56;
-      const v = clamp01(0.62 + Math.sin(t * 0.8 + i * 1.4 + variant) * 0.12 + i * 0.07);
-      c.fillStyle = "rgba(255,255,255,0.72)";
-      c.beginPath();
-      c.roundRect(20, y, 472, 48, 10);
-      c.fill();
-      c.fillStyle = ["#3b82f6", "#f59e0b", "#38bdf8", "#22d3ee"][i];
-      c.beginPath();
-      c.arc(46, y + 24, 14, 0, 7);
-      c.fill();
-      c.fillStyle = "#ffffff";
-      c.font = "800 15px Arial";
-      c.textAlign = "center";
-      c.fillText(n[0], 46, y + 30);
-      c.textAlign = "left";
-      c.fillStyle = "#1e3a5f";
-      c.font = "700 19px Arial";
-      c.fillText(n, 72, y + 22);
-      c.font = "13px Arial";
-      c.fillStyle = "rgba(30,58,95,0.6)";
-      c.fillText(d, 72, y + 40);
-      c.fillStyle = "rgba(37,99,235,0.13)";
-      c.beginPath();
-      c.roundRect(280, y + 18, 190, 12, 6);
-      c.fill();
-      c.fillStyle = "#3b82f6";
-      c.beginPath();
-      c.roundRect(280, y + 18, 190 * v, 12, 6);
-      c.fill();
-    });
-  } else {
-    // global presence
-    const cs = [["India (HQ)", 0], ["Dubai", 1], ["USA", 2], ["Singapore", 3], ["Malaysia", 4], ["Australia", 5]] as const;
-    const act = Math.floor(t * 0.7 + variant) % 6;
-    cs.forEach(([name, i]) => {
-      const x = 24 + (i % 2) * 238;
-      const y = 76 + Math.floor(i / 2) * 76;
-      const on = act === i;
-      c.fillStyle = on ? "rgba(245,158,11,0.18)" : "rgba(255,255,255,0.72)";
-      c.beginPath();
-      c.roundRect(x, y, 226, 64, 14);
-      c.fill();
-      c.fillStyle = on ? "#f59e0b" : "#3b82f6";
-      c.beginPath();
-      c.arc(x + 30, y + 32, on ? 11 : 8, 0, 7);
-      c.fill();
-      if (on) {
-        c.strokeStyle = "rgba(245,158,11,0.6)";
-        c.lineWidth = 2;
-        c.beginPath();
-        c.arc(x + 30, y + 32, 11 + ((t * 14) % 12), 0, 7);
-        c.stroke();
-      }
-      c.fillStyle = "#1e3a5f";
-      c.font = "700 21px Arial";
-      c.fillText(name, x + 56, y + 40);
-    });
-    c.fillStyle = "rgba(29,78,216,0.85)";
-    c.font = "600 15px Arial";
-    c.fillText("Six countries. One team.", 24, 326);
-  }
-}
-
-/** Renders the interface, sliding to its next page every few seconds (no interaction needed). */
-function renderInterface(c: CanvasRenderingContext2D, kind: number, i: number, t: number) {
-  const cyc = t / 7 + i * 0.31;
-  const idx = Math.floor(cyc);
-  const ph = cyc - idx;
-  const k = ph > 0.92 ? ease((ph - 0.92) / 0.08) : 0;
-  c.clearRect(0, 0, PW, PH);
-  c.save();
-  c.translate(-PW * k, 0);
-  drawPage(c, kind, idx % 2, t);
-  c.restore();
-  if (k > 0) {
-    c.save();
-    c.translate(PW * (1 - k), 0);
-    drawPage(c, kind, (idx + 1) % 2, t);
-    c.restore();
-  }
-}
-
-// stage coordinates (robot stands at x = -0.6): a symmetric arc of interfaces
-const PANELS: { pos: [number, number, number]; w: number; kind: number; ry: number }[] = [
-  { pos: [2.4, 2.75, 0.1], w: 1.45, kind: 0, ry: -0.45 },
-  { pos: [-3.2, 2.85, 0.5], w: 1.72, kind: 1, ry: 0.45 },
-  { pos: [2.35, 4.25, 0.1], w: 1.45, kind: 2, ry: -0.4 },
-  { pos: [-3.15, 4.35, 0.3], w: 1.72, kind: 3, ry: 0.4 },
-  { pos: [2.35, 1.25, 0.1], w: 1.45, kind: 4, ry: -0.45 },
-  { pos: [-3.1, 1.35, 0.5], w: 1.72, kind: 5, ry: 0.45 },
-];
-const SEG = 14;
+const sstep = (a: number, b: number, x: number) => ease(clamp01((x - a) / (b - a)));
+const back = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 + 2.7 * Math.pow(x - 1, 3) + 1.7 * Math.pow(x - 1, 2));
 const DOWN = new THREE.Vector3(0, -1, 0);
 
-/* ================================ glowing 3D "AI" held in the hand ================================ */
+function canvasTex(w: number, h: number, draw: (c: CanvasRenderingContext2D) => void) {
+  const cv = document.createElement("canvas");
+  cv.width = w;
+  cv.height = h;
+  draw(cv.getContext("2d")!);
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
 
-/** Extruded 3D "AI" lettering in glowing blue, turning slowly above the palm with pulsing glow rings. */
-function AIText({ palette }: { palette: RobotPalette; mobile: boolean }) {
-  const sway = useRef<THREE.Group>(null!);
-  const halo = useRef<THREE.Mesh>(null!);
-  const chip = useRef<THREE.Mesh>(null!);
-  const rings = useRef<THREE.Mesh[]>([]);
+/* ============================ the face screen (expressions) ============================ */
 
-  // glowing AI chip with circuit traces running out from it (drawn once on a canvas)
-  const chipTex = useMemo(() => {
-    const S = 1024;
-    const cv = document.createElement("canvas");
-    cv.width = cv.height = S;
-    const c = cv.getContext("2d")!;
-    let seed = 7;
-    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-    const mid = S / 2;
-    const half = 170;
-    c.lineCap = "round";
-    c.shadowColor = "#22e6ff";
-    c.shadowBlur = 12;
-    // circuit traces: leave the chip at right angles, bend once or twice, end in a node
-    for (let k = 0; k < 44; k++) {
-      const side = k % 4; // 0 up, 1 right, 2 down, 3 left
-      const off = (rnd() - 0.5) * (half * 1.7);
-      let x = side === 1 ? mid + half : side === 3 ? mid - half : mid + off;
-      let y = side === 0 ? mid - half : side === 2 ? mid + half : mid + off;
-      let dx = side === 1 ? 1 : side === 3 ? -1 : 0;
-      let dy = side === 0 ? -1 : side === 2 ? 1 : 0;
-      c.strokeStyle = `rgba(20,150,235,${0.7 + rnd() * 0.3})`;
-      c.lineWidth = 2 + rnd() * 2.5;
+export type Expr = "normal" | "happy" | "focus" | "wink" | "surprised" | "love" | "stars" | "dizzy";
+const FW = 512;
+const FH = 320; // matches the visor patch (about 1.6 : 1) so the eyes stay round on screen
+// eyes and mouth follow the mascot sheet: two big round eyes, set wide, with a small smile below
+// (placed in texture space so that, once wrapped round the curved visor, they land where the sheet has them)
+const EYE = { l: [161, 150], r: [351, 150] } as const;
+const EYE_R = 41;
+const MOUTH = [256, 222] as const;
+
+function heartPath(c: CanvasRenderingContext2D, x: number, y: number, s: number) {
+  c.beginPath();
+  c.moveTo(x, y + s * 0.35);
+  c.bezierCurveTo(x - s * 1.1, y - s * 0.35, x - s * 0.55, y - s * 1.15, x, y - s * 0.5);
+  c.bezierCurveTo(x + s * 0.55, y - s * 1.15, x + s * 1.1, y - s * 0.35, x, y + s * 0.35);
+  c.closePath();
+}
+function starPath(c: CanvasRenderingContext2D, x: number, y: number, r: number, rot: number) {
+  c.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = rot - Math.PI / 2 + (i * Math.PI) / 5;
+    const rr = i % 2 ? r * 0.45 : r;
+    c[i ? "lineTo" : "moveTo"](x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+  }
+  c.closePath();
+}
+
+/** draws the glowing eyes + mouth for an expression on a transparent canvas */
+function drawFace(c: CanvasRenderingContext2D, expr: Expr, blink: number, t: number) {
+  c.clearRect(0, 0, FW, FH);
+  const cyan = "#2ad2ff";
+  c.lineCap = "round";
+  c.lineJoin = "round";
+  const glow = (col: string, b = 30) => {
+    c.shadowColor = col;
+    c.shadowBlur = b;
+  };
+  // the mascot's big round eyes: bright cyan discs with a lighter core and a soft electric-blue halo
+  const eyeDisc = (x: number, y: number, rx: number, ry: number) => {
+    const h = Math.max(ry, 4);
+    const g = c.createRadialGradient(x, y - h * 0.15, 3, x, y, Math.max(rx, h));
+    g.addColorStop(0, "#a8f7ff");
+    g.addColorStop(0.5, "#2fd6ff");
+    g.addColorStop(1, "#0b9eff");
+    c.save();
+    c.shadowColor = "#1b98ff";
+    c.shadowBlur = 46;
+    c.fillStyle = g;
+    for (let k = 0; k < 2; k++) {
       c.beginPath();
-      c.moveTo(x, y);
-      const bends = 1 + Math.floor(rnd() * 2);
-      for (let b = 0; b <= bends; b++) {
-        const len = 60 + rnd() * 150;
-        x += dx * len;
-        y += dy * len;
-        c.lineTo(x, y);
-        if (b < bends) {
-          const turn = rnd() > 0.5 ? 1 : -1;
-          const ndx = dy * turn, ndy = -dx * turn;
-          dx = ndx;
-          dy = ndy;
-        }
-      }
-      c.stroke();
-      c.fillStyle = "rgba(30,170,255,1)";
-      c.beginPath();
-      c.arc(x, y, 6 + rnd() * 4, 0, 7);
+      c.ellipse(x, y, rx, h, 0, 0, Math.PI * 2);
       c.fill();
     }
-    // the chip
-    c.shadowBlur = 34;
-    c.fillStyle = "rgba(3,22,64,0.97)";
-    c.strokeStyle = "#7df6ff";
-    c.lineWidth = 9;
+    c.restore();
+  };
+  const arcEye = (x: number, y: number) => {
     c.beginPath();
-    c.roundRect(mid - half, mid - half, half * 2, half * 2, 34);
+    c.arc(x, y + 22, 40, Math.PI * 1.12, Math.PI * 1.88);
+    c.stroke();
+  };
+  const [lx, ly] = EYE.l;
+  const [rx, ry] = EYE.r;
+  const R = EYE_R;
+  const open = 1 - blink * 0.92;
+  glow(cyan, 34);
+  c.fillStyle = cyan;
+  c.strokeStyle = cyan;
+  c.lineWidth = 17;
+  if (expr === "normal") {
+    eyeDisc(lx, ly, R, R * open);
+    eyeDisc(rx, ry, R, R * open);
+  } else if (expr === "happy") {
+    arcEye(lx, ly);
+    arcEye(rx, ry);
+  } else if (expr === "focus") {
+    eyeDisc(lx, ly + 10, R, 25 * open);
+    eyeDisc(rx, ry + 10, R, 25 * open);
+  } else if (expr === "wink") {
+    arcEye(lx, ly);
+    eyeDisc(rx, ry, R, R);
+  } else if (expr === "surprised") {
+    c.lineWidth = 14;
+    [lx, rx].forEach((x) => {
+      c.beginPath();
+      c.arc(x, ly, 42 + Math.sin(t * 18) * 2.5, 0, Math.PI * 2);
+      c.stroke();
+    });
+  } else if (expr === "love") {
+    glow("#ff4d7d", 32);
+    c.fillStyle = "#ff5c8a";
+    const p = 1 + Math.sin(t * 9) * 0.08;
+    heartPath(c, lx, ly + 8, 52 * p);
     c.fill();
-    c.stroke();
-    c.shadowBlur = 10;
-    c.lineWidth = 3;
-    c.strokeStyle = "rgba(120,245,255,0.7)";
+    heartPath(c, rx, ry + 8, 52 * p);
+    c.fill();
+  } else if (expr === "stars") {
+    glow("#ffd23f", 32);
+    c.fillStyle = "#ffd84d";
+    starPath(c, lx, ly, 56, t * 2);
+    c.fill();
+    starPath(c, rx, ry, 56, -t * 2);
+    c.fill();
+  } else if (expr === "dizzy") {
+    c.lineWidth = 9;
+    [lx, rx].forEach((x, k) => {
+      c.beginPath();
+      for (let i = 0; i <= 60; i++) {
+        const a = (i / 60) * Math.PI * 5 + t * (k ? -6 : 6);
+        const r = (i / 60) * 42;
+        c[i ? "lineTo" : "moveTo"](x + Math.cos(a) * r, ly + Math.sin(a) * r);
+      }
+      c.stroke();
+    });
+  }
+  // mouth: the small smile (a shallow arc), wider for the happy moods
+  glow(cyan, 20);
+  c.strokeStyle = cyan;
+  c.fillStyle = cyan;
+  c.lineWidth = 9;
+  const smile = (halfW: number, depth: number, base: number) => {
+    const rr = (halfW * halfW + depth * depth) / (2 * depth);
+    const th = Math.asin(Math.min(1, halfW / rr));
     c.beginPath();
-    c.roundRect(mid - half + 26, mid - half + 26, (half - 26) * 2, (half - 26) * 2, 22);
+    c.arc(MOUTH[0], base - rr, rr, Math.PI / 2 - th, Math.PI / 2 + th);
     c.stroke();
-    for (let i = 0; i < 8; i++) {
-      const p = mid - half + 40 + i * ((half * 2 - 80) / 7);
-      c.lineWidth = 6;
-      c.strokeStyle = "#5ff3ff";
-      [[p, mid - half - 18, p, mid - half], [p, mid + half, p, mid + half + 18], [mid - half - 18, p, mid - half, p], [mid + half, p, mid + half + 18, p]].forEach(([a, b, d, e]) => {
-        c.beginPath();
-        c.moveTo(a, b);
-        c.lineTo(d, e);
-        c.stroke();
-      });
-    }
-    // the AI letters
-    c.font = "900 250px Arial, Helvetica, sans-serif";
-    c.textAlign = "center";
-    c.textBaseline = "middle";
-    c.shadowColor = "#22e6ff";
-    c.shadowBlur = 30;
-    c.fillStyle = "#38e1ff";
-    c.fillText("AI", mid, mid + 14);
-    c.shadowBlur = 10;
-    c.fillStyle = "#ffffff";
-    c.fillText("AI", mid, mid + 14);
-    const t = new THREE.CanvasTexture(cv);
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.anisotropy = 4;
-    return t;
-  }, []);
+  };
+  if (expr === "surprised") {
+    c.beginPath();
+    c.arc(MOUTH[0], MOUTH[1], 17, 0, Math.PI * 2);
+    c.stroke();
+  } else if (expr === "dizzy") {
+    c.beginPath();
+    for (let x = MOUTH[0] - 36; x <= MOUTH[0] + 36; x += 4) c[x === MOUTH[0] - 36 ? "moveTo" : "lineTo"](x, MOUTH[1] + Math.sin(x / 7 + t * 8) * 5);
+    c.stroke();
+  } else {
+    const wide = expr === "happy" || expr === "love" || expr === "stars" || expr === "wink";
+    if (wide) smile(54, 30, MOUTH[1] + 10);
+    else smile(40, 15, MOUTH[1] + 4);
+  }
+  c.shadowBlur = 0;
+  // glass gloss: broad soft reflections across the visor, like the studio shine on the mascot sheet
+  const gl = c.createLinearGradient(0, 10, 0, 92);
+  gl.addColorStop(0, "rgba(255,255,255,0.30)");
+  gl.addColorStop(1, "rgba(255,255,255,0)");
+  c.fillStyle = gl;
+  c.beginPath();
+  c.ellipse(190, 44, 160, 30, -0.07, 0, Math.PI * 2);
+  c.fill();
+  c.fillStyle = "rgba(190,225,255,0.14)";
+  c.beginPath();
+  c.ellipse(430, 70, 30, 11, -0.55, 0, Math.PI * 2);
+  c.fill();
+  const rim = c.createLinearGradient(0, FH - 70, 0, FH);
+  rim.addColorStop(0, "rgba(80,170,255,0)");
+  rim.addColorStop(1, "rgba(80,170,255,0.18)");
+  c.fillStyle = rim;
+  c.fillRect(0, FH - 70, FW, 70);
+}
 
-  const haloTex = useMemo(() => {
-    const cv = document.createElement("canvas");
-    cv.width = cv.height = 128;
-    const c = cv.getContext("2d")!;
-    const g = c.createRadialGradient(64, 64, 4, 64, 64, 64);
-    g.addColorStop(0, "rgba(220,255,255,0.8)");
-    g.addColorStop(0.3, "rgba(80,220,255,0.4)");
-    g.addColorStop(0.6, "rgba(30,160,255,0.16)");
-    g.addColorStop(1, "rgba(30,160,255,0)");
-    c.fillStyle = g;
-    c.fillRect(0, 0, 128, 128);
-    return new THREE.CanvasTexture(cv);
-  }, []);
+/* ================================== holographic globe ================================== */
 
-  const glass = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#7fd8ff", roughness: 0.02, metalness: 0, transparent: true, opacity: 0.32, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2.4, depthWrite: false, depthTest: false }), []);
-  const rim = useMemo(
+function HoloGlobe({ palette }: { palette: RobotPalette }) {
+  const spin = useRef<THREE.Group>(null!);
+  const ring = useRef<THREE.Mesh>(null!);
+  const ring2 = useRef<THREE.Mesh>(null!);
+  const dots = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    const p = new Float32Array(WORLD_DOTS.length * 3);
+    WORLD_DOTS.forEach(([lon, lat], i) => {
+      const phi = (90 - lat) * (Math.PI / 180);
+      const th = (lon + 180) * (Math.PI / 180);
+      p.set([-Math.sin(phi) * Math.cos(th) * 0.6, Math.cos(phi) * 0.6, Math.sin(phi) * Math.sin(th) * 0.6], i * 3);
+    });
+    g.setAttribute("position", new THREE.BufferAttribute(p, 3));
+    return g;
+  }, []);
+  const halo = useMemo(
     () =>
-      new THREE.ShaderMaterial({
-        transparent: true,
-        depthWrite: false,
-        depthTest: false,
-        blending: THREE.AdditiveBlending,
-        uniforms: { uC: { value: new THREE.Color("#46e8ff") } },
-        vertexShader: "varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }",
-        fragmentShader: "uniform vec3 uC; varying vec3 vN; varying vec3 vV; void main(){ float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.6); gl_FragColor = vec4(uC, f * 0.9); }",
+      canvasTex(128, 128, (c) => {
+        const g = c.createRadialGradient(64, 64, 8, 64, 64, 64);
+        g.addColorStop(0, "rgba(130,240,180,0.6)");
+        g.addColorStop(0.5, "rgba(70,200,130,0.22)");
+        g.addColorStop(1, "rgba(70,200,130,0)");
+        c.fillStyle = g;
+        c.fillRect(0, 0, 128, 128);
       }),
     []
   );
-  const glintTex = useMemo(() => {
-    const cv = document.createElement("canvas");
-    cv.width = cv.height = 64;
-    const c = cv.getContext("2d")!;
-    const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
-    g.addColorStop(0, "rgba(255,255,255,0.95)");
-    g.addColorStop(1, "rgba(255,255,255,0)");
-    c.fillStyle = g;
-    c.fillRect(0, 0, 64, 64);
-    return new THREE.CanvasTexture(cv);
-  }, []);
-
   const live = useLive();
   useFrame(() => {
     if (!live.current) return;
     const t = palette.uTime.value;
-    sway.current.rotation.y = Math.sin(t * 0.8) * 0.22;
-    sway.current.position.y = Math.sin(t * 1.6) * 0.04;
-    chip.current.scale.setScalar(1 + 0.025 * Math.sin(t * 3));
-    (halo.current.material as THREE.MeshBasicMaterial).opacity = 0.55 + 0.25 * Math.sin(t * 3);
-    halo.current.scale.setScalar(2.3 + 0.2 * Math.sin(t * 3));
-    rings.current.forEach((r, i) => {
-      if (!r) return;
-      const k = (t * 0.7 + i * 0.5) % 1;
-      r.scale.setScalar(0.5 + k * 1.5);
-      (r.material as THREE.MeshBasicMaterial).opacity = (1 - k) * 0.7;
-    });
+    spin.current.rotation.y = t * 0.45;
+    ring.current.rotation.z = t * 0.7;
+    ring2.current.rotation.z = -t * 0.5;
   });
-
   return (
     <group>
-      <mesh ref={halo} position={[0, 0, -0.2]}>
-        <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial map={haloTex} transparent depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending} />
+      <mesh position={[0, 0, -0.3]}>
+        <planeGeometry args={[2.6, 2.6]} />
+        <meshBasicMaterial map={halo} transparent depthWrite={false} toneMapped={false} />
       </mesh>
-      {/* light on the palm */}
-      <group position={[0, -0.7, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        {[0, 1].map((i) => (
-          <mesh key={i} ref={(m) => { if (m) rings.current[i] = m; }}>
-            <torusGeometry args={[0.6, 0.015, 8, 56]} />
-            <meshBasicMaterial color="#38e1ff" transparent toneMapped={false} depthWrite={false} />
-          </mesh>
-        ))}
-      </group>
-      <group ref={sway} position={[0, 0.02, 0.12]} scale={0.9}>
-        {/* chip + circuits, seen through the glass */}
-        <mesh ref={chip} position={[0, 0, -0.05]} renderOrder={11}>
-          <planeGeometry args={[2.5, 2.5]} />
-          <meshBasicMaterial map={chipTex} transparent toneMapped={false} depthWrite={false} depthTest={false} />
+      {/* light pooling on the open palm */}
+      <mesh position={[0, -0.78, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1.3, 1.3]} />
+        <meshBasicMaterial map={halo} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+      </mesh>
+      <group ref={spin} rotation={[0.35, 0, 0.15]}>
+        <mesh>
+          <sphereGeometry args={[0.58, 40, 28]} />
+          <meshBasicMaterial color="#1fb86a" transparent opacity={0.5} depthWrite={false} toneMapped={false} />
         </mesh>
-        {/* the glass sphere */}
-        <mesh material={glass} renderOrder={12}>
-          <sphereGeometry args={[0.62, 48, 32]} />
+        <mesh>
+          <sphereGeometry args={[0.6, 24, 16]} />
+          <meshBasicMaterial color="#dcffe9" wireframe transparent opacity={0.3} depthWrite={false} toneMapped={false} />
         </mesh>
-        <mesh material={rim} renderOrder={13} scale={1.02}>
-          <sphereGeometry args={[0.62, 48, 32]} />
-        </mesh>
-        <mesh position={[-0.26, 0.3, 0.5]} renderOrder={14}>
-          <planeGeometry args={[0.42, 0.26]} />
-          <meshBasicMaterial map={glintTex} transparent toneMapped={false} depthWrite={false} depthTest={false} opacity={0.75} />
-        </mesh>
-      </group>
-      <pointLight color="#36d8ff" intensity={6} distance={4} />
-    </group>
-  );
-}
-
-/* ================================ circular AI wave (mesh + particles) ================================ */
-
-const dotTex = (() => {
-  if (typeof document === "undefined") return null;
-  const cv = document.createElement("canvas");
-  cv.width = cv.height = 64;
-  const c = cv.getContext("2d")!;
-  const g = c.createRadialGradient(32, 32, 2, 32, 32, 30);
-  g.addColorStop(0, "rgba(255,255,255,1)");
-  g.addColorStop(0.4, "rgba(255,255,255,0.7)");
-  g.addColorStop(1, "rgba(255,255,255,0)");
-  c.fillStyle = g;
-  c.fillRect(0, 0, 64, 64);
-  return new THREE.CanvasTexture(cv);
-})();
-
-/** A flowing wire-mesh band wrapped around the robot in a circle, studded with glowing particles. */
-function AiWaveRing({ palette, R, H, y, tilt, x = -0.6, Nu = 120, Nv = 9, speed = 1 }: { palette: RobotPalette; R: number; H: number; y: number; tilt: number; x?: number; Nu?: number; Nv?: number; speed?: number }) {
-  const grp = useRef<THREE.Group>(null!);
-  const nodes = useMemo(() => new Float32Array(Nu * Nv * 3), [Nu, Nv]);
-  const { seg, pts } = useMemo(() => {
-    const seg = new THREE.BufferGeometry();
-    seg.setAttribute("position", new THREE.BufferAttribute(new Float32Array(Nu * Nv * 4 * 3), 3));
-    seg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 30);
-    const pts = new THREE.BufferGeometry();
-    pts.setAttribute("position", new THREE.BufferAttribute(nodes, 3));
-    const col = new Float32Array(Nu * Nv * 3);
-    const palette4 = ["#22d3ee", "#3b82f6", "#ffffff", "#22d3ee", "#60a5fa", "#4ade80", "#facc15"];
-    const c = new THREE.Color();
-    for (let i = 0; i < Nu * Nv; i++) {
-      const r = Math.random();
-      c.set(palette4[r < 0.9 ? Math.floor(Math.random() * 5) : 5 + Math.floor(Math.random() * 2)]);
-      col.set([c.r, c.g, c.b], i * 3);
-    }
-    pts.setAttribute("color", new THREE.BufferAttribute(col, 3));
-    pts.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 30);
-    return { seg, pts };
-  }, [Nu, Nv, nodes]);
-
-  const live = useLive();
-  useFrame((_, dt) => {
-    if (!live.current) return;
-    const t = palette.uTime.value * speed;
-    grp.current.rotation.y += Math.min(dt, 0.1) * 0.12 * speed;
-    for (let v = 0; v < Nv; v++) {
-      const vv = v / (Nv - 1) - 0.5;
-      for (let u = 0; u < Nu; u++) {
-        const th = (u / Nu) * Math.PI * 2;
-        const w = Math.sin(3 * th + t * 1.1 + vv * 3) * 0.3 + Math.sin(5 * th - t * 0.8) * 0.14;
-        const r = R + w * (1 - Math.abs(vv) * 0.5);
-        const i = (v * Nu + u) * 3;
-        nodes[i] = Math.cos(th) * r;
-        nodes[i + 1] = y + vv * H * (1 + 0.35 * Math.sin(2 * th + t)) + Math.sin(2 * th + t * 0.9) * 0.34 + Math.sin(4 * th - t * 1.3) * 0.12;
-        nodes[i + 2] = Math.sin(th) * r * 0.82;
-      }
-    }
-    const sp = seg.attributes.position.array as Float32Array;
-    let o = 0;
-    const put = (a: number, b: number) => {
-      sp[o++] = nodes[a]; sp[o++] = nodes[a + 1]; sp[o++] = nodes[a + 2];
-      sp[o++] = nodes[b]; sp[o++] = nodes[b + 1]; sp[o++] = nodes[b + 2];
-    };
-    for (let v = 0; v < Nv; v++)
-      for (let u = 0; u < Nu; u++) {
-        const a = (v * Nu + u) * 3;
-        put(a, (v * Nu + ((u + 1) % Nu)) * 3);
-        if (v < Nv - 1) put(a, ((v + 1) * Nu + u) * 3);
-        else put(a, a);
-      }
-    seg.attributes.position.needsUpdate = true;
-    pts.attributes.position.needsUpdate = true;
-  });
-
-  return (
-    <group position={[x, 0, 0]} rotation={[tilt, 0, tilt * 0.4]}>
-      <group ref={grp}>
-        <lineSegments geometry={seg} frustumCulled={false}>
-          <lineBasicMaterial color="#2f6bff" transparent opacity={0.3} depthWrite={false} />
-        </lineSegments>
-        <points geometry={pts} frustumCulled={false}>
-          <pointsMaterial size={0.13} sizeAttenuation vertexColors transparent depthWrite={false} map={dotTex ?? undefined} alphaTest={0.02} opacity={0.95} />
+        <points geometry={dots}>
+          <pointsMaterial color="#f4fff7" size={0.05} sizeAttenuation transparent opacity={0.98} depthWrite={false} toneMapped={false} />
         </points>
       </group>
+      <mesh ref={ring} rotation={[Math.PI / 2.4, 0, 0]}>
+        <torusGeometry args={[0.82, 0.014, 8, 90]} />
+        <meshBasicMaterial color="#6fe6a4" transparent opacity={0.9} toneMapped={false} />
+      </mesh>
+      <mesh ref={ring2} rotation={[Math.PI / 1.7, 0.4, 0]}>
+        <torusGeometry args={[0.95, 0.008, 8, 90]} />
+        <meshBasicMaterial color="#bff5d4" transparent opacity={0.7} toneMapped={false} />
+      </mesh>
+      <pointLight color="#3fe08f" intensity={5} distance={3.5} />
     </group>
   );
 }
 
-/* ======================================== shaders ======================================== */
+/* ================================== particles for reactions ================================== */
 
-const STREAM_V = /* glsl */ `
-uniform float uTime;
-attribute float aT; attribute float aR;
-varying float vT; varying float vP;
-void main(){
-  vT = aT;
-  vP = fract(uTime * 0.4 + aR * 3.0);
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}`;
-const STREAM_F = /* glsl */ `
-varying float vT; varying float vP;
-void main(){
-  float pulse = smoothstep(0.2, 0.0, abs(vT - vP));
-  vec3 col = mix(vec3(0.09, 0.64, 0.29), vec3(0.98, 0.8, 0.08), pulse);
-  gl_FragColor = vec4(col, 0.26 + pulse * 0.7);
-}`;
+type FX = { kind: "heart" | "star" | "bang" | "spark"; life: number; max: number; x: number; y: number; vx: number; vy: number; s: number };
+function fxTexture(kind: FX["kind"]) {
+  return canvasTex(128, 128, (c) => {
+    if (kind === "heart") {
+      c.shadowColor = "#ff4d7d";
+      c.shadowBlur = 16;
+      c.fillStyle = "#ff5c8a";
+      heartPath(c, 64, 70, 44);
+      c.fill();
+    } else if (kind === "star" || kind === "spark") {
+      c.shadowColor = "#ffcf33";
+      c.shadowBlur = 16;
+      c.fillStyle = kind === "star" ? "#ffd84d" : "#ffffff";
+      starPath(c, 64, 64, 46, 0);
+      c.fill();
+    } else {
+      c.fillStyle = "#ef4444";
+      c.font = "900 96px Arial";
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillText("!", 64, 66);
+    }
+  });
+}
+
+/* ================================== IK ================================== */
+
+/**
+ * A rounded-rectangle patch lying on an ellipsoid (rx, ry, rz): the big visor that covers the whole face, like the
+ * mascot sheet. `skirt` adds an edge that tucks back into the helmet so the visor reads as an inset glass panel.
+ * UVs span the patch, so the face texture fills the visor exactly.
+ */
+function visorGeometry(rx: number, ry: number, rz: number, halfAz: number, halfEl: number, elC: number, k: number, skirt = 0, n = 5) {
+  const R = 18, S = 96;
+  const pos: number[] = [];
+  const uv: number[] = [];
+  const idx: number[] = [];
+  const put = (u: number, v: number, kk: number) => {
+    const az = u * halfAz, el = elC + v * halfEl;
+    pos.push(Math.sin(az) * Math.cos(el) * rx * kk, Math.sin(el) * ry * kk, Math.cos(az) * Math.cos(el) * rz * kk);
+    uv.push((u + 1) / 2, (v + 1) / 2);
+  };
+  const edge = (sI: number) => {
+    const a = (sI / S) * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a);
+    return [Math.sign(c) * Math.abs(c) ** (2 / n), Math.sign(sn) * Math.abs(sn) ** (2 / n)];
+  };
+  put(0, 0, k);
+  for (let r = 1; r <= R; r++)
+    for (let i = 0; i < S; i++) {
+      const [u, v] = edge(i);
+      put((u * r) / R, (v * r) / R, k);
+    }
+  const rings = skirt ? R + 1 : R;
+  if (skirt)
+    for (let i = 0; i < S; i++) {
+      const [u, v] = edge(i);
+      put(u, v, skirt);
+    }
+  for (let i = 0; i < S; i++) idx.push(0, 1 + i, 1 + ((i + 1) % S));
+  for (let r = 1; r < rings; r++) {
+    const a = 1 + (r - 1) * S, b = 1 + r * S;
+    for (let i = 0; i < S; i++) {
+      const j = (i + 1) % S;
+      idx.push(a + i, b + i, b + j, a + i, b + j, a + j);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
+/**
+ * The black accordion tubes the mascot has for upper arms and knees: a lathe whose radius swells into rounded
+ * ridges separated by narrow grooves. Runs from y = 0 down to y = -len.
+ */
+function ribbedGeometry(radius: number, len: number, ribs: number) {
+  const pts: THREE.Vector2[] = [];
+  const N = ribs * 10;
+  for (let i = 0; i <= N; i++) {
+    const u = i / N;
+    const ridge = Math.pow(Math.abs(Math.sin(u * ribs * Math.PI)), 0.45);
+    pts.push(new THREE.Vector2(radius * (0.76 + 0.24 * ridge), -len + u * len));
+  }
+  return new THREE.LatheGeometry(pts, 32);
+}
+
+/** A rounded box that narrows towards its bottom (the mascot's chest plate is wider at the shoulders). */
+function taperedBox(w: number, h: number, d: number, seg: number, rad: number, bottomX: number, bottomZ = 1) {
+  const g = new RoundedBoxGeometry(w, h, d, seg, rad);
+  const pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const k = THREE.MathUtils.clamp((pos.getY(i) + h / 2) / h, 0, 1); // 0 at the bottom, 1 at the top
+    pos.setX(i, pos.getX(i) * THREE.MathUtils.lerp(bottomX, 1, k));
+    pos.setZ(i, pos.getZ(i) * THREE.MathUtils.lerp(bottomZ, 1, k));
+  }
+  pos.needsUpdate = true;
+  return g;
+}
 
 /** Two-bone IK: shoulder S, wrist target T, arm lengths L1/L2, elbow bends towards `pole`. */
 function solveArm(S: THREE.Vector3, T: THREE.Vector3, pole: THREE.Vector3, L1: number, L2: number, E: THREE.Vector3, W: THREE.Vector3, tmp: THREE.Vector3, tmp2: THREE.Vector3) {
@@ -623,60 +380,101 @@ function solveArm(S: THREE.Vector3, T: THREE.Vector3, pole: THREE.Vector3, L1: n
   E.copy(S).addScaledVector(dir, Math.cos(a) * L1).addScaledVector(b, Math.sin(a) * L1);
 }
 
+/* ================================== layout ================================== */
+
 /**
- * Netkathir AI assistant: glossy ceramic robot, glass visor, the 3D Netkathir emblem on its chest, a rotating
- * blue wireframe AI brain held in its hand, ringed by a circular AI data wave and living holographic interfaces.
+ * Layout of the mascot, in robot space (y up, soles on y = 0), measured off the reference sheet: a big round head on a
+ * long body, long legs with chunky boots, and long arms with black ribbed upper arms.
+ */
+const L = {
+  hip: 1.75, // hip pivot height when standing
+  upperLeg: 0.5,
+  lowerLeg: 0.85,
+  ankle: 0.44, // ankle pivot height when standing
+  hipX: 0.52,
+  ankleX: 0.7,
+  shoulderX: 1.1,
+  shoulderY: 3.3,
+  upperArm: 0.82,
+  foreArm: 0.72,
+  head: 4.82, // head centre
+  scale: 0.83, // the whole figure is taller than before, so scale it to keep the hero composition
+};
+
+/**
+ * Netkathir AI mascot on a glowing pedestal: white helmet, black visor with an expressive face screen, headphones,
+ * antennas, the Netkathir emblem on the chest. It waves hello, holds a holographic globe, then sits and works on a
+ * laptop, and back again. Hovering makes it smile; clicking it pokes it (surprise, hearts, stars, dizzy, giggle).
  */
 export default function AICore({ palette, mobile }: { palette: RobotPalette; mobile: boolean }) {
-  const stage = useRef<THREE.Group>(null!);
   const robot = useRef<THREE.Group>(null!);
+  const body = useRef<THREE.Group>(null!);
   const torso = useRef<THREE.Group>(null!);
   const head = useRef<THREE.Group>(null!);
-  const eyes = useRef<THREE.Group>(null!); // round glowing eyes
-  const happy = useRef<THREE.Group>(null!); // ^ ^ eyes while waving
-  const bubble = useRef<THREE.Mesh>(null!); // "Hii!" speech bubble
-  const antenna = useRef<THREE.Group>(null!);
-  const fingers = useRef<THREE.Group[][]>([[], []]); // [hold hand, wave hand] finger joints (curl)
-  const handP = useRef<THREE.Group>(null!);
-  const handR = useRef<THREE.Group>(null!);
+  const antenna = useRef<THREE.Group[]>([]);
+  const hips = useRef<THREE.Group[]>([]);
+  const knees = useRef<THREE.Group[]>([]);
+  const ankles = useRef<THREE.Group[]>([]);
   const upP = useRef<THREE.Group>(null!);
   const foP = useRef<THREE.Group>(null!);
   const upR = useRef<THREE.Group>(null!);
   const foR = useRef<THREE.Group>(null!);
-  const brain = useRef<THREE.Group>(null!);
-  const panels = useRef<THREE.Group[]>([]);
-  const shots = useRef<THREE.MeshBasicMaterial[]>([]);
-  const mouse = useRef({ x: 0, y: 0 });
+  const handP = useRef<THREE.Group>(null!);
+  const handR = useRef<THREE.Group>(null!);
+  const fingers = useRef<THREE.Group[][]>([[], []]);
+  const globe = useRef<THREE.Group>(null!);
+  const bubble = useRef<THREE.Mesh>(null!);
+  const pedRing = useRef<THREE.Mesh[]>([]);
+  const fxMeshes = useRef<THREE.Mesh[]>([]);
+  const colliders = useRef<THREE.Mesh[]>([]);
+  const mouse = useRef({ x: 0, y: 0, inside: false });
+  const click = useRef<{ x: number; y: number } | null>(null);
+  const react = useRef<{ kind: string; t0: number; part: string } | null>(null);
+  const pokes = useRef(0);
+  const hovered = useRef(0);
+  const fx = useRef<FX[]>([]);
+  const en = useRef(0);
+  const frames = useRef(0);
   const scroll = useRef(0);
-  const ndcV = useMemo(() => new THREE.Vector3(), []);
-  const en = useRef(0); // seconds since the robot started entering
   const pinAt = useRef<number | null>(null);
+  const faceState = useRef({ expr: "" as Expr | "", blink: -1, t: -1 });
+  const K = useMemo(
+    () => ({ v1: new THREE.Vector3(), v2: new THREE.Vector3(), q: new THREE.Quaternion(), x: new THREE.Vector3(), y: new THREE.Vector3(), z: new THREE.Vector3(), m: new THREE.Matrix4(), S: new THREE.Vector3(), E: new THREE.Vector3(), W: new THREE.Vector3(), a: new THREE.Vector3(), b: new THREE.Vector3(), pole: new THREE.Vector3(), t: new THREE.Vector3(), r: new THREE.Vector3(), u: new THREE.Vector3(), bp: new THREE.Vector3(), q1: new THREE.Quaternion(), q2: new THREE.Quaternion(), q3: new THREE.Quaternion(), front: new THREE.Vector3(), ndc: new THREE.Vector2(), ray: new THREE.Raycaster() }),
+    []
+  );
+  const RX = mobile ? 0 : -1.0; // where the robot stands in the stage
+
   useEffect(() => {
     const v = new URLSearchParams(window.location.search).get("robotAt");
     pinAt.current = v === null ? null : Number(v);
-  }, []);
-  const frames = useRef(0); // frames drawn since the scene woke (the entrance waits for the first ones to settle)
-  const turn = useRef(0);
-  const rings = useRef<THREE.Group[]>([]);
-  const K = useMemo(() => ({ v1: new THREE.Vector3(), v2: new THREE.Vector3(), q: new THREE.Quaternion(), x: new THREE.Vector3(), y: new THREE.Vector3(), z: new THREE.Vector3(), m: new THREE.Matrix4(), S: new THREE.Vector3(), E: new THREE.Vector3(), W: new THREE.Vector3(), a: new THREE.Vector3(), b: new THREE.Vector3(), pole: new THREE.Vector3(), t: new THREE.Vector3(), r: new THREE.Vector3(), u: new THREE.Vector3(), bp: new THREE.Vector3() }), []);
-  const count = mobile ? 3 : PANELS.length;
-
-  useEffect(() => {
     const wake = () => (frames.current = 0);
     window.addEventListener("nk:intro-done", wake);
-    return () => window.removeEventListener("nk:intro-done", wake);
-  }, []);
-
-  useEffect(() => {
-    const f = (e: MouseEvent) => {
+    const mv = (e: MouseEvent) => {
       mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.current.y = -((e.clientY / window.innerHeight) * 2 - 1);
+      mouse.current.inside = true;
     };
-    window.addEventListener("mousemove", f, { passive: true });
-    return () => window.removeEventListener("mousemove", f);
+    const out = (e: MouseEvent) => {
+      if (!e.relatedTarget) mouse.current.inside = false;
+    };
+    // the canvas sits behind the page, so clicks are caught on the window and tested against the robot
+    const down = (e: PointerEvent) => {
+      const t = e.target as HTMLElement;
+      if (t.closest("a,button,input,textarea,select,label,header,[role=combobox]")) return;
+      click.current = { x: (e.clientX / window.innerWidth) * 2 - 1, y: -((e.clientY / window.innerHeight) * 2 - 1) };
+    };
+    window.addEventListener("mousemove", mv, { passive: true });
+    document.addEventListener("mouseout", out);
+    window.addEventListener("pointerdown", down);
+    return () => {
+      window.removeEventListener("nk:intro-done", wake);
+      window.removeEventListener("mousemove", mv);
+      document.removeEventListener("mouseout", out);
+      window.removeEventListener("pointerdown", down);
+    };
   }, []);
 
-  // ---- real 3D Netkathir emblem traced from the icon: exact brand colours, unlit so lighting can't wash it out
+  // ---- the real 3D Netkathir emblem for the chest (traced from the icon, exact brand colours)
   const [logoGeo, setLogoGeo] = useState<THREE.BufferGeometry | null>(null);
   const logoMat = useMemo(() => new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }), []);
   useEffect(() => {
@@ -684,23 +482,22 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
     img.onload = () => {
       try {
         const { shapes, sample } = traceImageToShapes(img, 200, 1);
-        if (!shapes.length) return;
-        const geo = new THREE.ExtrudeGeometry(shapes, { depth: 0.1, bevelEnabled: true, bevelThickness: 0.014, bevelSize: 0.008, bevelSegments: 2, curveSegments: 1 });
-        const pos = geo.attributes.position;
-        const nor = geo.attributes.normal;
-        const col = new Float32Array(pos.count * 3);
-        const c = new THREE.Color();
-        for (let i = 0; i < pos.count; i++) {
-          const [r, g, b] = sample(pos.getX(i), pos.getY(i));
-          c.setRGB(r, g, b, THREE.SRGBColorSpace); // sRGB -> linear so the colour matches the brand exactly
-          const side = 0.62 + 0.38 * Math.min(1, Math.abs(nor.getZ(i)) * 1.6); // faces full colour, sides a touch deeper (reads as depth)
-          col[i * 3] = c.r * side;
-          col[i * 3 + 1] = c.g * side;
-          col[i * 3 + 2] = c.b * side;
+        if (shapes.length) {
+          const geo = new THREE.ExtrudeGeometry(shapes, { depth: 0.08, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.007, bevelSegments: 2, curveSegments: 1 });
+          const pos = geo.attributes.position;
+          const nor = geo.attributes.normal;
+          const col = new Float32Array(pos.count * 3);
+          const c = new THREE.Color();
+          for (let i = 0; i < pos.count; i++) {
+            const [r, g, b] = sample(pos.getX(i), pos.getY(i));
+            c.setRGB(r, g, b, THREE.SRGBColorSpace);
+            const side = 0.62 + 0.38 * Math.min(1, Math.abs(nor.getZ(i)) * 1.6);
+            col.set([c.r * side, c.g * side, c.b * side], i * 3);
+          }
+          geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+          geo.center();
+          setLogoGeo(geo);
         }
-        geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
-        geo.center();
-        setLogoGeo(geo);
       } catch (err) {
         console.warn("[AICore] 3D logo trace failed", err);
       }
@@ -709,698 +506,631 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
   }, []);
 
   const M = useMemo(() => {
-    const ceramic = new THREE.MeshPhysicalMaterial({ color: "#f5f7f6", roughness: 0.2, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 1.15 });
-    const ceramic2 = new THREE.MeshPhysicalMaterial({ color: "#e4ebe7", roughness: 0.26, metalness: 0.1, clearcoat: 0.8, clearcoatRoughness: 0.12, envMapIntensity: 1.1 });
-    const dark = new THREE.MeshPhysicalMaterial({ color: "#1b2420", roughness: 0.38, metalness: 0.85, clearcoat: 0.4, envMapIntensity: 1.15 });
-    const glass = new THREE.MeshPhysicalMaterial({ color: "#050808", roughness: 0.04, metalness: 0.7, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 1.9 });
-    const gold = new THREE.MeshPhysicalMaterial({ color: "#f2c230", roughness: 0.22, metalness: 1, clearcoat: 0.4, envMapIntensity: 1.5 });
-    const led = new THREE.MeshBasicMaterial({ color: "#7dffb2", toneMapped: false });
-    const ledY = new THREE.MeshBasicMaterial({ color: "#fde047", toneMapped: false });
-    // eyes: bright cyan discs with a soft additive halo and a tiny glint
-    const eye = new THREE.MeshBasicMaterial({ color: "#3fe3ff", toneMapped: false });
-    const eyeGlint = new THREE.MeshBasicMaterial({ color: "#ffffff", toneMapped: false, transparent: true, opacity: 0.85 });
-    const hc = document.createElement("canvas");
-    hc.width = hc.height = 128;
-    const hx = hc.getContext("2d")!;
-    const hg = hx.createRadialGradient(64, 64, 10, 64, 64, 64);
-    hg.addColorStop(0, "rgba(90,230,255,0.75)");
-    hg.addColorStop(0.45, "rgba(40,190,255,0.22)");
-    hg.addColorStop(1, "rgba(40,190,255,0)");
-    hx.fillStyle = hg;
-    hx.fillRect(0, 0, 128, 128);
-    const eyeHalo = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(hc), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
-    const cheek = new THREE.MeshBasicMaterial({ color: "#ff9db5", transparent: true, opacity: 0.35, depthWrite: false, toneMapped: false });
-    return { ceramic, ceramic2, dark, glass, gold, led, ledY, eye, eyeGlint, eyeHalo, cheek };
+    const shell = new THREE.MeshPhysicalMaterial({ color: "#f6f8f9", roughness: 0.18, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 1.15 });
+    const shell2 = new THREE.MeshPhysicalMaterial({ color: "#e6ecef", roughness: 0.24, metalness: 0.08, clearcoat: 0.8, clearcoatRoughness: 0.12, envMapIntensity: 1.1 });
+    const black = new THREE.MeshPhysicalMaterial({ color: "#15191d", roughness: 0.32, metalness: 0.7, clearcoat: 0.6, envMapIntensity: 1.2 });
+    const visor = new THREE.MeshPhysicalMaterial({ color: "#03060b", roughness: 0.06, metalness: 0, ior: 1.7, clearcoat: 0.8, clearcoatRoughness: 0.04, envMapIntensity: 0.6, side: THREE.DoubleSide });
+    const glow = new THREE.MeshBasicMaterial({ color: "#2fd3ff", toneMapped: false });
+    const blue = new THREE.MeshBasicMaterial({ color: "#2f8cff", toneMapped: false });
+    // headband + ear-cup trim: deep navy, like the mascot's headphones
+    const navy = new THREE.MeshPhysicalMaterial({ color: "#1a2547", roughness: 0.3, metalness: 0.55, clearcoat: 0.9, clearcoatRoughness: 0.1, envMapIntensity: 1.2 });
+    // the glossy blue balls on the antennas
+    const ball = new THREE.MeshPhysicalMaterial({ color: "#1f7bff", emissive: "#1257ff", emissiveIntensity: 0.75, roughness: 0.1, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 1.4 });
+    const yellow = new THREE.MeshBasicMaterial({ color: "#fde047", toneMapped: false });
+    const silver = new THREE.MeshPhysicalMaterial({ color: "#eef2f6", roughness: 0.22, metalness: 0.35, clearcoat: 1, envMapIntensity: 1.3 });
+    return { shell, shell2, black, visor, glow, blue, navy, ball, yellow, silver };
   }, []);
 
-  // "Hii!" greeting card: white glass bubble, green→gold rim, a welcome line, a tail pointing at the waving hand
-  const hiTex = useMemo(() => {
-    const W = 1000;
-    const H = 640;
-    const cv = document.createElement("canvas");
-    cv.width = W;
-    cv.height = H;
-    const c = cv.getContext("2d")!;
-    const x = 40, y = 34, w = 920, h = 420, r = 150;
-    const body = () => {
-      c.beginPath();
-      c.roundRect(x, y, w, h, r);
-      // tail, curving down-right towards the hand
-      c.moveTo(640, y + h - 4);
-      c.quadraticCurveTo(700, y + h + 90, 800, y + h + 150);
-      c.quadraticCurveTo(740, y + h + 70, 760, y + h - 4);
-      c.closePath();
-    };
-    // soft drop shadow
-    c.save();
-    c.shadowColor = "rgba(6,60,30,0.28)";
-    c.shadowBlur = 40;
-    c.shadowOffsetY = 14;
-    c.fillStyle = "#ffffff";
-    body();
-    c.fill();
-    c.restore();
-    // body fill: white to a whisper of mint
-    const fill = c.createLinearGradient(0, y, 0, y + h);
-    fill.addColorStop(0, "#ffffff");
-    fill.addColorStop(1, "#eefcf3");
-    c.fillStyle = fill;
-    body();
-    c.fill();
-    // gradient rim
-    const rim = c.createLinearGradient(x, 0, x + w, 0);
-    rim.addColorStop(0, "#15803d");
-    rim.addColorStop(0.6, "#22c55e");
-    rim.addColorStop(1, "#eab308");
-    c.lineWidth = 9;
-    c.strokeStyle = rim;
-    body();
-    c.stroke();
-    // glossy highlight along the top
-    const gloss = c.createLinearGradient(0, y, 0, y + 150);
-    gloss.addColorStop(0, "rgba(255,255,255,0.95)");
-    gloss.addColorStop(1, "rgba(255,255,255,0)");
-    c.fillStyle = gloss;
-    c.beginPath();
-    c.roundRect(x + 60, y + 14, w - 120, 120, 60);
-    c.fill();
-    // "Hii!" with a green gradient + the wave emoji
-    const ink = c.createLinearGradient(150, 0, 600, 0);
-    ink.addColorStop(0, "#14532d");
-    ink.addColorStop(1, "#16a34a");
-    c.fillStyle = ink;
-    c.textAlign = "left";
-    c.textBaseline = "alphabetic";
-    c.font = "900 178px Arial, Helvetica, sans-serif";
-    c.fillText("Hii!", 150, 248);
-    c.font = "150px 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif";
-    c.fillText("👋", 560, 238);
-    // welcome line
-    c.fillStyle = "#3f6b52";
-    c.font = "600 56px Arial, Helvetica, sans-serif";
-    c.fillText("Welcome to Netkathir", 154, 352);
-    // little sparkle dots
-    [[860, 120, 10, "#eab308"], [890, 170, 6, "#22c55e"], [835, 92, 5, "#22c55e"]].forEach(([px, py, pr, col]) => {
-      c.fillStyle = col as string;
-      c.beginPath();
-      c.arc(px as number, py as number, pr as number, 0, 7);
-      c.fill();
-    });
-    const t = new THREE.CanvasTexture(cv);
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.anisotropy = 8;
-    return t;
-  }, []);
-
-  const G = useMemo(
-    () => ({
+  const G = useMemo(() => {
+    // the visor is a big rounded-rectangle glass panel set into the helmet; the face screen lies just above it
+    const HR = [1.3, 1.1, 1.16] as const;
+    const visorG = visorGeometry(HR[0], HR[1], HR[2], 1.05, 0.72, -0.24, 1.03, 0.96, 3.4);
+    const face = visorGeometry(HR[0], HR[1], HR[2], 1.05, 0.72, -0.24, 1.036, 0, 3.4);
+    return {
+      visorG,
       sph: new THREE.SphereGeometry(1, 40, 32),
       cap: (r: number, l: number) => new THREE.CapsuleGeometry(r, l, 8, 24),
       ring: (r: number, t: number, arc = Math.PI * 2) => new THREE.TorusGeometry(r, t, 14, 56, arc),
-      // rounded blocks for the body (width, height, depth, segments, corner radius)
-      torso: new RoundedBoxGeometry(1.56, 1.32, 1.0, 5, 0.32),
-      // flat rounded-rectangle outline (outer minus inner) used as a panel seam on the chest
-      seam: (() => {
-        const rr = (w: number, h: number, r: number, hole = false) => {
-          const p = hole ? new THREE.Path() : new THREE.Shape();
-          const x = -w / 2, y = -h / 2;
-          p.moveTo(x + r, y);
-          p.lineTo(x + w - r, y);
-          p.quadraticCurveTo(x + w, y, x + w, y + r);
-          p.lineTo(x + w, y + h - r);
-          p.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-          p.lineTo(x + r, y + h);
-          p.quadraticCurveTo(x, y + h, x, y + h - r);
-          p.lineTo(x, y + r);
-          p.quadraticCurveTo(x, y, x + r, y);
-          return p;
-        };
-        const outer = rr(1.12, 1.06, 0.16) as THREE.Shape;
-        outer.holes.push(rr(1.096, 1.036, 0.148, true) as THREE.Path);
-        return new THREE.ShapeGeometry(outer, 12);
-      })(),
-      display: new RoundedBoxGeometry(0.28, 0.15, 0.04, 3, 0.02),
-      pelvis: new RoundedBoxGeometry(1.14, 0.38, 0.84, 4, 0.16),
-      thigh: new RoundedBoxGeometry(0.42, 0.34, 0.42, 4, 0.13),
-      shin: new RoundedBoxGeometry(0.38, 0.34, 0.4, 4, 0.12),
-      palm: new RoundedBoxGeometry(0.27, 0.25, 0.13, 4, 0.06),
-    }),
-    []
-  );
-
-  // ---- glass finish for the panels: curved glowing rim + a moving mirror reflection (all share one set of textures)
-  const glass = useMemo(() => {
-    const mk = (w: number, h: number, draw: (c: CanvasRenderingContext2D) => void) => {
-      const cv = document.createElement("canvas");
-      cv.width = w;
-      cv.height = h;
-      draw(cv.getContext("2d")!);
-      const t = new THREE.CanvasTexture(cv);
-      t.colorSpace = THREE.SRGBColorSpace;
-      return t;
+      face,
+      torso: taperedBox(1.8, 1.3, 1.04, 5, 0.3, 0.78, 0.9),
+      lightBay: new RoundedBoxGeometry(0.42, 0.11, 0.06, 3, 0.04),
+      pelvis: new RoundedBoxGeometry(1.5, 0.55, 0.9, 5, 0.22),
+      thigh: new RoundedBoxGeometry(0.58, 0.4, 0.56, 4, 0.18),
+      shin: new RoundedBoxGeometry(0.72, 0.56, 0.6, 5, 0.2),
+      forearm: new RoundedBoxGeometry(0.54, 0.6, 0.5, 5, 0.17),
+      armRib: ribbedGeometry(0.23, L.upperArm - 0.06, 7),
+      kneeRib: ribbedGeometry(0.27, 0.34, 4),
+      palm: new RoundedBoxGeometry(0.26, 0.24, 0.13, 4, 0.06),
+      display: new RoundedBoxGeometry(0.3, 0.16, 0.04, 3, 0.02),
     };
-    const rim = mk(560, 374, (c) => {
-      c.shadowColor = "#5eb0ff";
-      c.shadowBlur = 26;
-      c.strokeStyle = "rgba(150,205,255,0.95)";
-      c.lineWidth = 4;
-      c.beginPath();
-      c.roundRect(24, 17, 512, 340, 26);
-      c.stroke();
-      c.shadowBlur = 0;
-      const g = c.createLinearGradient(24, 17, 300, 200);
-      g.addColorStop(0, "rgba(255,255,255,0.95)");
-      g.addColorStop(0.5, "rgba(255,255,255,0.1)");
-      g.addColorStop(1, "rgba(255,255,255,0)");
-      c.strokeStyle = g;
-      c.lineWidth = 2.5;
-      c.beginPath();
-      c.roundRect(27, 20, 506, 334, 24);
-      c.stroke();
-    });
-    const mask = mk(512, 340, (c) => {
-      c.fillStyle = "#000";
-      c.fillRect(0, 0, 512, 340);
-      c.fillStyle = "#fff";
-      c.beginPath();
-      c.roundRect(0, 0, 512, 340, 26);
-      c.fill();
-    });
-    const streak = mk(1024, 340, (c) => {
-      const g = c.createLinearGradient(380, 0, 640, 0);
-      g.addColorStop(0, "rgba(255,255,255,0)");
-      g.addColorStop(0.5, "rgba(255,255,255,0.55)");
-      g.addColorStop(1, "rgba(255,255,255,0)");
-      c.fillStyle = g;
-      c.beginPath();
-      c.moveTo(430, 0);
-      c.lineTo(690, 0);
-      c.lineTo(590, 340);
-      c.lineTo(330, 340);
-      c.closePath();
-      c.fill();
-    });
-    streak.repeat.set(0.5, 1);
-    const shine = PANELS.map(() => {
-      const t = streak.clone();
-      t.needsUpdate = true;
-      t.repeat.set(0.5, 1);
-      return t;
-    });
-    return { rim, mask, shine };
   }, []);
 
-  // ---- live interface canvases (redrawn ~10x/s while visible)
-  const live = useMemo(
+  // the cyan light slits sit flush on the helmet's surface: one on the crown, one on each upper side
+  const SL = useMemo(() => {
+    const HR = [1.3, 1.1, 1.16] as const;
+    const at = (az: number, el: number, len: number) => {
+      const pos = new THREE.Vector3(Math.sin(az) * Math.cos(el) * HR[0], Math.sin(el) * HR[1], Math.cos(az) * Math.cos(el) * HR[2]);
+      const n = new THREE.Vector3(pos.x / (HR[0] * HR[0]), pos.y / (HR[1] * HR[1]), pos.z / (HR[2] * HR[2])).normalize();
+      pos.addScaledVector(n, 0.004);
+      return { pos, quat: new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n), len };
+    };
+    return [at(0, 0.75, 0.34), at(-1.07, 0.42, 0.22), at(1.07, 0.42, 0.22)];
+  }, []);
+
+  // face screen texture
+  const faceTex = useMemo(() => canvasTex(FW, FH, (c) => drawFace(c, "normal", 0, 0)), []);
+  const chestTex = useMemo(
     () =>
-      PANELS.map((p, i) => {
-        const cv = document.createElement("canvas");
-        cv.width = PW;
-        cv.height = PH;
-        const ctx = cv.getContext("2d")!;
-        const tex = new THREE.CanvasTexture(cv);
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.anisotropy = 4;
-        renderInterface(ctx, p.kind, i, i * 0.9);
-        return { ctx, tex, last: -1 };
+      canvasTex(512, 160, (c) => {
+        c.textAlign = "center";
+        c.fillStyle = "#166534";
+        c.font = "800 70px Arial, Helvetica, sans-serif";
+        c.fillText("Netkathir", 256, 74);
+        c.fillStyle = "#4b6b58";
+        c.font = "600 40px Arial, Helvetica, sans-serif";
+        c.fillText("Technologies", 256, 134);
+      }),
+    []
+  );
+  const fxTex = useMemo(() => ({ heart: fxTexture("heart"), star: fxTexture("star"), bang: fxTexture("bang"), spark: fxTexture("spark") }), []);
+  const halo = useMemo(
+    () =>
+      canvasTex(256, 256, (c) => {
+        const g = c.createRadialGradient(128, 128, 6, 128, 128, 128);
+        g.addColorStop(0, "rgba(95,230,255,0.7)");
+        g.addColorStop(0.4, "rgba(34,197,94,0.18)");
+        g.addColorStop(1, "rgba(34,197,94,0)");
+        c.fillStyle = g;
+        c.fillRect(0, 0, 256, 256);
+      }),
+    []
+  );
+  const hiTex = useMemo(
+    () =>
+      canvasTex(1000, 640, (c) => {
+        const x = 40, y = 34, w = 920, h = 420;
+        const body0 = () => {
+          c.beginPath();
+          c.roundRect(x, y, w, h, 150);
+          c.moveTo(640, y + h - 4);
+          c.quadraticCurveTo(700, y + h + 90, 800, y + h + 150);
+          c.quadraticCurveTo(740, y + h + 70, 760, y + h - 4);
+          c.closePath();
+        };
+        c.save();
+        c.shadowColor = "rgba(6,60,30,0.28)";
+        c.shadowBlur = 40;
+        c.shadowOffsetY = 14;
+        c.fillStyle = "#ffffff";
+        body0();
+        c.fill();
+        c.restore();
+        const rim = c.createLinearGradient(x, 0, x + w, 0);
+        rim.addColorStop(0, "#15803d");
+        rim.addColorStop(0.6, "#22c55e");
+        rim.addColorStop(1, "#38bdf8");
+        c.lineWidth = 9;
+        c.strokeStyle = rim;
+        body0();
+        c.stroke();
+        const ink = c.createLinearGradient(150, 0, 600, 0);
+        ink.addColorStop(0, "#14532d");
+        ink.addColorStop(1, "#16a34a");
+        c.fillStyle = ink;
+        c.font = "900 178px Arial, Helvetica, sans-serif";
+        c.fillText("Hii!", 150, 248);
+        c.font = "150px 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif";
+        c.fillText("👋", 560, 238);
+        c.fillStyle = "#3f6b52";
+        c.font = "600 56px Arial, Helvetica, sans-serif";
+        c.fillText("Welcome to Netkathir", 154, 352);
       }),
     []
   );
 
-  const stageShadow = useMemo(
-    () => ({
-      v: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
-      f: "varying vec2 vUv; void main(){ float d = length(vUv-0.5)*2.0; float a = smoothstep(1.0,0.0,d); gl_FragColor = vec4(0.02,0.25,0.12, a*a*0.42); }",
-    }),
-    []
-  );
-  const streamGeo = useMemo(() => {
-    const n = PANELS.length * SEG * 2;
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
-    const aT = new Float32Array(n);
-    const aR = new Float32Array(n);
-    for (let i = 0; i < PANELS.length; i++)
-      for (let k = 0; k < SEG; k++)
-        for (let e = 0; e < 2; e++) {
-          const idx = (i * SEG + k) * 2 + e;
-          aT[idx] = (k + e) / SEG;
-          aR[idx] = (i * 0.37) % 1;
-        }
-    g.setAttribute("aT", new THREE.BufferAttribute(aT, 1));
-    g.setAttribute("aR", new THREE.BufferAttribute(aR, 1));
-    g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 50);
-    return g;
-  }, []);
-  const streamU = useMemo(() => ({ uTime: palette.uTime }), [palette]);
-
-  const onStage = useLive();
+  const live = useLive();
   useFrame((s, dt) => {
-    if (!onStage.current) return;
+    if (!live.current) return;
     const d = Math.min(dt, 0.25);
     const t = palette.uTime.value;
-    const tNow = t;
     scroll.current = THREE.MathUtils.damp(scroll.current, clamp01(window.scrollY / (window.innerHeight * 1.05)), 5, d);
-    const sc = scroll.current;
-    const e = ease(sc);
-    void s;
-    const visible = count; // every panel is shown, no scroll gating
-    // entrance: robot rises and turns in, raises its hand, the AI pops up, the wave opens, screens appear one by one
+    const e = ease(scroll.current);
+
+    // ---- entrance clock (held while the intro plays; /?robotAt=N freezes it for checking poses)
     frames.current += 1;
-    // the very first frames after waking pay for uploads and shader work: hold the entrance until they settle
-    if (pinAt.current !== null) en.current = pinAt.current; // dev aid: /?robotAt=3 freezes the entrance at 3 s
+    if (pinAt.current !== null) en.current = pinAt.current;
     else if (frames.current > 14 && (window as unknown as { __nkIntro?: string }).__nkIntro !== "playing") en.current += Math.min(d, 0.04);
     const E = en.current;
-    const sg = (a: number, b: number) => ease(clamp01((E - a) / (b - a)));
-    const back = (x: number) => 1 + 2.7 * Math.pow(x - 1, 3) + 1.7 * Math.pow(x - 1, 2);
+    const sg = (a: number, b: number) => sstep(a, b, E);
+
+    // ---- story: turn in, wave "Hii!", raise the globe and keep it in hand (standing)
     const rIn = sg(0.2, 1.7);
-    // 1. "Hii!": the left hand rises and waves, eyes turn happy, the head tilts
-    // the arm lifts with a small overshoot, waves with a swing that builds and settles, then lowers
-    const backOut = (x: number) => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2);
-    const wave = backOut(clamp01((E - 1.5) / 0.65)) * (1 - sg(3.95, 4.6));
+    const wave = back(clamp01((E - 1.5) / 0.65)) * (1 - sg(3.95, 4.6));
     const waveW = clamp01(wave);
-    const env = sg(1.85, 2.25) * (1 - sg(3.55, 3.95)); // how big the swing is
-    const wph = E * 11; // just under 2 waves a second
-    const happyK = sg(1.6, 1.95) * (1 - sg(3.9, 4.3));
-    const bub = clamp01((E - 1.75) / 0.45);
-    const bubOut = sg(3.85, 4.25);
-    // 2. the right hand rises, palm up, and the AI appears on it (and stays)
-    const armIn = sg(4.0, 4.85);
-    const aiIn = clamp01((E - 4.85) / 0.9);
-
-    // ---- where the cursor is relative to the robot itself (not the middle of the window), so it follows everywhere
-    robot.current.updateWorldMatrix(true, false);
-    ndcV.setFromMatrixPosition(robot.current.matrixWorld).project(s.camera);
-    // while it says hello it looks straight at the visitor; the cursor takes over once the AI is in its hand
+    const env = sg(1.85, 2.25) * (1 - sg(3.55, 3.95));
+    const wph = E * 11;
+    const hold = sg(4.0, 4.85);
+    const gl = clamp01((E - 4.85) / 0.9);
     const follow = sg(4.7, 5.7);
-    const fx = THREE.MathUtils.clamp((mouse.current.x - ndcV.x) * 1.25, -1.2, 1.2) * follow;
-    const fy = THREE.MathUtils.clamp((mouse.current.y - (ndcV.y + 0.35)) * 1.1, -1, 1) * follow;
-    // ---- body: hover, breathing, turns with the cursor (and a little with scroll)
-    robot.current.rotation.y = THREE.MathUtils.damp(robot.current.rotation.y, -0.05 + e * 0.3 + fx * 0.85 + (1 - rIn) * 3.0, 4.6, d);
-    robot.current.rotation.x = THREE.MathUtils.damp(robot.current.rotation.x, -fy * 0.1, 4.6, d);
-    robot.current.position.y = Math.sin(t * 1.6) * 0.04;
-    torso.current.scale.set(1, 1 + Math.sin(t * 1.7) * 0.01, 1 + Math.sin(t * 1.7) * 0.012);
-    antenna.current.rotation.z = Math.sin(t * 2.1) * 0.05;
-    robot.current.updateWorldMatrix(true, true);
 
-    // ---- arms: two-bone IK. Right arm (screen right) holds the AI on an open palm; left arm waves hello, then rests
+    // ---- pokes and hover: ray from the camera through the mouse into the robot's hit-boxes
+    robot.current.updateWorldMatrix(true, true);
+    const now = t;
+    const ray = K.ray;
+    const hitParts = (x: number, y: number) => {
+      ray.setFromCamera(K.ndc.set(x, y), s.camera);
+      const hit = ray.intersectObjects(colliders.current, false)[0];
+      return hit ? (hit.object.userData.part as string) : null;
+    };
+    if (click.current) {
+      const part = hitParts(click.current.x, click.current.y);
+      click.current = null;
+      if (part && E > 2) {
+        pokes.current += 1;
+        const seq = ["bonk", "love", "stars", "dizzy"];
+        const kind = part === "body" ? "giggle" : seq[(pokes.current - 1) % seq.length];
+        react.current = { kind, t0: now, part };
+        // burst of reaction particles from the head
+        const n = kind === "love" ? 7 : kind === "stars" ? 9 : kind === "bonk" ? 1 : kind === "giggle" ? 4 : 0;
+        for (let i = 0; i < n; i++) {
+          fx.current.push({
+            kind: kind === "love" ? "heart" : kind === "bonk" ? "bang" : kind === "giggle" ? "heart" : i % 3 ? "spark" : "star",
+            life: 0,
+            max: 1.4 + Math.random() * 0.6,
+            x: (Math.random() - 0.5) * (kind === "bonk" ? 0 : 1.6),
+            y: kind === "bonk" ? 1.35 : 0.9 + Math.random() * 0.3,
+            vx: (Math.random() - 0.5) * (kind === "stars" ? 2.4 : 0.6),
+            vy: kind === "stars" ? 0.8 + Math.random() * 1.2 : 0.7 + Math.random() * 0.5,
+            s: 0.22 + Math.random() * 0.16,
+          });
+        }
+      }
+    }
+    const hov = mouse.current.inside && E > 5 && !!hitParts(mouse.current.x, mouse.current.y);
+    hovered.current = THREE.MathUtils.damp(hovered.current, hov ? 1 : 0, 8, d);
+    const R = react.current;
+    const ra = R ? now - R.t0 : 99;
+    if (R && ra > (R.kind === "dizzy" ? 2.2 : 1.7)) react.current = null;
+    const rk = R ? R.kind : "";
+
+    // ---- cursor relative to the robot
+    K.v1.setFromMatrixPosition(robot.current.matrixWorld).project(s.camera);
+    const fx0 = THREE.MathUtils.clamp((mouse.current.x - K.v1.x) * 1.25, -1.2, 1.2) * follow;
+    const fy0 = THREE.MathUtils.clamp((mouse.current.y - (K.v1.y + 0.35)) * 1.1, -1, 1) * follow;
+
+    // ---- body: turn in, follow the cursor, giggle shake
+    const shake = rk === "giggle" ? Math.sin(ra * 40) * 0.06 * (1 - ra / 1.7) : 0;
+    robot.current.rotation.y = THREE.MathUtils.damp(robot.current.rotation.y, -0.05 + e * 0.3 + fx0 * 0.75 + (1 - rIn) * 3.0, 4.6, d) + shake;
+    robot.current.rotation.x = THREE.MathUtils.damp(robot.current.rotation.x, -fy0 * 0.08, 4.6, d);
+    robot.current.rotation.z = THREE.MathUtils.damp(robot.current.rotation.z, 0.035 * waveW + 0.018 * env * Math.sin(wph - 1.4), 8, d);
+    // standing: the body only breathes a little
+    const bodyY = 0;
+    body.current.position.set(0, Math.sin(t * 1.6) * 0.025, 0);
+    torso.current.scale.set(1, 1 + Math.sin(t * 1.7) * 0.006, 1 + Math.sin(t * 1.7) * 0.008);
+    antenna.current.forEach((a, i) => {
+      if (!a) return;
+      const wob = rk === "bonk" ? Math.sin(ra * 30) * 0.35 * Math.exp(-ra * 3) : 0;
+      a.rotation.z = (i ? -1 : 1) * 0.55 + Math.sin(t * 2.1 + i) * 0.045 + wob;
+    });
+
+    // ---- legs: planted under the hips, knees pointing forward
+    const limbQ = (from: THREE.Vector3, to: THREE.Vector3, front: THREE.Vector3, out: THREE.Quaternion) => {
+      K.y.copy(from).sub(to).normalize(); // the limb runs down its local -y
+      K.z.copy(front).addScaledVector(K.y, -front.dot(K.y)).normalize();
+      K.x.crossVectors(K.y, K.z).normalize();
+      out.setFromRotationMatrix(K.m.makeBasis(K.x, K.y, K.z));
+    };
+    for (let i = 0; i < 2; i++) {
+      const h = hips.current[i], k = knees.current[i], a = ankles.current[i];
+      if (!h || !k || !a) continue;
+      const sd = i ? -1 : 1;
+      const H = K.S.set(sd * L.hipX, L.hip, 0.02);
+      h.position.copy(H);
+      K.t.set(sd * L.ankleX, L.ankle, 0.02);
+      K.front.set(0, 0, 1);
+      solveArm(H, K.t, K.front, L.upperLeg, L.lowerLeg, K.E, K.W, K.a, K.b);
+      limbQ(H, K.E, K.front, K.q1);
+      limbQ(K.E, K.W, K.front, K.q2);
+      // foot: flat on the pedestal, toes forward
+      K.z.set(0, 0, 1);
+      K.y.set(0, 1, 0);
+      K.x.crossVectors(K.y, K.z).normalize();
+      K.q3.setFromRotationMatrix(K.m.makeBasis(K.x, K.y, K.z));
+      h.quaternion.copy(K.q1);
+      k.quaternion.copy(K.q1).invert().multiply(K.q2);
+      a.quaternion.copy(K.q2).invert().multiply(K.q3);
+    }
+
+    // ---- arms (two-bone IK in torso space). The globe rides on the robot's right hand (the viewer's left); the left hand waves.
     const bob = Math.sin(t * 1.4) * 0.04;
     for (let a = 0; a < 2; a++) {
       const side = a === 0 ? 1 : -1;
-      const S = K.S.set(side * 0.98, 2.55 + (a === 1 ? 0.04 * waveW : 0), 0); // a little shrug as it waves
+      const isG = a === 1; // the globe arm
+      const S = K.S.set(side * L.shoulderX, L.shoulderY + (!isG ? 0.04 * waveW : 0), 0);
+      // targets are in body space (shoulders at L.shoulderY); the arms hang a little out from the sides, like the sheet
       let wrist: THREE.Vector3;
-      if (a === 0) {
-        // rests hanging at the side (nearly straight, elbow a touch back), then lifts the AI out in front
-        wrist = K.t.set(1.0, 1.95 + bob, 0.92).lerp(K.r.set(1.1 + Math.sin(t * 1.1) * 0.015, 1.37 + Math.sin(t * 1.3) * 0.015, 0.1), 1 - armIn);
-        K.pole.set(0.5, -0.9, -0.35).lerp(K.v2.set(0.25, 0, -1), 1 - armIn);
+      if (isG) {
+        wrist = K.t.set(-1.95, 2.55 + bob, 0.55).lerp(K.r.set(-1.5 - Math.sin(t * 1.1) * 0.015, 1.9 + Math.sin(t * 1.3) * 0.015, 0.1), 1 - hold);
+        K.pole.set(-0.35, -1, -0.45).lerp(K.v2.set(-0.25, 0, -1), 1 - hold);
       } else {
-        // arm down by the side: nearly straight, a slight bend at the elbow
-        const rest = K.r.set(-1.1 - Math.sin(t * 1.1) * 0.015, 1.37 + Math.sin(t * 1.3) * 0.015, 0.1);
-        // a real wave: the elbow stays put out to the side and the forearm swings from it like a pendulum
-        // elbow a little below the shoulder and forward, as a person waves
-        const elbow = K.v1.set(-0.7, -0.5, 0.5).normalize().multiplyScalar(0.62).add(S);
-        const th = -0.18 + 0.32 * env * Math.sin(wph); // forearm angle from vertical (negative leans outward)
-        const up = K.u.set(Math.sin(th), Math.cos(th), 0.18).normalize().multiplyScalar(0.615).add(elbow);
+        const rest = K.r.set(1.5 + Math.sin(t * 1.1) * 0.015, 1.9 + Math.sin(t * 1.3) * 0.015, 0.1);
+        const elbow = K.v1.set(0.7, -0.5, 0.5).normalize().multiplyScalar(L.upperArm).add(S);
+        const th = -0.18 + 0.32 * env * Math.sin(wph);
+        const up = K.u.set(-Math.sin(th), Math.cos(th), 0.18).normalize().multiplyScalar(L.foreArm).add(elbow);
         wrist = K.t.copy(rest).lerp(up, wave);
-        // aiming the elbow at that point makes the IK keep it exactly there while the forearm swings
-        K.pole.set(-0.25, 0, -1).lerp(K.v2.copy(elbow).sub(S), waveW);
+        K.pole.set(0.25, 0, -1).lerp(K.v2.copy(elbow).sub(S), waveW);
       }
-      solveArm(S, wrist, K.pole, 0.62, 0.62, K.E, K.W, K.a, K.b);
+      solveArm(S, wrist, K.pole, L.upperArm, L.foreArm, K.E, K.W, K.a, K.b);
       const upA = (a === 0 ? upP : upR).current;
       const fo = (a === 0 ? foP : foR).current;
       upA.position.copy(S);
       upA.quaternion.setFromUnitVectors(DOWN, K.a.copy(K.E).sub(S).normalize());
       fo.position.copy(K.E);
-      // forearm frame built from the arm direction + where the palm should face (so a raised hand never flips round)
-      K.y.copy(K.E).sub(K.W).normalize(); // local +y runs from the wrist back to the elbow
-      // palms face in towards the legs at rest; up under the AI; towards the viewer while waving
-      if (a === 0) K.z.set(-1, 0, 0.25).lerp(K.v2.set(0, 1, 0.35), armIn).normalize();
-      else K.z.set(1, 0, 0.25).lerp(K.v2.set(0.15, 0, 1), waveW).normalize();
+      K.y.copy(K.E).sub(K.W).normalize();
+      if (isG) K.z.set(1, 0, 0.25).lerp(K.v2.set(0.05, 1, 0.12), hold);
+      else K.z.set(-1, 0, 0.25).lerp(K.v2.set(-0.15, 0, 1), waveW);
+      K.z.normalize();
       K.x.crossVectors(K.y, K.z).normalize();
       K.z.crossVectors(K.x, K.y).normalize();
       K.m.makeBasis(K.x, K.y, K.z);
       fo.quaternion.setFromRotationMatrix(K.m);
-      // fingers: relaxed curl at rest, open for the wave, cupped under the AI
-      const curl = a === 0 ? THREE.MathUtils.lerp(0.5, 0.45, armIn) : THREE.MathUtils.lerp(0.5, 0.12, waveW); // relaxed, not a fist
+      const curl = isG ? THREE.MathUtils.lerp(0.5, 0.16, hold) : THREE.MathUtils.lerp(0.5, 0.12, waveW);
       fingers.current[a].forEach((f, k) => {
         if (!f) return;
-        // waving fingers stay loose: a light flutter that trails the swing
-        const flutter = a === 1 ? 0.08 * env * Math.sin(wph - 0.9 - (k >> 1) * 0.35) : 0;
-        // relaxed, not ramrod straight: the outer fingers bend a touch more, and they fan apart slightly
         const fi = k >> 1;
-        const relax = a === 1 ? waveW * (0.16 + (fi === 1 ? 0 : 0.08)) : 0;
+        const flutter = !isG ? 0.08 * env * Math.sin(wph - 0.9 - fi * 0.35) : 0;
+        const relax = !isG ? waveW * (0.16 + (fi === 1 ? 0 : 0.08)) : 0;
         f.rotation.x = -(curl + relax + flutter) * (k % 2 ? 0.9 : 1);
-        if (k % 2 === 0) f.rotation.z = a === 1 ? (fi - 1) * 0.16 * waveW : 0;
+        if (k % 2 === 0) f.rotation.z = !isG ? -(fi - 1) * 0.16 * waveW : 0;
       });
       const hand = (a === 0 ? handP : handR).current;
-      // a loose wrist: the hand lags the forearm and flicks at each turn (follow-through)
       if (hand) {
-        hand.rotation.z = a === 1 ? 0.3 * env * Math.cos(wph - 0.35) + 0.12 * waveW : 0;
-        hand.rotation.x = a === 1 ? -0.12 * waveW : 0; // fingers tipped back a touch, palm open to the viewer
-        hand.rotation.y = a === 1 ? 0.22 * env * Math.sin(wph - 0.6) - 0.18 * waveW : 0; // the palm turns a little with each swing
+        hand.rotation.z = !isG ? -(0.3 * env * Math.cos(wph - 0.35) + 0.12 * waveW) : 0;
+        hand.rotation.x = !isG ? -0.12 * waveW : 0;
+        hand.rotation.y = !isG ? -(0.22 * env * Math.sin(wph - 0.6) - 0.18 * waveW) : 0;
       }
-      if (a === 0) {
-        // the AI floats just above the open palm
+      if (isG) {
         const u = K.u.copy(K.W).sub(K.E).normalize();
         K.bp.copy(K.W).addScaledVector(u, 0.16);
-        K.bp.y += 0.8 + Math.sin(t * 1.8) * 0.05; // a little higher above the bigger glove
-        K.bp.z += 0.12;
-        brain.current.position.copy(K.bp);
-        brain.current.scale.setScalar(0.64 * Math.max(0.001, back(aiIn)));
+        K.bp.y += 0.96 + Math.sin(t * 1.8) * 0.05;
+        K.bp.x -= 0.02;
+        K.bp.z += 0.04;
+        globe.current.position.copy(K.bp);
+        globe.current.scale.setScalar(1.28 * Math.max(0.001, back(gl)));
+        globe.current.visible = gl > 0.01;
       }
     }
 
-    // ---- "Hii!" bubble pops beside the waving hand
+    // ---- "Hii!" bubble
     if (bubble.current) {
-      const k = Math.max(0.001, back(bub) * (1 - bubOut));
+      const k = Math.max(0.001, back(clamp01((E - 1.75) / 0.45)) * (1 - sg(3.85, 4.25)));
       bubble.current.scale.setScalar(k);
       bubble.current.visible = k > 0.01;
-      bubble.current.position.set(-2.25, 4.75 + Math.sin(t * 2.4) * 0.04, 0.6);
-      // always face the viewer: undo the robot's own turn, then take the camera's
+      bubble.current.position.set(2.55, L.head + 1.35 + Math.sin(t * 2.4) * 0.04, 0.6);
       robot.current.getWorldQuaternion(K.q);
       bubble.current.quaternion.copy(K.q.invert().multiply(s.camera.quaternion));
-      bubble.current.rotateZ(0.045 * env * Math.sin(wph - 1.2)); // a friendly wobble in time with the wave
+      bubble.current.rotateZ(-0.045 * env * Math.sin(wph - 1.2));
     }
 
-    // ---- head: friendly tilt while waving, otherwise follows the AI, then the cursor
+    // ---- head: looks at the visitor, the globe or the cursor; reacts to pokes
     const bp = K.bp;
-    const look = 1 - wave;
-    const hy = (THREE.MathUtils.clamp(Math.atan2(bp.x, bp.z + 0.5) * 0.4, -0.45, 0.45) * look * follow - 0.06 * wave) + fx * 0.6;
-    const hx = THREE.MathUtils.clamp(-Math.atan2(bp.y - 3.4, Math.hypot(bp.x, bp.z)) * 0.5, -0.3, 0.3) * look * follow - fy * 0.4;
+    const look = (1 - wave) * follow;
+    let hy = THREE.MathUtils.clamp(Math.atan2(bp.x, bp.z + 0.5) * 0.4, -0.45, 0.45) * look * gl + 0.06 * wave + fx0 * 0.6;
+    let hx = THREE.MathUtils.clamp(-Math.atan2(bp.y - (L.head - 0.4), Math.hypot(bp.x, bp.z)) * 0.5, -0.3, 0.3) * look * gl - fy0 * 0.4;
+    let hz = -0.14 * waveW + 0.04 * env * Math.sin(wph - 0.8);
+    let squash = 0;
+    if (rk === "bonk") {
+      squash = Math.sin(Math.min(ra, 0.5) * Math.PI * 2) * 0.12 * Math.exp(-ra * 4);
+      hz += Math.sin(ra * 22) * 0.18 * Math.exp(-ra * 3.5);
+    } else if (rk === "dizzy") {
+      hz += Math.sin(ra * 5) * 0.2;
+      hx += Math.cos(ra * 5) * 0.12;
+    } else if (rk === "love" || rk === "stars") {
+      hz += Math.sin(ra * 6) * 0.08;
+    }
+    hy += hovered.current * fx0 * 0.15;
     head.current.rotation.y = THREE.MathUtils.damp(head.current.rotation.y, hy, 8, d);
     head.current.rotation.x = THREE.MathUtils.damp(head.current.rotation.x, hx, 8, d);
-    head.current.rotation.z = THREE.MathUtils.damp(head.current.rotation.z, 0.14 * waveW + 0.04 * env * Math.sin(wph - 0.8), 8, d);
-    // the body sways a touch with the wave and leans into it
-    robot.current.rotation.z = THREE.MathUtils.damp(robot.current.rotation.z, -0.035 * waveW + 0.018 * env * Math.sin(wph - 1.4), 8, d);
-    const blink = Math.max(0, Math.sin(t * 1.3 + 0.7) * 18 - 17);
-    eyes.current.scale.set(1 - happyK, Math.max(0.08, (1 - Math.min(blink, 1) * 0.9) * (1 - happyK)), 1);
-    eyes.current.visible = happyK < 0.98;
-    happy.current.scale.setScalar(Math.max(0.001, happyK));
-    happy.current.visible = happyK > 0.02;
+    head.current.rotation.z = THREE.MathUtils.damp(head.current.rotation.z, hz, 10, d);
+    head.current.scale.set(1 + squash * 0.6, 1 - squash, 1 + squash * 0.6);
 
-    // ---- interfaces: float, fan out with scroll, and run their own live content + page transitions
-    turn.current += 1;
-    glass.shine.forEach((t, i) => (t.offset.x = ((tNow * 0.13 + i * 0.21) % 2.4) - 0.9));
-    PANELS.slice(0, count).forEach((p, i) => {
-      const g = panels.current[i];
-      if (!g) return;
-      const appear = 1 * sg(6.4 + i * 0.35, 7.3 + i * 0.35);
-      const spread = mobile ? 0.72 : 1 + e * 0.1;
-      const ox = mobile ? 0.6 : 0;
-      g.position.set(p.pos[0] * spread + ox, p.pos[1] + Math.sin(t * 1.2 + i * 1.3) * 0.07, p.pos[2]);
-      g.rotation.y = p.ry + Math.sin(t * 0.5 + i) * 0.03;
-      g.scale.setScalar(Math.max(0.001, 0.2 * (appear > 0.01 ? 1 : 0) + 0.8 * appear));
-      g.visible = i < visible;
-      const m = shots.current[i];
-      if (m) m.opacity = appear;
-      const L = live[i];
-      if (g.visible && appear > 0.01 && turn.current % count === i && t - L.last > 0.09) {
-        L.last = t;
-        renderInterface(L.ctx, p.kind, i, t);
-        L.tex.needsUpdate = true;
-      }
-    });
-
-    rings.current.forEach((g, i) => {
-      if (!g) return;
-      const k = sg(5.6 + i * 0.35, 6.9 + i * 0.35);
-      g.visible = k > 0.02; // a collapsed ring would show as a thin vertical dotted line
-      g.scale.set(Math.max(0.001, k), 0.4 + 0.6 * k, Math.max(0.001, k));
-    });
-
-    // ---- data streams from the chest into every active interface
-    const sp = streamGeo.attributes.position.array as Float32Array;
-    const c0x = -0.6, c0y = 2.3, c0z = 0.8;
-    let vi = 0;
-    for (let i = 0; i < PANELS.length; i++) {
-      const g = panels.current[i];
-      const on = !!g && i < count && g.visible && g.scale.x > 0.55;
-      const w = PANELS[i].w;
-      const p2x = on ? g.position.x + (g.position.x > c0x ? -1 : 1) * w * 0.46 : c0x;
-      const p2y = on ? g.position.y : c0y;
-      const p2z = on ? g.position.z : c0z;
-      const mx = (c0x + p2x) / 2, my = Math.max(c0y, p2y) + 0.55, mz = Math.max(c0z, p2z) + 0.55;
-      for (let k = 0; k < SEG; k++)
-        for (let e2 = 0; e2 < 2; e2++) {
-          const tt = on ? (k + e2) / SEG : 0;
-          const u = 1 - tt;
-          sp[vi++] = u * u * c0x + 2 * u * tt * mx + tt * tt * p2x;
-          sp[vi++] = u * u * c0y + 2 * u * tt * my + tt * tt * p2y;
-          sp[vi++] = u * u * c0z + 2 * u * tt * mz + tt * tt * p2z;
-        }
+    // ---- face expression (reaction > greeting > typing > hover > normal, with blinks)
+    let expr: Expr = "normal";
+    if (rk === "bonk") expr = ra < 0.75 ? "surprised" : "happy";
+    else if (rk === "love") expr = "love";
+    else if (rk === "stars") expr = "stars";
+    else if (rk === "dizzy") expr = "dizzy";
+    else if (rk === "giggle") expr = "wink";
+    else if (sg(1.6, 1.95) * (1 - sg(3.9, 4.3)) > 0.5) expr = "happy";
+    else if (hovered.current > 0.5) expr = "happy";
+    const bl = Math.max(0, Math.sin(t * 1.3 + 0.7) * 18 - 17);
+    const blink = expr === "normal" ? Math.round(Math.min(bl, 1) * 4) / 4 : 0;
+    const animated = expr === "love" || expr === "stars" || expr === "dizzy" || expr === "surprised";
+    const fs = faceState.current;
+    if (fs.expr !== expr || fs.blink !== blink || (animated && now - fs.t > 1 / 30)) {
+      drawFace((faceTex.image as HTMLCanvasElement).getContext("2d")!, expr, blink, now);
+      faceTex.needsUpdate = true;
+      fs.expr = expr;
+      fs.blink = blink;
+      fs.t = now;
     }
-    streamGeo.attributes.position.needsUpdate = true; // (streams are no longer drawn)
+
+    // ---- reaction particles (hearts, stars, sparks, "!")
+    const list = fx.current;
+    for (let i = list.length - 1; i >= 0; i--) {
+      const p = list[i];
+      p.life += d;
+      if (p.life > p.max) list.splice(i, 1);
+      else {
+        p.x += p.vx * d;
+        p.y += p.vy * d;
+        p.vy -= (p.kind === "spark" || p.kind === "star" ? 1.6 : 0.2) * d;
+      }
+    }
+    fxMeshes.current.forEach((m, i) => {
+      const p = list[i];
+      if (!m) return;
+      m.visible = !!p;
+      if (!p) return;
+      const k = p.life / p.max;
+      (m.material as THREE.MeshBasicMaterial).map = fxTex[p.kind];
+      (m.material as THREE.MeshBasicMaterial).opacity = k < 0.15 ? k / 0.15 : 1 - Math.max(0, (k - 0.6) / 0.4);
+      m.position.set(p.x, L.head + bodyY + p.y, 1.3);
+      m.scale.setScalar(p.s * (p.kind === "bang" ? 1 + Math.sin(Math.min(k * 8, Math.PI)) * 0.4 : 1));
+      m.rotation.z = p.kind === "heart" ? Math.sin(p.life * 6) * 0.25 : p.life * 3;
+    });
+
+    // ---- pedestal glow rings pulse
+    pedRing.current.forEach((r, i) => {
+      if (!r) return;
+      const k = (t * 0.35 + i * 0.5) % 1;
+      r.scale.setScalar(1 + k * 0.7);
+      (r.material as THREE.MeshBasicMaterial).opacity = (1 - k) * 0.55;
+    });
+
   });
 
   return (
-    <group ref={stage} position={[0, -2.35, 0]} scale={0.9}>
-      {/* floor: soft contact shadow */}
-      <mesh position={[mobile ? 0 : -0.6, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[2.2, 48]} />
-        <shaderMaterial transparent depthWrite={false} vertexShader={stageShadow.v} fragmentShader={stageShadow.f} />
-      </mesh>
+    <group position={[0, -2.35, 0]} scale={0.9}>
+      {/* ---------- grand animated backdrop ---------- */}
+      <Backdrop palette={palette} en={en} cx={RX} mouse={mouse} mobile={mobile} />
+
+      {/* ---------- glowing pedestal ---------- */}
+      <group position={[RX, 0, 0.05]}>
+        <mesh position={[0, -0.42, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[6, 6]} />
+          <meshBasicMaterial map={halo} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+        </mesh>
+        <mesh position={[0, -0.3, 0]} material={M.silver}>
+          <cylinderGeometry args={[1.85, 1.95, 0.2, 72]} />
+        </mesh>
+        <mesh position={[0, -0.19, 0]} rotation={[Math.PI / 2, 0, 0]} material={M.glow}>
+          <torusGeometry args={[1.86, 0.028, 10, 96]} />
+        </mesh>
+        <mesh position={[0, -0.1, 0]} material={M.shell}>
+          <cylinderGeometry args={[1.5, 1.58, 0.2, 72]} />
+        </mesh>
+        <mesh position={[0, 0.005, 0]} rotation={[Math.PI / 2, 0, 0]} material={M.glow}>
+          <torusGeometry args={[1.5, 0.03, 10, 96]} />
+        </mesh>
+        <mesh position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.9, 1.0, 72]} />
+          <meshBasicMaterial color="#7dd3fc" transparent opacity={0.35} toneMapped={false} />
+        </mesh>
+        {[0, 1].map((i) => (
+          <mesh key={i} ref={(m) => { if (m) pedRing.current[i] = m; }} position={[0, -0.36, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[1.9, 1.95, 96]} />
+            <meshBasicMaterial color="#5fe6ff" transparent opacity={0.4} depthWrite={false} toneMapped={false} />
+          </mesh>
+        ))}
+      </group>
 
       {/* ================================ ROBOT ================================ */}
-      <group ref={robot} position={[mobile ? 0 : -0.6, 0, 0]}>
-        {/* ---- legs: sneakers, white shin and thigh blocks joined by a dark bellows knee with a yellow light ---- */}
-        {[-1, 1].map((sd) => (
-          <group key={sd} position={[sd * 0.38, 0, 0.02]}>
-            {/* shoe: thin dark outsole, thick white midsole with a dark seam, rounded upper, toe lifted a touch */}
-            <mesh material={M.dark} position={[0, 0.02, 0.08]} scale={[1, 1, 1.62]}>
-              <cylinderGeometry args={[0.3, 0.3, 0.04, 40]} />
-            </mesh>
-            <mesh material={M.ceramic} position={[0, 0.085, 0.08]} scale={[1, 1, 1.6]}>
-              <cylinderGeometry args={[0.3, 0.305, 0.1, 40]} />
-            </mesh>
-            <mesh geometry={G.ring(0.3, 0.01)} material={M.dark} position={[0, 0.137, 0.08]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 1.6, 1]} />
-            <mesh geometry={G.sph} material={M.ceramic} scale={[0.28, 0.17, 0.43]} position={[0, 0.17, 0.07]} />
-            <mesh geometry={G.sph} material={M.ceramic2} scale={[0.22, 0.1, 0.15]} position={[0, 0.18, 0.38]} rotation={[-0.25, 0, 0]} />
-            {/* ankle */}
-            <mesh geometry={G.ring(0.14, 0.05)} material={M.dark} position={[0, 0.33, 0]} rotation={[Math.PI / 2, 0, 0]} />
-            {/* shin block */}
-            <mesh geometry={G.shin} material={M.ceramic} position={[0, 0.55, 0]} />
-            {/* bellows knee with a yellow light line */}
-            <mesh geometry={G.ring(0.185, 0.012)} material={M.ledY} position={[0, 0.735, 0]} rotation={[Math.PI / 2, 0, 0]} />
-            {[0.78, 0.85, 0.92].map((y, i) => (
-              <mesh key={i} geometry={G.ring(0.14, 0.055)} material={M.dark} position={[0, y, 0]} rotation={[Math.PI / 2, 0, 0]} />
-            ))}
-            {/* thigh block */}
-            <mesh geometry={G.thigh} material={M.ceramic} position={[0, 1.12, 0]} />
-          </group>
-        ))}
+      <group ref={robot} position={[RX, 0, 0]} scale={L.scale}>
 
-        {/* ---- pelvis + bellows waist ---- */}
-        <mesh geometry={G.pelvis} material={M.ceramic} position={[0, 1.42, 0]} />
-        {[1.6, 1.66].map((y, i) => (
-          <mesh key={i} geometry={G.ring(0.5, 0.045)} material={M.dark} position={[0, y, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 0.62, 1]} />
-        ))}
-
-        <group ref={torso}>
-          {/* torso: one solid rounded body with a flat front panel */}
-          <mesh geometry={G.torso} material={M.ceramic} position={[0, 2.3, 0]} />
-          {/* a thin seam line marks the chest panel flush with the body (no separate block, no bulging corners) */}
-          <mesh geometry={G.seam} material={M.dark} position={[0, 2.26, 0.502]} />
-          {/* the 3D Netkathir emblem on the chest (unchanged artwork) */}
-          {logoGeo && <mesh geometry={logoGeo} material={logoMat} position={[0, 2.22, 0.56]} scale={0.6} />}
-          {/* top of the panel: a yellow status bar and a small cyan display */}
-          <mesh geometry={G.cap(0.03, 0.2)} material={M.ledY} position={[-0.24, 2.7, 0.515]} rotation={[0, 0, Math.PI / 2]} />
-          <mesh geometry={G.display} material={M.dark} position={[0.26, 2.7, 0.505]} />
-          {[0, 1, 2].map((r) => (
-            <mesh key={r} material={M.eye} position={[0.26, 2.735 - r * 0.035, 0.527]}>
-              <boxGeometry args={[0.2, 0.014, 0.004]} />
-            </mesh>
-          ))}
-          {[-0.4, -0.33].map((x, i) => (
-            <mesh key={i} geometry={G.sph} material={i ? M.eye : M.dark} scale={0.022} position={[x, 2.7, 0.505]} />
-          ))}
-          {/* speaker grille under the emblem */}
-          {[0, 1].flatMap((r) =>
-            [-3, -2, -1, 0, 1, 2, 3].map((c) => (
-              <mesh key={`${r}${c}`} geometry={G.sph} material={M.dark} scale={0.016} position={[c * 0.06, 1.86 - r * 0.055, 0.505]} />
-            ))
-          )}
-          {/* neck: a short, wide dark collar the head sits down onto, with a light rim at its base */}
-          <mesh material={M.dark} position={[0, 3.04, 0]}>
-            <cylinderGeometry args={[0.34, 0.4, 0.2, 48]} />
-          </mesh>
-          <mesh geometry={G.ring(0.4, 0.022)} material={M.ceramic2} position={[0, 2.95, 0]} rotation={[Math.PI / 2, 0, 0]} />
-          <mesh geometry={G.ring(0.345, 0.01)} material={M.eye} position={[0, 3.13, 0]} rotation={[Math.PI / 2, 0, 0]} />
-          {/* shoulders: dark ball joints */}
-          {[-1, 1].map((sd) => (
-            <mesh key={sd} geometry={G.sph} material={M.dark} scale={0.2} position={[sd * 0.98, 2.55, 0]} />
-          ))}
-
-          {/* ---- arms: thick bellows upper arm, chunky white gauntlet, big glove hand ---- */}
-          {[0, 1].map((a) => {
-            const sd = a === 0 ? 1 : -1;
-            return (
-              <group key={a}>
-                <group ref={a === 0 ? upP : upR}>
-                  <mesh material={M.dark} position={[0, -0.3, 0]}>
-                    <cylinderGeometry args={[0.08, 0.08, 0.5, 16]} />
+        {/* ---- legs: white thigh sleeve, black ribbed knee, boxy white shin with cyan pills, chunky boot ---- */}
+        {[0, 1].map((i) => {
+          const sd = i ? -1 : 1;
+          return (
+            <group key={i} ref={(g) => { if (g) hips.current[i] = g; }} position={[sd * L.hipX, L.hip, 0.02]}>
+              <mesh geometry={G.sph} material={M.black} scale={0.2} />
+              <mesh geometry={G.thigh} material={M.shell} position={[0, -0.2, 0]} />
+              <group ref={(g) => { if (g) knees.current[i] = g; }} position={[0, -L.upperLeg, 0]}>
+                <mesh geometry={G.kneeRib} material={M.black} position={[0, 0.17, 0]} />
+                <mesh geometry={G.shin} material={M.shell} position={[0, -0.43, 0]} />
+                {[-1, 1].map((side) => (
+                  <mesh key={side} geometry={G.cap(0.02, 0.1)} material={M.glow} position={[side * 0.366, -0.43, 0.06]} />
+                ))}
+                <group ref={(g) => { if (g) ankles.current[i] = g; }} position={[0, -L.lowerLeg, 0]}>
+                  <mesh geometry={G.ring(0.31, 0.04)} material={M.black} position={[0, 0.16, 0.04]} rotation={[Math.PI / 2, 0, 0]} />
+                  {/* boot: white upper + toe cap, white midsole, black sole line, cyan glow underneath */}
+                  <mesh material={M.black} position={[0, -0.405, 0.1]} scale={[1, 1, 1.36]}>
+                    <cylinderGeometry args={[0.49, 0.49, 0.06, 56]} />
                   </mesh>
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <mesh key={i} geometry={G.ring(0.1, 0.052)} material={M.dark} position={[0, -0.07 - i * 0.088, 0]} rotation={[Math.PI / 2, 0, 0]} />
-                  ))}
+                  <mesh material={M.shell} position={[0, -0.345, 0.1]} scale={[1, 1, 1.34]}>
+                    <cylinderGeometry args={[0.49, 0.5, 0.08, 56]} />
+                  </mesh>
+                  <mesh geometry={G.ring(0.48, 0.012)} material={M.glow} position={[0, -0.437, 0.1]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 1.36, 1]} />
+                  <mesh geometry={G.sph} material={M.shell} scale={[0.46, 0.34, 0.6]} position={[0, -0.12, 0.1]} />
+                  <mesh geometry={G.sph} material={M.shell2} scale={[0.38, 0.2, 0.28]} position={[0, -0.2, 0.52]} rotation={[-0.2, 0, 0]} />
                 </group>
-                <group ref={a === 0 ? foP : foR}>
-                  <mesh geometry={G.sph} material={M.dark} scale={0.12} />
-                  {/* gauntlet: widens towards the wrist */}
-                  <mesh geometry={G.sph} material={M.ceramic} scale={[0.125, 0.09, 0.125]} position={[0, -0.12, 0]} />
-                  <mesh material={M.ceramic} position={[0, -0.32, 0]}>
-                    <cylinderGeometry args={[0.125, 0.16, 0.4, 32]} />
-                  </mesh>
-                  <mesh geometry={G.ring(0.158, 0.02)} material={M.ceramic2} position={[0, -0.52, 0]} rotation={[Math.PI / 2, 0, 0]} />
-                  <mesh geometry={G.ring(0.142, 0.012)} material={a === 0 ? M.eye : M.ledY} position={[0, -0.22, 0]} rotation={[Math.PI / 2, 0, 0]} />
-                  <mesh geometry={G.sph} material={M.dark} scale={0.024} position={[sd * 0.15, -0.4, 0]} />
-                  <group ref={a === 0 ? handP : handR} position={[0, -0.56, 0]}>
-                    {/* glove palm (palm faces +z) */}
-                    <mesh geometry={G.palm} material={M.ceramic} position={[0, -0.12, 0]} />
-                    <mesh geometry={G.sph} material={M.ceramic2} scale={[0.09, 0.08, 0.02]} position={[0, -0.12, 0.068]} />
-                    {[-0.085, 0, 0.085].map((x, i) => (
-                      <group key={i} position={[x, -0.245, 0]}>
-                        <group ref={(g) => { if (g) fingers.current[a][i * 2] = g; }}>
-                          <mesh geometry={G.cap(0.044, 0.07)} material={M.ceramic} position={[0, -0.06, 0]} />
-                          <mesh geometry={G.sph} material={M.dark} scale={0.034} position={[0, -0.125, 0]} />
-                          <group ref={(g) => { if (g) fingers.current[a][i * 2 + 1] = g; }} position={[0, -0.135, 0]}>
-                            <mesh geometry={G.cap(0.041, 0.055)} material={M.ceramic} position={[0, -0.05, 0]} />
+              </group>
+            </group>
+          );
+        })}
+
+        <group ref={body}>
+          {/* invisible hit-boxes for hover and pokes */}
+          <mesh ref={(m) => { if (m) colliders.current[0] = m; }} userData={{ part: "head" }} position={[0, L.head, 0]} visible={false}>
+            <sphereGeometry args={[1.4, 16, 12]} />
+          </mesh>
+          <mesh ref={(m) => { if (m) colliders.current[1] = m; }} userData={{ part: "body" }} position={[0, 2.5, 0]} visible={false}>
+            <boxGeometry args={[2.1, 2.8, 1.2]} />
+          </mesh>
+          {/* pelvis with the cyan hip lights, and the black waist band with its light bar */}
+          <mesh geometry={G.pelvis} material={M.shell} position={[0, 1.85, 0]} />
+          {[-1, 1].map((sd) => (
+            <mesh key={sd} geometry={G.sph} material={M.glow} scale={[0.04, 0.1, 0.075]} position={[sd * 0.745, 1.78, 0.2]} />
+          ))}
+          <mesh material={M.black} position={[0, 2.2, 0]} scale={[1, 1, 0.82]}>
+            <cylinderGeometry args={[0.72, 0.64, 0.22, 56]} />
+          </mesh>
+          <mesh material={M.glow} position={[0, 2.2, 0.572]}>
+            <boxGeometry args={[0.42, 0.035, 0.012]} />
+          </mesh>
+
+          <group ref={torso}>
+            {/* torso: wide at the shoulders, narrowing to the waist, with the chest plate, two light bays and the emblem */}
+            <mesh geometry={G.torso} material={M.shell} position={[0, 2.95, 0]} />
+            <mesh geometry={G.lightBay} material={M.black} position={[-0.4, 3.5, 0.475]} />
+            <mesh material={M.yellow} position={[-0.4, 3.5, 0.508]}>
+              <boxGeometry args={[0.3, 0.045, 0.01]} />
+            </mesh>
+            <mesh geometry={G.lightBay} material={M.black} position={[0.4, 3.5, 0.475]} />
+            <mesh material={M.blue} position={[0.4, 3.5, 0.508]}>
+              <boxGeometry args={[0.34, 0.055, 0.01]} />
+            </mesh>
+            {logoGeo && <mesh geometry={logoGeo} material={logoMat} position={[0, 3.08, 0.55]} scale={0.7} />}
+            <mesh position={[0, 2.54, 0.535]}>
+              <planeGeometry args={[0.8, 0.25]} />
+              <meshBasicMaterial map={chestTex} transparent toneMapped={false} />
+            </mesh>
+            {/* neck */}
+            <mesh material={M.black} position={[0, 3.68, 0]}>
+              <cylinderGeometry args={[0.3, 0.36, 0.26, 48]} />
+            </mesh>
+            {/* shoulders: round black joints with a cyan glow crescent on the outer edge */}
+            {[-1, 1].map((sd) => (
+              <group key={sd} position={[sd * L.shoulderX, L.shoulderY, 0]}>
+                <mesh geometry={G.sph} material={M.black} scale={0.3} />
+                <mesh geometry={G.ring(0.288, 0.024, Math.PI * 0.9)} material={M.glow} position={[0, 0, 0.12]} rotation={[0, 0, -0.3 * Math.PI]} scale={[sd, 1, 1]} />
+              </group>
+            ))}
+
+            {/* ---- arms: black ribbed upper arm, white armoured forearm with cyan pills, white glove hand ---- */}
+            {[0, 1].map((a) => {
+              const sd = a === 0 ? 1 : -1;
+              return (
+                <group key={a}>
+                  <group ref={a === 0 ? upP : upR}>
+                    <mesh geometry={G.armRib} material={M.black} position={[0, -0.03, 0]} />
+                  </group>
+                  <group ref={a === 0 ? foP : foR}>
+                    <mesh geometry={G.sph} material={M.black} scale={0.235} />
+                    <mesh geometry={G.forearm} material={M.shell} position={[0, -0.43, 0]} />
+                    {[-0.3, -0.56].map((y) => (
+                      <mesh key={y} geometry={G.cap(0.02, 0.1)} material={M.glow} position={[0, y, -0.254]} />
+                    ))}
+                    <mesh geometry={G.ring(0.14, 0.05)} material={M.black} position={[0, -L.foreArm, 0]} rotation={[Math.PI / 2, 0, 0]} />
+                    <group ref={a === 0 ? handP : handR} position={[0, -L.foreArm - 0.02, 0]} scale={1.12}>
+                      <mesh geometry={G.palm} material={M.shell} position={[0, -0.11, 0]} />
+                      <mesh geometry={G.sph} material={M.black} scale={[0.08, 0.07, 0.015]} position={[0, -0.11, 0.066]} />
+                      {[-0.085, 0, 0.085].map((x, i) => (
+                        <group key={i} position={[x, -0.235, 0]}>
+                          <group ref={(g) => { if (g) fingers.current[a][i * 2] = g; }}>
+                            <mesh geometry={G.sph} material={M.black} scale={0.034} />
+                            <mesh geometry={G.cap(0.038, 0.065)} material={M.shell} position={[0, -0.065, 0]} />
+                            <mesh geometry={G.sph} material={M.black} scale={0.03} position={[0, -0.125, 0]} />
+                            <group ref={(g) => { if (g) fingers.current[a][i * 2 + 1] = g; }} position={[0, -0.135, 0]}>
+                              <mesh geometry={G.cap(0.035, 0.05)} material={M.shell} position={[0, -0.05, 0]} />
+                            </group>
                           </group>
                         </group>
+                      ))}
+                      <group position={[-sd * 0.155, -0.08, 0.04]} rotation={[0.3, 0, -sd * 1.05]}>
+                        <mesh geometry={G.sph} material={M.black} scale={0.032} />
+                        <mesh geometry={G.cap(0.04, 0.085)} material={M.shell} position={[0, -0.07, 0]} />
                       </group>
-                    ))}
-                    {/* thumb, on the inner side */}
-                    <group position={[-sd * 0.155, -0.08, 0.04]} rotation={[0.3, 0, -sd * 1.05]}>
-                      <mesh geometry={G.cap(0.047, 0.09)} material={M.ceramic} position={[0, -0.06, 0]} />
-                      <mesh geometry={G.sph} material={M.dark} scale={0.03} position={[0, -0.005, 0]} />
                     </group>
                   </group>
                 </group>
-              </group>
-            );
-          })}
+              );
+            })}
 
-          {/* the AI, floating above the open hand */}
-          <group ref={brain} scale={0.64}>
-            <AIText palette={palette} mobile={mobile} />
-          </group>
+            {/* holographic globe above the open hand */}
+            <group ref={globe} visible={false}>
+              <HoloGlobe palette={palette} />
+            </group>
 
-          {/* ---- head: ceramic helmet, glass visor face, round glowing eyes, smile, headphones ---- */}
-          <group ref={head} position={[0, 3.78, 0]}>
-            <mesh geometry={G.sph} material={M.ceramic} scale={[1.2, 1.05, 1.08]} />
-            {/* helmet seam + forehead light */}
-            <mesh geometry={G.ring(0.98, 0.012)} material={M.dark} position={[0, 0.52, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1.17, 1, 1]} />
-            <mesh geometry={G.sph} material={M.eye} scale={0.055} position={[0, 0.74, 0.76]} />
-            {/* visor */}
-            <mesh geometry={G.sph} material={M.dark} scale={[0.98, 0.7, 0.42]} position={[0, -0.06, 0.76]} />
-            <mesh geometry={G.sph} material={M.glass} scale={[0.93, 0.65, 0.42]} position={[0, -0.06, 0.79]} />
-            {/* round glowing eyes with a soft halo */}
-            <group ref={eyes}>
+            {/* ---- head: glossy white helmet, big black visor with the face, headphones, headband, antennas ---- */}
+            <group ref={head} position={[0, L.head, 0]}>
+              <mesh geometry={G.sph} material={M.shell} scale={[1.3, 1.1, 1.16]} />
+              {/* the little cyan light slits on the crown and the upper sides of the helmet */}
+              {SL.map((s, i) => (
+                <mesh key={i} position={s.pos} quaternion={s.quat} material={M.glow}>
+                  <boxGeometry args={[s.len, 0.045, 0.05]} />
+                </mesh>
+              ))}
+              {/* visor: one big glossy black glass panel across the face */}
+              <mesh geometry={G.visorG} material={M.visor} />
+              {/* the face: eyes + mouth drawn live on the visor */}
+              <mesh geometry={G.face} renderOrder={5}>
+                <meshBasicMaterial map={faceTex} transparent depthWrite={false} toneMapped={false} />
+              </mesh>
+
+              {/* headphones: dark ear cups with a glowing cyan ring on the outer face, turned a little to the front */}
               {[-1, 1].map((sd) => (
-                <group key={sd} position={[sd * 0.33, 0.0, 1.2]} rotation={[0, sd * 0.26, 0]}>
-                  <mesh material={M.eyeHalo} position={[0, 0, -0.005]}>
-                    <planeGeometry args={[0.62, 0.62]} />
-                  </mesh>
-                  <mesh material={M.eye}>
-                    <circleGeometry args={[0.15, 40]} />
-                  </mesh>
-                  <mesh material={M.eyeGlint} position={[-0.05, 0.05, 0.004]}>
-                    <circleGeometry args={[0.035, 20]} />
-                  </mesh>
+                <group key={sd} position={[sd * 1.42, -0.2, -0.04]} rotation={[0, -sd * 0.14, 0]}>
+                  <group rotation={[0, 0, -sd * Math.PI / 2]}>
+                    <mesh material={M.black}>
+                      <cylinderGeometry args={[0.46, 0.46, 0.3, 56]} />
+                    </mesh>
+                    <mesh position={[0, 0.15, 0]} rotation={[Math.PI / 2, 0, 0]} material={M.navy}>
+                      <torusGeometry args={[0.45, 0.035, 14, 56]} />
+                    </mesh>
+                    <mesh position={[0, 0.158, 0]} material={M.navy}>
+                      <cylinderGeometry args={[0.36, 0.36, 0.02, 56]} />
+                    </mesh>
+                    <mesh position={[0, 0.172, 0]} rotation={[Math.PI / 2, 0, 0]} material={M.glow}>
+                      <torusGeometry args={[0.385, 0.034, 12, 64]} />
+                    </mesh>
+                    <mesh position={[0, 0.17, 0]} rotation={[Math.PI / 2, 0, 0]} material={M.blue}>
+                      <torusGeometry args={[0.2, 0.014, 10, 48]} />
+                    </mesh>
+                  </group>
                 </group>
               ))}
-            </group>
-            {/* happy ^ ^ eyes (shown while waving) */}
-            <group ref={happy} scale={0.001}>
-              {[-1, 1].map((sd) => (
-                <mesh key={sd} geometry={G.ring(0.13, 0.03, Math.PI)} material={M.eye} position={[sd * 0.33, -0.04, 1.2]} rotation={[0, sd * 0.26, 0]} />
-              ))}
-            </group>
-            {/* little smile */}
-            <mesh geometry={G.ring(0.12, 0.016, Math.PI)} material={M.eye} position={[0, -0.27, 1.17]} rotation={[0.25, 0, Math.PI]} />
-            {/* headphones: ear cups + padded headband over the helmet */}
-            {[-1, 1].map((sd) => (
-              <group key={sd} position={[sd * 1.17, -0.02, 0]} rotation={[0, 0, Math.PI / 2]}>
-                <mesh material={M.dark}>
-                  <cylinderGeometry args={[0.36, 0.36, 0.2, 40]} />
-                </mesh>
-                <mesh position={[0, sd * 0.13, 0]} material={M.ceramic}>
-                  <cylinderGeometry args={[0.31, 0.31, 0.08, 40]} />
-                </mesh>
-                <mesh position={[0, sd * 0.18, 0]} rotation={[Math.PI / 2, 0, 0]} material={M.gold}>
-                  <torusGeometry args={[0.17, 0.022, 12, 40]} />
-                </mesh>
-                <mesh position={[0, sd * 0.19, 0]} material={M.eye}>
-                  <cylinderGeometry args={[0.06, 0.06, 0.02, 24]} />
-                </mesh>
-              </group>
-            ))}
-            <mesh geometry={G.ring(1.24, 0.07, Math.PI)} material={M.dark} position={[0, -0.02, -0.12]} rotation={[-0.22, 0, 0]} />
-            {/* two antenna stalks rising from the headband, swaying gently */}
-            <group ref={antenna}>
-              {[-1, 1].map((sd) => (
-                <group key={sd} position={[sd * 0.78, 0.92, -0.25]} rotation={[0, 0, -sd * 0.45]}>
-                  <mesh material={M.dark} position={[0, 0.22, 0]}>
-                    <cylinderGeometry args={[0.022, 0.03, 0.46, 12]} />
+              {/* headband: a slim navy arc standing just off the crown */}
+              <mesh geometry={G.ring(1.42, 0.05, Math.PI)} material={M.navy} position={[0, -0.02, 0]} scale={[1, 0.86, 1]} />
+              {/* antennas: black stalks angled outwards, glossy blue balls */}
+              {[-1, 1].map((sd, i) => (
+                <group key={sd} ref={(g) => { if (g) antenna.current[i] = g; }} position={[sd * 0.92, 0.8, 0]}>
+                  <mesh geometry={G.sph} material={M.black} scale={[0.1, 0.08, 0.1]} />
+                  <mesh material={M.black} position={[0, 0.3, 0]}>
+                    <cylinderGeometry args={[0.04, 0.052, 0.6, 16]} />
                   </mesh>
-                  <mesh geometry={G.sph} material={M.eye} scale={0.06} position={[0, 0.47, 0]} />
+                  <mesh geometry={G.sph} material={M.ball} scale={0.15} position={[0, 0.68, 0]} />
+                  <mesh position={[0, 0.68, 0]}>
+                    <planeGeometry args={[0.7, 0.7]} />
+                    <meshBasicMaterial map={halo} transparent opacity={0.3} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+                  </mesh>
                 </group>
               ))}
             </group>
           </group>
         </group>
 
+        {/* reaction particles */}
+        {Array.from({ length: 12 }, (_, i) => (
+          <mesh key={i} ref={(m) => { if (m) fxMeshes.current[i] = m; }} visible={false} renderOrder={21}>
+            <planeGeometry args={[1, 1]} />
+            <meshBasicMaterial map={fxTex.heart} transparent depthWrite={false} depthTest={false} toneMapped={false} />
+          </mesh>
+        ))}
+
         {/* "Hii!" speech bubble */}
         <mesh ref={bubble} scale={0.001} renderOrder={20}>
-          <planeGeometry args={[1.5, 0.96]} />
+          <planeGeometry args={[1.8, 1.15]} />
           <meshBasicMaterial map={hiTex} transparent depthWrite={false} depthTest={false} toneMapped={false} />
         </mesh>
       </group>
 
-      {/* ============================ LIVE HOLOGRAPHIC UI ============================ */}
-      {PANELS.slice(0, count).map((p, i) => (
-        <group
-          key={i}
-          ref={(g) => {
-            if (g) panels.current[i] = g;
-          }}
-          position={p.pos}
-        >
-          <mesh>
-            <planeGeometry args={[p.w, p.w * 0.664]} />
-            <meshBasicMaterial
-              ref={(m) => {
-                if (m) shots.current[i] = m;
-              }}
-              map={live[i].tex}
-              alphaMap={glass.mask}
-              transparent
-              side={THREE.DoubleSide}
-              toneMapped={false}
-              depthWrite={false}
-            />
-          </mesh>
-          <mesh position={[0, 0, -0.012]} renderOrder={-1}>
-            <planeGeometry args={[p.w * 1.094, p.w * 0.664 * 1.1]} />
-            <meshBasicMaterial map={glass.rim} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} side={THREE.DoubleSide} />
-          </mesh>
-          <mesh position={[0, 0, 0.006]}>
-            <planeGeometry args={[p.w, p.w * 0.664]} />
-            <meshBasicMaterial map={glass.shine[i]} alphaMap={glass.mask} transparent opacity={0.5} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} side={THREE.DoubleSide} />
-          </mesh>
-        </group>
-      ))}
-
-
-      {/* circular AI data wave wrapped around the robot */}
-      <group ref={(g) => { if (g) rings.current[0] = g; }} position={[mobile ? 0 : -0.6, 0, 0]}>
-        <AiWaveRing palette={palette} R={mobile ? 2.7 : 3.6} H={0.95} y={1.7} tilt={0.22} x={0} Nu={mobile ? 60 : 96} Nv={6} />
-      </group>
+      {/* ---------- live glass interfaces around the robot ---------- */}
       {!mobile && (
-        <group ref={(g) => { if (g) rings.current[1] = g; }} position={[-0.6, 0, 0]}>
-          <AiWaveRing palette={palette} R={2.9} H={0.6} y={3.7} tilt={-0.2} x={0} Nu={80} Nv={5} speed={1.3} />
-        </group>
+        <>
+          <HoloPanels palette={palette} en={en} cx={RX} />
+        </>
       )}
-
     </group>
   );
 }
