@@ -29,17 +29,40 @@ function Icon({ name }: { name: string }) {
 }
 
 export default function ContactForm() {
-  const [sent, setSent] = useState(false);
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [error, setError] = useState("");
 
-  // NOTE: no backend yet — this opens the visitor's mail client with the details filled in.
-  function submit(e: React.FormEvent<HTMLFormElement>) {
+  // saves the enquiry to the contact_submissions table (app/api/contact/route.ts)
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const body = [...f.entries()].map(([k, v]) => `${k}: ${v}`).join("\n");
-    window.location.href = `mailto:${SITE.email}?subject=${encodeURIComponent(
-      "Website enquiry: " + f.get("Service")
-    )}&body=${encodeURIComponent(body)}`;
-    setSent(true);
+    if (state === "sending") return;
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    const get = (k: string) => String(f.get(k) ?? "");
+    setState("sending");
+    setError("");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: get("Full Name"),
+          email: get("Email"),
+          company: get("Company"),
+          phone: get("Phone"),
+          service: get("Service"),
+          message: get("Message"),
+          website: get("website"),
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || "Something went wrong. Please try again.");
+      form.reset();
+      setState("sent");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `Something went wrong. Please email ${SITE.email}.`);
+      setState("error");
+    }
   }
 
   return (
@@ -116,19 +139,23 @@ export default function ContactForm() {
         </div>
 
         <div className="relative mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-6 md:mt-8">
-          <button type="submit" className="btn btn-solid group justify-center" data-magnetic>
-            <span className="relative z-10">Send Message</span>
+          {/* honeypot for bots: hidden from people and screen readers */}
+          <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] h-0 w-0 opacity-0" />
+          <button type="submit" disabled={state === "sending"} className="btn btn-solid group justify-center disabled:opacity-70" data-magnetic>
+            <span className="relative z-10">{state === "sending" ? "Sending…" : "Send Message"}</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="relative z-10 h-5 w-5 transition-transform duration-500 group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:rotate-12">
               <path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" />
             </svg>
           </button>
-          {sent ? (
+          {state === "sent" ? (
             <p className="ct-sent flex items-center gap-2 text-sm font-medium text-ice">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="h-5 w-5">
                 <path d="M5 12l5 5L20 7" className="ct-check" />
               </svg>
-              Opening your email app…
+              Thanks! We&apos;ve received your message and will reply within 24h.
             </p>
+          ) : state === "error" ? (
+            <p role="alert" className="text-center text-sm font-medium text-red-600 sm:text-left">{error}</p>
           ) : (
             <p className="text-center text-xs text-muted sm:text-left">🔒 Your details stay private. No spam, ever.</p>
           )}

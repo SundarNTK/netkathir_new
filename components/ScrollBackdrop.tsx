@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 /**
  * Soft colour fields, rings and a dot grid that drift, rotate and breathe as the page scrolls.
@@ -16,11 +17,20 @@ const BLOBS = [
 
 export default function ScrollBackdrop() {
   const root = useRef<HTMLDivElement>(null);
+  const path = usePathname();
 
   useEffect(() => {
     const el = root.current;
     if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // the home hero stays pure white; the colour fields fade in as the first section scrolls away
+    const home = path === "/";
+    const veil = () => {
+      const vh = window.innerHeight;
+      el.style.opacity = home ? String(Math.min(1, Math.max(0, (window.scrollY - vh * 0.45) / (vh * 0.5)))) : "1";
+    };
+    veil();
+    window.addEventListener("scroll", veil, { passive: true });
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return () => window.removeEventListener("scroll", veil);
     const blobs = Array.from(el.querySelectorAll<HTMLElement>("[data-b]"));
     const rings = Array.from(el.querySelectorAll<HTMLElement>("[data-r]"));
     const grid = el.querySelector<HTMLElement>("[data-g]");
@@ -59,9 +69,10 @@ export default function ScrollBackdrop() {
     window.addEventListener("scroll", kick, { passive: true });
     return () => {
       window.removeEventListener("scroll", kick);
+      window.removeEventListener("scroll", veil);
       cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [path]);
 
   return (
     <div ref={root} aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">

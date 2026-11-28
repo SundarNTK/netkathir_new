@@ -98,7 +98,7 @@ export default function About() {
       <section className="py-10 md:py-12">
         <div className="mx-auto max-w-7xl px-6">
           <h2 data-split className="font-display text-[clamp(2.2rem,5vw,4.5rem)] leading-none mb-8">What we stand for</h2>
-          <ValueRows rows={VALUES.map(([t, d], i) => ({ t, d, image: [IMAGES.heroes.blogs, IMAGES.heroes.contact, IMAGES.heroes.home, IMAGES.heroes.garage][i % 4] }))} />
+          <ValueRows rows={VALUES.map(([t, d], i) => ({ t, d, kind: (["idea", "team", "tech", "growth"] as const)[i % 4] }))} />
         </div>
       </section>
 

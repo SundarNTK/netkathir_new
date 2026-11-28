@@ -182,37 +182,6 @@ export const TESTIMONIALS = [
   },
 ];
 
-const JPG_POSTS = new Set([
-  "mobile-app-design-modern-commerce",
-  "wordpress-seo-migration",
-]);
-
-export const BLOGS = [
-  ["Nov 20, 2026", "How ERP Software Simplifies Business Operations", "how-erp-software-simplifies-business-operations"],
-  ["Nov 13, 2026", "AI-Powered Chatbots for Customer Support", "ai-powered-chatbots-customer-support"],
-  ["Nov 3, 2026", "Docker Fundamentals: A Beginner's Guide", "docker-fundamentals-beginners-guide"],
-  ["Oct 22, 2026", "Custom Software vs Ready-Made Software", "custom-software-vs-ready-made-software"],
-  ["Oct 8, 2026", "MergeWatcher: Detect Git Conflicts Before Merge", "mergewatcher-detect-git-conflicts-before-merge"],
-  ["Sep 23, 2026", "Jenkins Fundamentals: CI/CD Pipeline Automation", "jenkins-fundamentals-ci-cd-pipeline-automation"],
-  ["Sep 4, 2026", "Unit Testing Basics: How to Write Unit Tests", "unit-testing-basics-how-to-write-unit-tests"],
-  ["Aug 19, 2026", "AI Unit Testing & Code Validation", "ai-unit-testing-code-validation"],
-  ["Aug 11, 2026", "AWS IAM and S3 Guide", "aws-iam-and-s3-guide"],
-  ["Aug 4, 2026", "AI Agents: How They Work", "blog-ai-agents-how-they-work"],
-  ["Jul 28, 2026", "How to Reduce Manual Work in Your Business Using AI", "how-to-reduce-manual-work-in-your-business-using-ai"],
-  ["Jul 24, 2026", "Claude AI for Software Development", "claude-ai-for-software-development"],
-  ["Nov 13, 2025", "Mobile App Design for Modern Commerce", "mobile-app-design-modern-commerce"],
-  ["Nov 4, 2025", "WordPress SEO Migration", "wordpress-seo-migration"],
-  ["Oct 28, 2025", "URL Slugs & Search Generative Experience 2025", "3-url-slug-search-generative-experience-2025"],
-  ["Oct 8, 2025", "Cross-Platform vs Native Apps: iOS & Android", "cross-platform-vs-native-apps-ios-android"],
-].map(([date, title, slug], i) => ({
-  date,
-  title,
-  slug,
-  n: String(i + 1).padStart(2, "0"),
-  url: `https://netkathir.com/blogs/${slug}`,
-  image: `/images/blog/${slug}.${JPG_POSTS.has(slug) ? "jpg" : "webp"}`,
-}));
-
 export const COUNTRIES = ["India (HQ)", "USA", "Dubai", "Singapore", "Malaysia", "Australia"];
 
 export const VALUES = [

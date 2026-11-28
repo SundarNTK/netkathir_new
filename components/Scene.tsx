@@ -15,6 +15,9 @@ type Stage = { x: number; y: number; s: number; pal: [string, string, string] };
 // pages whose hero leaves room for the 3D object on phones (PageHero `room`)
 const MOBILE_3D = new Set(["/", "/about", "/contact"]);
 
+/** sub-pages use their section's 3D stage (an article at /blogs/<slug> looks like /blogs) */
+const sectionOf = (p: string) => (p.startsWith("/blogs/") ? "/blogs" : p);
+
 const STAGES: Record<string, Stage> = {
   "/": { x: 3.2, y: -0.05, s: 0.95, pal: ["#14532d", "#16a34a", "#eab308"] },
   "/services": { x: 2.7, y: -0.1, s: 1.0, pal: ["#166534", "#22c55e", "#facc15"] },
@@ -291,7 +294,7 @@ function Dust({ shared, count }: { shared: Shared; count: number }) {
 /* --------------------------------- world --------------------------------- */
 
 function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
-  const path = usePathname();
+  const path = sectionOf(usePathname());
   const stage = STAGES[path] ?? STAGES["/"];
   // phones: inner pages skip their 3D object (it sat on top of the page title and costs battery); the home robot stays
   const variant = mobile && !MOBILE_3D.has(path) ? "none" : VARIANT[path] ?? "core";
@@ -435,7 +438,7 @@ function World({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
 }
 
 export default function Scene() {
-  const path = usePathname();
+  const path = sectionOf(usePathname());
   const mobile = typeof window !== "undefined" && window.innerWidth < 800;
   const variant = mobile && !MOBILE_3D.has(path) ? "none" : VARIANT[path] ?? "core";
   const reduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 
+const ACCENTS = ["#16a34a", "#f59e0b", "#0ea5e9", "#8b5cf6"];
+
 type Group = { name: string; blurb: string; items: string[]; image: string };
 
 /**
@@ -19,6 +21,7 @@ export default function Capabilities({ groups }: { groups: Group[] }) {
           href="/services"
           className="xp-item group"
           data-on={on === i ? "1" : "0"}
+          style={{ ["--c" as string]: ACCENTS[i % ACCENTS.length] }}
           onMouseEnter={() => setOn(i)}
           onFocus={() => setOn(i)}
         >
@@ -31,20 +34,22 @@ export default function Capabilities({ groups }: { groups: Group[] }) {
           </span>
           <span className="xp-go" aria-hidden>↗</span>
           <div className="xp-body">
+            <div className="xp-card">
             <span className="xp-pill">0{i + 1} · {g.items.length} services</span>
             <h3 className="mt-4 font-display text-[clamp(1.7rem,2.6vw,2.4rem)] font-semibold leading-[1.05]">{g.name}</h3>
-            <p className="mt-3 max-w-sm text-[0.95rem] leading-snug text-white/80">{g.blurb}</p>
+            <p className="xp-blurb mt-3 max-w-sm text-[0.95rem] leading-snug">{g.blurb}</p>
             <ul className="mt-5 flex flex-wrap gap-2">
               {g.items.slice(0, 3).map((it) => (
-                <li key={it} className="rounded-full bg-white/18 px-3 py-1.5 text-xs font-medium text-white ring-1 ring-white/30">
+                <li key={it} className="xp-chip rounded-full px-3 py-1.5 text-xs font-semibold">
                   {it.replace(/ \(.*\)/, "")}
                 </li>
               ))}
-              {g.items.length > 3 && <li className="px-1.5 py-1.5 text-xs font-semibold text-[#fde68a]">+{g.items.length - 3} more</li>}
+              {g.items.length > 3 && <li className="xp-more px-1.5 py-1.5 text-xs font-bold">+{g.items.length - 3} more</li>}
             </ul>
-            <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#fde68a]">
+            <span className="xp-link mt-6 inline-flex items-center gap-2 text-sm font-bold">
               Explore <span className="transition-transform duration-300 group-hover:translate-x-1.5">→</span>
             </span>
+            </div>
           </div>
         </Link>
       ))}

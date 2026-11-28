@@ -1,5 +1,4 @@
 import PageHero from "@/components/PageHero";
-import StatCards from "@/components/StatCards";
 import { FlightStrip } from "@/components/Flight";
 import { ClientReel, LetterWall } from "@/components/Showcase";
 import Ticker from "@/components/Ticker";
@@ -53,12 +52,6 @@ export default function Projects() {
       </section>
 
       <LetterWall rows={["PLAN", "DESIGN", "BUILD", "CONNECT", "AUTOMATE", "INTEGRATE", "DELIVER", "SUPPORT", "SCALE", "SECURE", "MAINTAIN"]} stamp="Netkathir · 2015 — 2026" title="11 years. 50+ projects. One team" sub="From hospitals to marine to e-commerce — software that keeps running." />
-      <section className="px-3 py-10 sm:px-6 md:py-14">
-        <div className="mx-auto max-w-7xl">
-          <StatCards items={[["11", "+", "Years of delivery", "years"], ["6", "", "Countries served", "countries"], ["50", "+", "Engineers", "people"]]} />
-        </div>
-      </section>
-
       <ClientReel clients={CLIENTS} notes={CASES} />
     </div>
   );
