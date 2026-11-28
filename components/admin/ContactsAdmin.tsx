@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { readCache, writeCache } from "./cache";
+import { exportContactsCsv, exportContactsXlsx } from "./exportContacts";
 import { useRouter } from "next/navigation";
 import { Icon, IconButton, PageHead, SearchBox, Select, Stat, btnGhost, btnPrimary } from "./ui";
 
@@ -19,18 +20,6 @@ type Row = {
 
 function when(iso: string) {
   return new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
-}
-
-function csv(rows: Row[]) {
-  const cols: (keyof Row)[] = ["created_at", "full_name", "email", "phone", "company", "service", "message"];
-  const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const text = [cols.join(","), ...rows.map((r) => cols.map((c) => esc(r[c])).join(","))].join("\r\n");
-  const url = URL.createObjectURL(new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `contact-submissions-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 const TINTS = ["#16a34a", "#0d9488", "#ca8a04", "#2563eb", "#7c3aed", "#db2777"];
@@ -52,6 +41,7 @@ export default function ContactsAdmin() {
   const [open, setOpen] = useState<Row | null>(null);
   const [loadedAt, setLoadedAt] = useState(0);
   const [spin, setSpin] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const router = useRouter();
 
   const load = useCallback(async () => {
@@ -108,8 +98,24 @@ export default function ContactsAdmin() {
         <button onClick={load} className={btnGhost}>
           <Icon name="refresh" className={`h-[1.1rem] w-[1.1rem] ${spin ? "animate-spin" : ""}`} /> Refresh
         </button>
-        <button onClick={() => csv(shown)} disabled={!shown.length} className={btnPrimary}>
-          <Icon name="download" className="h-[1.1rem] w-[1.1rem]" /> Export CSV
+        <button onClick={() => exportContactsCsv(shown)} disabled={!shown.length} className={btnGhost} title="Plain CSV file">
+          CSV
+        </button>
+        <button
+          onClick={async () => {
+            setExporting(true);
+            try {
+              await exportContactsXlsx(shown);
+            } catch (e) {
+              alert(e instanceof Error ? e.message : "Export failed");
+            } finally {
+              setExporting(false);
+            }
+          }}
+          disabled={!shown.length || exporting}
+          className={btnPrimary}
+        >
+          <Icon name="download" className="h-[1.1rem] w-[1.1rem]" /> {exporting ? "Preparing…" : "Export Excel"}
         </button>
       </PageHead>
 
