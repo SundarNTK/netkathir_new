@@ -7,6 +7,21 @@ import { parseBlogInput } from "@/lib/blogInput";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// one full post (with its article text) for the editor
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const deny = await denyUnlessAdmin(req);
+  if (deny) return deny;
+  const { id } = await params;
+  if (!UUID.test(id)) return NextResponse.json({ error: "Unknown post" }, { status: 404 });
+  try {
+    const rows = await rest<BlogPost[]>(`blog_posts?select=*&id=eq.${id}&limit=1`);
+    if (!rows.length) return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    return NextResponse.json(rows[0]);
+  } catch (e) {
+    return apiError(e);
+  }
+}
+
 // update a post
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const deny = await denyUnlessAdmin(req);

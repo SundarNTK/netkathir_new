@@ -454,7 +454,6 @@ export function ClientReel({ clients, notes }: { clients: { name: string; logo: 
       const plates = Array.from(root.querySelectorAll<HTMLElement>("[data-rl-plate]"));
       const counter = root.querySelector<HTMLElement>("[data-rl-now]");
       const bar = root.querySelector<HTMLElement>("[data-rl-bar]");
-      const n = cards.length;
       const dist = () => Math.max(0, track.scrollWidth - window.innerWidth);
       let current = -1;
       const paint = () => {

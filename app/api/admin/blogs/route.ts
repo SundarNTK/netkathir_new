@@ -10,7 +10,8 @@ export async function GET(req: NextRequest) {
   const deny = await denyUnlessAdmin(req);
   if (deny) return deny;
   try {
-    const rows = await rest<BlogPost[]>("blog_posts?select=*&order=published_at.desc.nullsfirst,created_at.desc");
+    // the list skips body_html (the article text) — it is ~85% of the payload and only the editor needs it
+    const rows = await rest<BlogPost[]>("blog_posts?select=id,slug,title,excerpt,cover_image_url,tags,status,published_at,created_at,updated_at&order=published_at.desc.nullsfirst,created_at.desc");
     return NextResponse.json(rows);
   } catch (e) {
     return apiError(e);

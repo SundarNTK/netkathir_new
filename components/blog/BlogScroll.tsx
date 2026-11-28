@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export type Post = { id: string; slug: string; title: string; excerpt: string; cover: string | null; date: string; tags: string[] };
@@ -16,11 +17,18 @@ function Cover({ src, className = "", eager }: { src: string | null; className?:
     );
   return (
     <div className={`${className} relative overflow-hidden bg-[#eef5f0]`}>
-      {/* blurred copy fills the frame, the real image is shown whole on top (covers have mixed proportions) */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" aria-hidden draggable={false} loading={eager ? "eager" : "lazy"} className="cv-blur absolute inset-0 h-full w-full scale-125 object-cover opacity-70 blur-2xl" />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" draggable={false} loading={eager ? "eager" : "lazy"} fetchPriority={eager ? "high" : "auto"} className="cv-img relative h-full w-full object-contain" />
+      {/* a tiny copy, blurred, fills the frame; the real image is shown whole on top (covers have mixed proportions) */}
+      <Image src={src} alt="" aria-hidden fill sizes="48px" className="cv-blur scale-125 object-cover opacity-70 blur-2xl" />
+      <Image
+        src={src}
+        alt=""
+        fill
+        draggable={false}
+        loading={eager ? "eager" : "lazy"}
+        fetchPriority={eager ? "high" : "auto"}
+        sizes={eager ? "(min-width: 1024px) 620px, 100vw" : "(min-width: 1024px) 400px, (min-width: 640px) 50vw, 100vw"}
+        className="cv-img object-contain"
+      />
     </div>
   );
 }

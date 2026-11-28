@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { coverUrl, formatDate } from "@/lib/supabase";
 import { cachedPost, cachedPosts } from "@/lib/blogData";
@@ -122,8 +123,9 @@ async function Post({ params }: { params: Promise<{ slug: string }> }) {
             <div className="ar-cover relative">
               <div aria-hidden className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-[#22c55e]/25 via-[#facc15]/15 to-[#38bdf8]/20 blur-2xl" />
               <div className="relative overflow-hidden rounded-[1.75rem] border border-white/80 bg-white shadow-[0_50px_100px_-45px_rgba(20,83,45,0.75)]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={cover} alt="" fetchPriority="high" className="aspect-[16/10] w-full object-cover" />
+                <div className="relative aspect-[16/10] w-full">
+                  <Image src={cover} alt="" fill loading="eager" fetchPriority="high" sizes="(min-width: 1024px) 600px, 100vw" className="object-cover" />
+                </div>
               </div>
             </div>
           )}
@@ -159,9 +161,8 @@ async function Post({ params }: { params: Promise<{ slug: string }> }) {
               const c = coverUrl(b.cover_image_url);
               return (
                 <Link key={b.id} href={`/blogs/${b.slug}`} className="bl-card group flex flex-col overflow-hidden rounded-[1.5rem] border border-[#14532d]/10 bg-white">
-                  <div className="aspect-[16/9] overflow-hidden bg-[#14532d]/8">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {c && <img src={c} alt="" loading="lazy" className="bl-img h-full w-full object-cover" />}
+                  <div className="relative aspect-[16/9] overflow-hidden bg-[#14532d]/8">
+                    {c && <Image src={c} alt="" fill sizes="(min-width: 1024px) 400px, (min-width: 640px) 50vw, 100vw" className="bl-img object-cover" />}
                   </div>
                   <div className="flex flex-1 flex-col p-5">
                     <p className="font-mono text-xs text-[#a16207]">{formatDate(b.published_at)}</p>

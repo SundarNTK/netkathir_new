@@ -77,7 +77,6 @@ export function Presence({ active, warm: doWarm = true, children }: { active: bo
       window.clearTimeout(t);
       if (idle && w.cancelIdleCallback) w.cancelIdleCallback(idle);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
   useEffect(() => {
     if (!doWarm || warm.finished) return;

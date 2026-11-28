@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { readCache, writeCache } from "./cache";
 import { useRouter } from "next/navigation";
 import { Icon, IconButton, PageHead, SearchBox, Select, Stat, btnGhost, btnPrimary } from "./ui";
 
@@ -62,6 +63,7 @@ export default function ContactsAdmin() {
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || "Could not load submissions");
       setRows(j);
+      writeCache("contacts", j);
       setLoadedAt(Date.now());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load submissions");
@@ -71,7 +73,10 @@ export default function ContactsAdmin() {
   }, [router]);
 
   useEffect(() => {
+    // show the last list straight away, then refresh it
+    const cached = readCache<Row[]>("contacts");
     // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (cached) setRows(cached);
     load();
   }, [load]);
 

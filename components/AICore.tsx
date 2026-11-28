@@ -1015,7 +1015,6 @@ export default function AICore({ palette, mobile }: { palette: RobotPalette; mob
 
             {/* ---- arms: black ribbed upper arm, white armoured forearm with cyan pills, white glove hand ---- */}
             {[0, 1].map((a) => {
-              const sd = a === 0 ? 1 : -1;
               return (
                 <group key={a}>
                   <group ref={a === 0 ? upP : upR}>

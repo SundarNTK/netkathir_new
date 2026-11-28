@@ -91,45 +91,6 @@ export function traceImageToShapes(img: CanvasImageSource, N = 200, size = 1) {
     if (max > eps) return [...dp(pts.slice(0, mi + 1), eps).slice(0, -1), ...dp(pts.slice(mi), eps)];
     return [a, b];
   };
-  // Keep the outline detailed, then round the pixel stairs into a smooth corner.
-  const chaikin = (pts: P[]): P[] => {
-    const next: P[] = [];
-    const n = pts.length;
-    for (let i = 0; i < n; i++) {
-      const a = pts[i];
-      const b = pts[(i + 1) % n];
-      next.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25]);
-      next.push([a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
-    }
-    return next;
-  };
-  const resample = (pts: P[], step: number): P[] => {
-    const n = pts.length;
-    if (n < 3) return pts;
-    const out: P[] = [pts[0]];
-    let remain = step;
-    for (let i = 0; i < n; i++) {
-      let ax = pts[i][0];
-      let ay = pts[i][1];
-      const b = pts[(i + 1) % n];
-      let dx = b[0] - ax;
-      let dy = b[1] - ay;
-      let len = Math.hypot(dx, dy);
-      while (len >= remain && len > 1e-4) {
-        const t = remain / len;
-        ax += dx * t;
-        ay += dy * t;
-        out.push([ax, ay]);
-        dx = b[0] - ax;
-        dy = b[1] - ay;
-        len = Math.hypot(dx, dy);
-        remain = step;
-      }
-      remain -= len;
-    }
-    if (out.length > 3) out.pop();
-    return out.length >= 3 ? out : pts;
-  };
   // Corner-preserving smoothing: curves become smooth, genuine corners (letter edges, leaf tips) stay sharp.
   const sharpSmooth = (pts: P[]): P[] => {
     let cur = pts;

@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { readCache, writeCache } from "./cache";
 import { useRouter } from "next/navigation";
 import RichEditor from "./RichEditor";
 import { Confirm, DateTimePicker, Icon, IconButton, PageHead, SearchBox, Segmented, Select, Stat, StatusPill, Toast, btnGhost, btnPrimary, field } from "./ui";
@@ -76,6 +78,7 @@ export default function BlogsAdmin() {
   const [toast, setToast] = useState("");
   const [del, setDel] = useState<Post | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [opening, setOpening] = useState<string | null>(null);
   const router = useRouter();
 
   const load = useCallback(async () => {
@@ -86,15 +89,24 @@ export default function BlogsAdmin() {
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || "Could not load posts");
       setPosts(j);
+      writeCache("blogs", j);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load posts");
     }
   }, [router]);
 
   useEffect(() => {
+    // show the last list straight away, then refresh it
+    const cached = readCache<Post[]>("blogs");
     // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (cached) setPosts(cached);
     load();
   }, [load]);
+
+  // keep the cache in step with local changes (save / delete)
+  useEffect(() => {
+    if (posts) writeCache("blogs", posts);
+  }, [posts]);
 
   useEffect(() => {
     if (!toast) return;
@@ -125,18 +137,32 @@ export default function BlogsAdmin() {
     [posts]
   );
 
-  const edit = (p: Post) =>
-    setDraft({
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      excerpt: p.excerpt ?? "",
-      cover_image_url: p.cover_image_url ?? "",
-      tags: (p.tags ?? []).join(", "),
-      body_html: p.body_html ?? "",
-      status: p.status === "published" ? "published" : "draft",
-      published_at: toLocal(p.published_at),
-    });
+  // the list has no article text; fetch the full post when it is opened
+  async function edit(p: Post) {
+    if (opening) return;
+    setOpening(p.id);
+    try {
+      const res = await fetch(`/api/admin/blogs/${p.id}`, { cache: "no-store" });
+      if (res.status === 401) return router.replace("/admin/login");
+      const full: Post = await res.json();
+      if (!res.ok) throw new Error((full as unknown as { error?: string }).error || "Could not open the post");
+      setDraft({
+        id: full.id,
+        title: full.title,
+        slug: full.slug,
+        excerpt: full.excerpt ?? "",
+        cover_image_url: full.cover_image_url ?? "",
+        tags: (full.tags ?? []).join(", "),
+        body_html: full.body_html ?? "",
+        status: full.status === "published" ? "published" : "draft",
+        published_at: toLocal(full.published_at),
+      });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Could not open the post");
+    } finally {
+      setOpening(null);
+    }
+  }
 
   async function remove() {
     const p = del;
@@ -231,8 +257,7 @@ export default function BlogsAdmin() {
                   style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}
                 >
                   <div className="relative h-32 w-full shrink-0 overflow-hidden rounded-2xl bg-[#14532d]/8 sm:h-[4.5rem] sm:w-32">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {c ? <img src={c} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" /> : <span className="grid h-full place-items-center text-[#15803d]/50"><Icon name="image" className="h-6 w-6" /></span>}
+                    {c ? <Image src={c} alt="" fill sizes="(min-width: 640px) 128px, 100vw" className="object-cover transition-transform duration-500 group-hover:scale-110" /> : <span className="grid h-full place-items-center text-[#15803d]/50"><Icon name="image" className="h-6 w-6" /></span>}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[0.98rem] font-bold text-[#10231a]">{p.title}</p>
@@ -253,7 +278,7 @@ export default function BlogsAdmin() {
                     </span>
                     <div className="ml-auto flex items-center gap-1 rounded-2xl bg-[#f6faf7] p-1 sm:ml-0">
                       {live && <IconButton icon="eye" label="View on site" href={`/blogs/${p.slug}`} external tone="blue" />}
-                      <IconButton icon="pencil" label="Edit" tone="green" onClick={() => edit(p)} />
+                      <IconButton icon={opening === p.id ? "clock" : "pencil"} label={opening === p.id ? "Opening…" : "Edit"} tone="green" onClick={() => edit(p)} />
                       <IconButton icon="trash" label="Delete" tone="red" onClick={() => setDel(p)} />
                     </div>
                   </div>
